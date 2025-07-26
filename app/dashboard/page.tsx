@@ -1,3 +1,5 @@
+import Icon from '../components/Icon'
+
 export default function DashboardHome() {
   return (
     <div className="space-y-6">
@@ -26,7 +28,7 @@ export default function DashboardHome() {
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>24</p>
             </div>
             <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <span className="text-2xl">⚠️</span>
+              <Icon name="risk" size={24} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -42,7 +44,7 @@ export default function DashboardHome() {
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>8</p>
             </div>
             <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <span className="text-2xl">🔍</span>
+              <Icon name="audit" size={24} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -58,7 +60,7 @@ export default function DashboardHome() {
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>87%</p>
             </div>
             <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <span className="text-2xl">✅</span>
+              <Icon name="compliance" size={24} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -74,7 +76,7 @@ export default function DashboardHome() {
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>156</p>
             </div>
             <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <span className="text-2xl">📋</span>
+              <Icon name="policies" size={24} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -126,22 +128,30 @@ export default function DashboardHome() {
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#22223B' }}>Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
             <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="text-2xl mb-2">➕</div>
+              <div className="mb-2">
+                <Icon name="add" size={24} />
+              </div>
               <div className="text-sm font-medium" style={{ color: '#22223B' }}>Add Risk</div>
               <div className="text-xs" style={{ color: '#22223B' }}>Create new risk entry</div>
             </button>
             <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="text-2xl mb-2">📋</div>
+              <div className="mb-2">
+                <Icon name="audit_new" size={24} />
+              </div>
               <div className="text-sm font-medium" style={{ color: '#22223B' }}>New Audit</div>
               <div className="text-xs" style={{ color: '#22223B' }}>Schedule audit</div>
             </button>
             <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="text-2xl mb-2">📊</div>
+              <div className="mb-2">
+                <Icon name="report" size={24} />
+              </div>
               <div className="text-sm font-medium" style={{ color: '#22223B' }}>Generate Report</div>
               <div className="text-xs" style={{ color: '#22223B' }}>Create compliance report</div>
             </button>
             <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="text-2xl mb-2">⚙️</div>
+              <div className="mb-2">
+                <Icon name="settings_advanced" size={24} />
+              </div>
               <div className="text-sm font-medium" style={{ color: '#22223B' }}>Settings</div>
               <div className="text-xs" style={{ color: '#22223B' }}>Configure system</div>
             </button>

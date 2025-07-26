@@ -22,5 +22,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-rubik), Arial, Helvetica, sans-serif;
 }

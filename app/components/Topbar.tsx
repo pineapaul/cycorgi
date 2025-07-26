@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Icon from './Icon'
 
 export default function Topbar() {
   const [notifications] = useState(3)
@@ -26,12 +27,14 @@ export default function Topbar() {
               borderColor: '#A2AADB'
             }}
           />
-          <div className="absolute left-3 top-2.5" style={{ color: '#898AC4' }}>🔍</div>
+          <div className="absolute left-3 top-2.5" style={{ color: '#898AC4' }}>
+            <Icon name="audit" size={16} />
+          </div>
         </div>
 
         {/* Notifications */}
         <button className="relative p-2 transition-colors" style={{ color: '#898AC4' }}>
-          <span className="text-xl">🔔</span>
+          <Icon name="settings" size={20} />
           {notifications > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center" style={{ backgroundColor: '#A2AADB' }}>
               {notifications}

@@ -3,15 +3,16 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import Icon from './Icon'
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-  { name: 'Risk Register', href: '/dashboard/risk-register', icon: '⚠️' },
-  { name: 'Audits', href: '/dashboard/audits', icon: '🔍' },
-  { name: 'Policies', href: '/dashboard/policies', icon: '📋' },
-  { name: 'Compliance', href: '/dashboard/compliance', icon: '✅' },
-  { name: 'Reports', href: '/dashboard/reports', icon: '📈' },
-  { name: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+  { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+  { name: 'Risk Register', href: '/dashboard/risk-register', icon: 'risk' },
+  { name: 'Audits', href: '/dashboard/audits', icon: 'audit' },
+  { name: 'Policies', href: '/dashboard/policies', icon: 'policies' },
+  { name: 'Compliance', href: '/dashboard/compliance', icon: 'compliance' },
+  { name: 'Reports', href: '/dashboard/reports', icon: 'reports' },
+  { name: 'Settings', href: '/dashboard/settings', icon: 'settings' },
 ]
 
 export default function Sidebar() {
@@ -48,7 +49,7 @@ export default function Sidebar() {
               backgroundColor: pathname === item.href ? '#A2AADB' : 'transparent'
             }}
           >
-            <span className="text-lg">{item.icon}</span>
+            <Icon name={item.icon} size={20} />
             <span>{item.name}</span>
           </Link>
         ))}
