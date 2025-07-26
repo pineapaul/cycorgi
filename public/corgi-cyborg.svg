@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="30" fill="#5A189A"/>
+  <!-- Corgi head shape -->
+  <ellipse cx="32" cy="40" rx="18" ry="16" fill="#fff" stroke="#3C096C" stroke-width="2"/>
+  <!-- Left ear -->
+  <ellipse cx="18" cy="20" rx="6" ry="10" fill="#fff" stroke="#3C096C" stroke-width="2"/>
+  <!-- Right ear -->
+  <ellipse cx="46" cy="20" rx="6" ry="10" fill="#fff" stroke="#3C096C" stroke-width="2"/>
+  <!-- Face split (cyborg) -->
+  <line x1="32" y1="28" x2="32" y2="56" stroke="#5A189A" stroke-width="2"/>
+  <!-- Left eye (normal) -->
+  <ellipse cx="26" cy="42" rx="2.2" ry="2.8" fill="#3C096C"/>
+  <!-- Right eye (cyborg) -->
+  <rect x="36" y="40" width="4" height="4" rx="1" fill="#9D4EDD" stroke="#3C096C" stroke-width="1"/>
+  <!-- Nose -->
+  <ellipse cx="32" cy="48" rx="2.5" ry="1.5" fill="#3C096C"/>
+  <!-- Cyborg details -->
+  <rect x="38" y="34" width="6" height="2" rx="1" fill="#9D4EDD"/>
+  <circle cx="44" cy="36" r="1.2" fill="#fff" stroke="#3C096C" stroke-width="0.8"/>
+</svg> 
