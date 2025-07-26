@@ -56,22 +56,22 @@ export default function Sidebar() {
   const [ismsOperationsOpen, setIsmsOperationsOpen] = useState(false)
 
   return (
-    <aside className="h-full w-64 text-white flex flex-col" style={{ backgroundColor: '#898AC4' }}>
+    <aside className="h-full w-64 text-white flex flex-col flex-shrink-0" style={{ backgroundColor: '#898AC4' }}>
       {/* Logo */}
-      <div className="p-6 border-b" style={{ borderColor: '#A2AADB' }}>
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#C0C9EE' }}>
-            <img src="/angry-corgi.png" alt="Cycorgi Logo" className="w-6 h-6" />
+      <div className="p-4 md:p-6 border-b" style={{ borderColor: '#A2AADB' }}>
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#C0C9EE' }}>
+            <img src="/angry-corgi.png" alt="Cycorgi Logo" className="w-4 h-4 md:w-6 md:h-6" />
           </div>
           <div>
-            <div className="font-bold text-lg">Cycorgi</div>
+            <div className="font-bold text-sm md:text-lg">Cycorgi</div>
             <div className="text-xs" style={{ color: '#C0C9EE' }}>GRC Platform</div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-2 md:p-4 space-y-1 overflow-y-auto">
         {/* Dashboard */}
         <Link
           key={navItems[0].href}
@@ -318,13 +318,13 @@ export default function Sidebar() {
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t" style={{ borderColor: '#A2AADB' }}>
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C0C9EE' }}>
-            <span className="text-white text-sm font-medium">P</span>
+      <div className="p-2 md:p-4 border-t flex-shrink-0" style={{ borderColor: '#A2AADB' }}>
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C0C9EE' }}>
+            <span className="text-white text-xs md:text-sm font-medium">P</span>
           </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium">Paul Admin</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs md:text-sm font-medium truncate">Paul Admin</div>
             <div className="text-xs" style={{ color: '#C0C9EE' }}>Administrator</div>
           </div>
         </div>

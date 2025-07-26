@@ -4,23 +4,22 @@ export default function DashboardHome() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your GRC program.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
         </div>
-        <div className="flex space-x-3">
-          <button className="px-4 py-2 rounded-lg transition-colors" style={{ backgroundColor: '#C0C9EE', color: '#898AC4' }}>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <button className="px-3 py-2 md:px-4 md:py-2 rounded-lg transition-colors text-sm md:text-base" style={{ backgroundColor: '#C0C9EE', color: '#898AC4' }}>
             Export Report
           </button>
-          <button className="px-4 py-2 text-white rounded-lg transition-colors" style={{ backgroundColor: '#898AC4' }}>
+          <button className="px-3 py-2 md:px-4 md:py-2 text-white rounded-lg transition-colors text-sm md:text-base" style={{ backgroundColor: '#898AC4' }}>
             + New Risk
           </button>
         </div>
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <div className="p-6 rounded-xl shadow-sm border" style={{ backgroundColor: '#C0C9EE', borderColor: '#C0C9EE', color: '#22223B' }}>
           <div className="flex items-center justify-between">
             <div>
@@ -87,7 +86,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Charts and Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Recent Activities */}
         <div className="p-6 rounded-xl shadow-sm border" style={{ backgroundColor: '#C0C9EE', borderColor: '#C0C9EE', color: '#22223B' }}>
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#22223B' }}>Recent Activities</h3>

@@ -2,99 +2,103 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import Icon from './Icon'
 
 export default function Topbar() {
   const [notifications] = useState(3)
   const pathname = usePathname()
 
-  // Generate breadcrumbs based on current path
-  const generateBreadcrumbs = () => {
-    const segments = pathname.split('/').filter(Boolean)
-    const breadcrumbs = []
-    
-    // Always start with Dashboard
-    breadcrumbs.push({ name: 'Dashboard', href: '/dashboard', icon: 'dashboard' })
-    
-    // Add other segments
-    for (let i = 1; i < segments.length; i++) {
-      const segment = segments[i]
-      const href = '/' + segments.slice(0, i + 1).join('/')
-      
-      // Convert segment to readable name
-      const name = segment
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-      
-      breadcrumbs.push({ name, href, icon: getIconForSegment(segment) })
+  // Get tabs based on current page
+  const getTabs = () => {
+    if (pathname.includes('/inventory/assets')) {
+      return [
+        { name: 'Assets', href: '/dashboard/inventory/assets', active: true },
+        { name: 'Assessments', href: '/dashboard/inventory/cia-assessments', active: false }
+      ]
     }
     
-    return breadcrumbs
-  }
-
-  const getIconForSegment = (segment: string) => {
-    const iconMap: Record<string, string> = {
-      'risk-register': 'risk',
-      'audits': 'audit',
-      'policies': 'policies',
-      'compliance': 'compliance',
-      'reports': 'reports',
-      'settings': 'settings',
-      'program': 'cubes',
-      'scope': 'audit',
-      'issues': 'risk',
-      'objectives': 'compliance',
-      'roles': 'settings'
+    if (pathname.includes('/inventory/third-parties')) {
+      return [
+        { name: 'Partners', href: '/dashboard/inventory/third-parties', active: true },
+        { name: 'Risks', href: '/dashboard/inventory/third-party-risks', active: false }
+      ]
     }
-    return iconMap[segment] || 'dashboard'
+    
+    if (pathname.includes('/risk-management')) {
+      return [
+        { name: 'Register', href: '/dashboard/risk-management/register', active: pathname.includes('/register') },
+        { name: 'Assessments', href: '/dashboard/risk-management/assessments', active: pathname.includes('/assessments') },
+        { name: 'Exceptions', href: '/dashboard/risk-management/exceptions', active: pathname.includes('/exceptions') }
+      ]
+    }
+    
+    if (pathname.includes('/compliance')) {
+      return [
+        { name: 'SOA', href: '/dashboard/compliance/soa', active: pathname.includes('/soa') },
+        { name: 'Actions', href: '/dashboard/compliance/corrective-actions', active: pathname.includes('/corrective-actions') },
+        { name: 'Improvements', href: '/dashboard/compliance/improvements', active: pathname.includes('/improvements') }
+      ]
+    }
+    
+    if (pathname.includes('/isms-operations')) {
+      return [
+        { name: 'Calendar', href: '/dashboard/isms-operations/calendar', active: pathname.includes('/calendar') },
+        { name: 'Incidents', href: '/dashboard/isms-operations/incidents', active: pathname.includes('/incidents') },
+        { name: 'Documents', href: '/dashboard/isms-operations/document-review', active: pathname.includes('/document-review') },
+        { name: 'Drills', href: '/dashboard/isms-operations/dr-drill', active: pathname.includes('/dr-drill') },
+        { name: 'Metrics', href: '/dashboard/isms-operations/measurements', active: pathname.includes('/measurements') }
+      ]
+    }
+    
+    // Default dashboard tabs
+    return [
+      { name: 'Overview', href: '/dashboard', active: true },
+      { name: 'Activity', href: '/dashboard/activity', active: false }
+    ]
   }
 
-  const breadcrumbs = generateBreadcrumbs()
+  const tabs = getTabs()
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 shadow-sm" style={{ backgroundColor: '#FFF2E0', borderBottom: '1px solid #C0C9EE' }}>
-      {/* Enhanced Breadcrumb */}
-      <div className="flex items-center space-x-2">
-        {breadcrumbs.map((crumb, index) => (
-          <div key={crumb.href} className="flex items-center space-x-2">
-            {index > 0 && (
-              <Icon name="audit" size={12} className="text-[#898AC4] opacity-50" />
-            )}
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-lg transition-all duration-200 hover:bg-white/50">
-              <Icon name={crumb.icon} size={16} className="text-[#898AC4]" />
-              <span className={`text-sm font-medium ${
-                index === breadcrumbs.length - 1 
-                  ? 'text-gray-900' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}>
-                {crumb.name}
-              </span>
-            </div>
-          </div>
+    <header className="h-16 flex items-center justify-between px-3 md:px-6 shadow-sm overflow-hidden" style={{ backgroundColor: '#FFF2E0', borderBottom: '1px solid #C0C9EE' }}>
+      {/* Tabs */}
+      <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+              tab.active 
+                ? 'bg-white text-gray-900 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            }`}
+          >
+            {tab.name}
+          </Link>
         ))}
       </div>
 
       {/* Right side */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
         {/* Notifications */}
-        <button className="relative p-2 transition-colors hover:bg-white/50 rounded-lg" style={{ color: '#898AC4' }}>
-          <Icon name="bell" size={20} />
+        <button className="relative p-1 md:p-2 transition-colors hover:bg-white/50 rounded-lg" style={{ color: '#898AC4' }}>
+          <Icon name="bell" size={16} className="md:w-5" />
           {notifications > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center" style={{ backgroundColor: '#A2AADB' }}>
+            <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 text-white text-xs rounded-full flex items-center justify-center" style={{ backgroundColor: '#A2AADB' }}>
               {notifications}
             </span>
           )}
         </button>
 
         {/* User Menu */}
-        <div className="flex items-center space-x-3">
-          <div className="text-right">
-            <div className="text-sm font-medium text-gray-900">Paul Admin</div>
-            <div className="text-xs text-gray-500">paul@company.com</div>
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="text-right hidden sm:block">
+            <div className="text-xs md:text-sm font-medium text-gray-900 truncate">Paul Admin</div>
+            <div className="text-xs text-gray-500 truncate">paul@company.com</div>
           </div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-gray-600 text-sm font-medium">P</span>
+          <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-gray-600 text-xs md:text-sm font-medium">P</span>
           </div>
         </div>
       </div>

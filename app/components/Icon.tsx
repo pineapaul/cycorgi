@@ -16,7 +16,11 @@ import {
   faCubes,
   faBell,
   faWarehouse,
-  faBriefcase
+  faBriefcase,
+  faSortUp,
+  faSortDown,
+  faChartSimple,
+  faMagnifyingGlass
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -43,6 +47,10 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     bell: faBell,
     warehouse: faWarehouse,
     briefcase: faBriefcase,
+    'sort-up': faSortUp,
+    'sort-down': faSortDown,
+    'chart-simple': faChartSimple,
+    'magnifying-glass': faMagnifyingGlass,
   }
 
   const icon = icons[name]
@@ -78,6 +86,10 @@ function getFallbackEmoji(name: string): string {
     bell: '🔔',
     warehouse: '🏭',
     briefcase: '💼',
+    'sort-up': '⬆️',
+    'sort-down': '⬇️',
+    'chart-simple': '📊',
+    'magnifying-glass': '🔍',
   }
   return emojiMap[name] || '📄'
 } 
