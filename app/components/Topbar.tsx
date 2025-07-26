@@ -6,7 +6,7 @@ export default function Topbar() {
   const [notifications] = useState(3)
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+    <header className="h-16 flex items-center justify-between px-6 shadow-sm" style={{ backgroundColor: '#FFF2E0', borderBottom: '1px solid #C0C9EE' }}>
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2">
         <span className="text-gray-500">Dashboard</span>
