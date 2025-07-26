@@ -34,7 +34,7 @@ export default function Topbar() {
 
         {/* Notifications */}
         <button className="relative p-2 transition-colors" style={{ color: '#898AC4' }}>
-          <Icon name="settings" size={20} />
+          <Icon name="bell" size={20} />
           {notifications > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center" style={{ backgroundColor: '#A2AADB' }}>
               {notifications}

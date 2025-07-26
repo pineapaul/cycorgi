@@ -13,7 +13,8 @@ import {
   faClipboardList,
   faFileInvoice,
   faCogs,
-  faCubes
+  faCubes,
+  faBell
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -37,6 +38,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     report: faFileInvoice,
     settings_advanced: faCogs,
     cubes: faCubes,
+    bell: faBell,
   }
 
   const icon = icons[name]
@@ -69,6 +71,7 @@ function getFallbackEmoji(name: string): string {
     report: '📄',
     settings_advanced: '⚙️',
     cubes: '🧊',
+    bell: '🔔',
   }
   return emojiMap[name] || '📄'
 } 
