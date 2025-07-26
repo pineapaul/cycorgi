@@ -279,10 +279,10 @@ export default function DataTable({
                       className="px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm"
                       style={{ color: '#22223B' }}
                     >
-                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInformation' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''}`}>
+                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''}`}>
                         {column.render 
                           ? column.render(row[column.key], row)
-                          : <span className="truncate block">{String(row[column.key] || '')}</span>
+                          : <span className="truncate block">{row[column.key] ? String(row[column.key]) : '-'}</span>
                         }
                       </div>
                     </td>

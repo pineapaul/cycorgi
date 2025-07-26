@@ -1,7 +1,38 @@
-import { NextResponse } from 'next/server'
-import clientPromise from '@/lib/mongodb'
+const { MongoClient } = require('mongodb');
+const path = require('path');
+const fs = require('fs');
 
-// Comprehensive fake data for information assets
+// Load environment variables from .env.local
+function loadEnvFile() {
+  const envPath = path.join(__dirname, '..', '.env.local');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const envVars = {};
+    
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('=').trim();
+        if (!key.startsWith('#')) {
+          envVars[key.trim()] = value.replace(/^["']|["']$/g, ''); // Remove quotes
+        }
+      }
+    });
+    
+    // Set environment variables
+    Object.keys(envVars).forEach(key => {
+      process.env[key] = envVars[key];
+    });
+  }
+}
+
+// Load environment variables
+loadEnvFile();
+
+// MongoDB connection string from environment
+const MONGODB_URI = process.env.MONGODB_URI;
+
+// Fake data for information assets
 const fakeInformationAssets = [
   {
     id: '1',
@@ -243,135 +274,50 @@ const fakeInformationAssets = [
     availability: 'Medium',
     additionalInfo: '7-year retention policy'
   }
-]
+];
 
-export async function GET() {
+async function seedDatabase() {
+  if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI not found in environment variables');
+    console.log('💡 Make sure your .env.local file contains MONGODB_URI=your_connection_string');
+    process.exit(1);
+  }
+  
+  const client = new MongoClient(MONGODB_URI);
+  
   try {
-    // Connect to MongoDB
-    const client = await clientPromise
-    const db = client.db('cycorgi')
+    console.log('🔗 Connecting to MongoDB...');
+    console.log(`📡 Using URI: ${MONGODB_URI.substring(0, 20)}...`);
+    await client.connect();
     
-    // Check if information assets collection exists and has data
-    const collection = db.collection('information-assets')
-    const existingData = await collection.find({}).limit(1).toArray()
+    const db = client.db('cycorgi');
+    const collection = db.collection('information-assets');
     
-    if (existingData.length === 0) {
-      // Insert fake data if collection is empty
-      await collection.insertMany(fakeInformationAssets)
-      console.log('Inserted fake information assets data')
-    }
+    // Clear existing data
+    console.log('Clearing existing data...');
+    await collection.deleteMany({});
     
-    // Retrieve all information assets
-    let informationAssets = await collection.find({}).toArray()
+    // Insert fake data
+    console.log('Inserting fake data...');
+    const result = await collection.insertMany(fakeInformationAssets);
     
-    // Transform old data structure to new structure if needed
-    informationAssets = informationAssets.map(asset => {
-      // If it's the old structure, transform it
-      if (asset.name && !asset.informationAsset) {
-        return {
-          ...asset,
-          informationAsset: asset.name,
-          category: asset.type === 'Database' ? 'Customer Data' : 
-                   asset.type === 'File System' ? 'HR Data' :
-                   asset.type === 'Document' ? 'Financial Data' :
-                   asset.type === 'Code' ? 'Intellectual Property' :
-                   asset.type === 'Media' ? 'Marketing' :
-                   asset.type === 'Backup' ? 'Infrastructure' :
-                   asset.type === 'Credentials' ? 'Security' :
-                   asset.type === 'Configuration' ? 'Infrastructure' : 'Other',
-          sme: asset.owner === 'John Smith' ? 'Sarah Johnson' :
-               asset.owner === 'Sarah Johnson' ? 'David Brown' :
-               asset.owner === 'Mike Davis' ? 'Emily Wilson' :
-               asset.owner === 'Lisa Chen' ? 'Carlos Martinez' :
-               asset.owner === 'Tom Wilson' ? 'Emily Wilson' :
-               asset.owner === 'David Brown' ? 'Amanda White' :
-               asset.owner === 'Emma Taylor' ? 'Daniel Kim' :
-               asset.owner === 'Alex Rodriguez' ? 'Amanda White' : 'TBD',
-          administrator: asset.owner === 'John Smith' ? 'Mike Chen' :
-                       asset.owner === 'Sarah Johnson' ? 'Alex Rodriguez' :
-                       asset.owner === 'Mike Davis' ? 'Tom Anderson' :
-                       asset.owner === 'Lisa Chen' ? 'Rachel Green' :
-                       asset.owner === 'Tom Wilson' ? 'Rachel Green' :
-                       asset.owner === 'David Brown' ? 'Steve Johnson' :
-                       asset.owner === 'Emma Taylor' ? 'Maria Lopez' :
-                       asset.owner === 'Alex Rodriguez' ? 'Steve Johnson' : 'TBD',
-          agileReleaseTrain: asset.owner === 'John Smith' ? 'ART-1' :
-                           asset.owner === 'Sarah Johnson' ? 'ART-2' :
-                           asset.owner === 'Mike Davis' ? 'ART-3' :
-                           asset.owner === 'Lisa Chen' ? 'ART-1' :
-                           asset.owner === 'Tom Wilson' ? 'ART-3' :
-                           asset.owner === 'David Brown' ? 'ART-4' :
-                           asset.owner === 'Emma Taylor' ? 'ART-2' :
-                           asset.owner === 'Alex Rodriguez' ? 'ART-4' : 'ART-1',
-          confidentiality: asset.classification === 'Confidential' ? 'High' :
-                         asset.classification === 'Internal' ? 'Medium' :
-                         asset.classification === 'Public' ? 'Low' :
-                         asset.classification === 'Restricted' ? 'High' : 'Medium',
-          integrity: asset.type === 'Database' ? 'High' :
-                   asset.type === 'File System' ? 'Medium' :
-                   asset.type === 'Document' ? 'High' :
-                   asset.type === 'Code' ? 'High' :
-                   asset.type === 'Media' ? 'Medium' :
-                   asset.type === 'Backup' ? 'High' :
-                   asset.type === 'Credentials' ? 'High' :
-                   asset.type === 'Configuration' ? 'High' : 'Medium',
-          availability: asset.type === 'Database' ? 'High' :
-                      asset.type === 'File System' ? 'Medium' :
-                      asset.type === 'Document' ? 'Medium' :
-                      asset.type === 'Code' ? 'High' :
-                      asset.type === 'Media' ? 'Medium' :
-                      asset.type === 'Backup' ? 'Critical' :
-                      asset.type === 'Credentials' ? 'Medium' :
-                      asset.type === 'Configuration' ? 'Critical' : 'Medium',
-          additionalInfo: asset.additionalInformation || 'No additional information'
-        }
-      }
-      return asset
-    })
+    console.log(`✅ Successfully seeded database with ${result.insertedCount} information assets`);
+    console.log('\n📊 Sample data includes:');
+    console.log('- Customer Database (High confidentiality)');
+    console.log('- Employee Records (HR Data)');
+    console.log('- Financial Reports (Regulatory compliance)');
+    console.log('- Source Code Repository (Intellectual Property)');
+    console.log('- Network Infrastructure (Critical availability)');
+    console.log('- API Keys (Security credentials)');
+    console.log('- And 9 more diverse assets...');
     
-    return NextResponse.json({
-      success: true,
-      data: informationAssets
-    })
   } catch (error) {
-    console.error('Error fetching information assets:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch information assets',
-        data: fakeInformationAssets // Fallback to fake data
-      },
-      { status: 500 }
-    )
+    console.error('❌ Error seeding database:', error);
+  } finally {
+    await client.close();
+    console.log('\n🔗 Database connection closed');
   }
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const client = await clientPromise
-    const db = client.db('cycorgi')
-    const collection = db.collection('information-assets')
-    
-    // Add timestamp and ID
-    const newAsset = {
-      ...body,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    
-    const result = await collection.insertOne(newAsset)
-    
-    return NextResponse.json({
-      success: true,
-      data: { ...newAsset, _id: result.insertedId }
-    })
-  } catch (error) {
-    console.error('Error creating information asset:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to create information asset' },
-      { status: 500 }
-    )
-  }
-} 
+// Run the seeding function
+seedDatabase(); 
