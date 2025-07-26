@@ -64,36 +64,46 @@ export default function Sidebar() {
         </Link>
 
         {/* Program Menu */}
-        <button
-          className={cn(
-            'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-            programOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              programOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: programOpen ? '#A2AADB' : 'transparent' }}
+            onClick={() => setProgramOpen((open) => !open)}
+          >
+            <Icon name="cubes" size={20} />
+            <span>Program</span>
+            {/* Dropdown icon: show if expanded, or on hover */}
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                programOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {programOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {programOpen && (
+            <div className="ml-7 mt-1 space-y-1">
+              {programItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
           )}
-          style={{ backgroundColor: programOpen ? '#A2AADB' : 'transparent' }}
-          onClick={() => setProgramOpen((open) => !open)}
-        >
-          <Icon name="cubes" size={20} />
-          <span>Program</span>
-          <span className="ml-auto">{programOpen ? '▲' : '▼'}</span>
-        </button>
-        {programOpen && (
-          <div className="ml-7 mt-1 space-y-1">
-            {programItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'block px-3 py-1 rounded text-sm transition-all',
-                  pathname === item.href
-                    ? 'bg-white text-[#898AC4] font-semibold'
-                    : 'text-white hover:bg-[#A2AADB] hover:text-white'
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        </div>
 
         {/* Other nav items */}
         {navItems.slice(1).map((item) => (
