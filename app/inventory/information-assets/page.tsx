@@ -355,8 +355,17 @@ export default function InformationAssetsPage() {
           {showColumns && (
             <div className="absolute right-0 top-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
               <div className="p-3">
-                <h3 className="text-sm font-medium mb-3 text-gray-900">Select Columns</h3>
-                <div className="space-y-2">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-900">Select Columns</h3>
+                  <button
+                    onClick={() => setShowColumns(false)}
+                    className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-100 transition-colors"
+                    title="Close"
+                  >
+                    <Icon name="close" size={12} className="text-gray-500" />
+                  </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                   {allColumns.map((column) => (
                     <label key={column.key} className="flex items-center space-x-2">
                       <input

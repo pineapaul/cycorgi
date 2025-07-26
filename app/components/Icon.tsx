@@ -30,7 +30,8 @@ import {
   faPlus as faPlusSolid,
   faArrowRight,
   faFilter,
-  faColumns
+  faColumns,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -71,6 +72,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'arrow-right': faArrowRight,
     filter: faFilter,
     columns: faColumns,
+    close: faTimes,
   }
 
   const icon = icons[name]
@@ -120,6 +122,7 @@ function getFallbackEmoji(name: string): string {
     'arrow-right': '➡️',
     filter: '🔍',
     columns: '📊',
+    close: '✕',
   }
   return emojiMap[name] || '📄'
 } 
