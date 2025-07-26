@@ -29,8 +29,8 @@ const riskManagementItems = [
 ]
 
 const inventoryManagementItems = [
-  { name: 'Information Assets', href: '/dashboard/inventory/assets' },
-  { name: 'Third Parties', href: '/dashboard/inventory/third-parties' },
+  { name: 'Information Assets', href: '/inventory/information-assets' },
+  { name: 'Third Parties', href: '/inventory/third-parties' },
 ]
 
 const complianceItems = [

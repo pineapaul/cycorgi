@@ -122,13 +122,12 @@ export default function DataTable({
   return (
     <div className="space-y-4">
       {/* Actions Bar */}
-      <div className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg" style={{ backgroundColor: '#C0C9EE' }}>
+      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
         {/* Left side - Options dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg transition-all duration-200 hover:scale-105"
-            style={{ backgroundColor: '#FFF2E0', color: '#22223B' }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
             title="Options"
           >
             <Icon name="chart-simple" size={16} />
@@ -169,8 +168,7 @@ export default function DataTable({
           {/* Search Button */}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg transition-all duration-200 hover:scale-105"
-            style={{ backgroundColor: '#FFF2E0', color: '#22223B' }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
             title="Search"
           >
             <Icon name="magnifying-glass" size={16} />
@@ -196,17 +194,16 @@ export default function DataTable({
             placeholder={searchPlaceholder}
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            style={{ backgroundColor: '#FFF2E0', borderColor: '#C0C9EE' }}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           />
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border" style={{ borderColor: '#C0C9EE' }}>
-        <div className="overflow-x-auto overflow-y-hidden">
-          <table className="min-w-full divide-y" style={{ borderColor: '#C0C9EE' }}>
-            <thead className="bg-gray-50" style={{ backgroundColor: '#C0C9EE' }}>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
               <tr>
                 {selectable && (
                   <th
@@ -255,11 +252,11 @@ export default function DataTable({
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y" style={{ borderColor: '#C0C9EE' }}>
+            <tbody className="bg-white divide-y divide-gray-200">
               {paginatedData.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick && onRowClick(row)}
                 >
                   {selectable && (

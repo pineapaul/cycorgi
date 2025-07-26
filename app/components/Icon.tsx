@@ -20,7 +20,17 @@ import {
   faSortUp,
   faSortDown,
   faChartSimple,
-  faMagnifyingGlass
+  faMagnifyingGlass,
+  faFile,
+  faShield,
+  faCheckCircle as faCheckCircleSolid,
+  faFolder,
+  faArrowRotateRight,
+  faWarning,
+  faPlus as faPlusSolid,
+  faArrowRight,
+  faFilter,
+  faColumns
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -51,6 +61,16 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'sort-down': faSortDown,
     'chart-simple': faChartSimple,
     'magnifying-glass': faMagnifyingGlass,
+    file: faFile,
+    shield: faShield,
+    'check-circle': faCheckCircleSolid,
+    folder: faFolder,
+    'arrow-clockwise': faArrowRotateRight,
+    warning: faWarning,
+    plus: faPlusSolid,
+    'arrow-right': faArrowRight,
+    filter: faFilter,
+    columns: faColumns,
   }
 
   const icon = icons[name]
@@ -90,6 +110,16 @@ function getFallbackEmoji(name: string): string {
     'sort-down': '⬇️',
     'chart-simple': '📊',
     'magnifying-glass': '🔍',
+    file: '📄',
+    shield: '🛡️',
+    'check-circle': '✅',
+    folder: '📁',
+    'arrow-clockwise': '🔄',
+    warning: '⚠️',
+    plus: '➕',
+    'arrow-right': '➡️',
+    filter: '🔍',
+    columns: '📊',
   }
   return emojiMap[name] || '📄'
 } 
