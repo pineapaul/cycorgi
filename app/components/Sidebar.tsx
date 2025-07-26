@@ -9,10 +9,8 @@ import { useState } from 'react'
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
   // Program menu will be inserted here
-  { name: 'Risk Register', href: '/dashboard/risk-register', icon: 'risk' },
-  { name: 'Audits', href: '/dashboard/audits', icon: 'audit' },
-  { name: 'Policies', href: '/dashboard/policies', icon: 'policies' },
   { name: 'Compliance', href: '/dashboard/compliance', icon: 'compliance' },
+  { name: 'ISMS Operations', href: '/dashboard/isms-operations', icon: 'settings' },
   { name: 'Reports', href: '/dashboard/reports', icon: 'reports' },
   { name: 'Settings', href: '/dashboard/settings', icon: 'settings' },
 ]
@@ -24,9 +22,38 @@ const programItems = [
   { name: 'Roles', href: '/dashboard/program/roles' },
 ]
 
+const riskManagementItems = [
+  { name: 'Risk Register', href: '/dashboard/risk-management/register' },
+  { name: 'Risk Assessments', href: '/dashboard/risk-management/assessments' },
+  { name: 'Risk Exceptions', href: '/dashboard/risk-management/exceptions' },
+]
+
+const inventoryManagementItems = [
+  { name: 'Information Assets', href: '/dashboard/inventory/assets' },
+  { name: 'Third Parties', href: '/dashboard/inventory/third-parties' },
+]
+
+const complianceItems = [
+  { name: 'Statement of Applicability', href: '/dashboard/compliance/soa' },
+  { name: 'Corrective Actions', href: '/dashboard/compliance/corrective-actions' },
+  { name: 'Improvements', href: '/dashboard/compliance/improvements' },
+]
+
+const ismsOperationsItems = [
+  { name: 'Security Calendar', href: '/dashboard/isms-operations/calendar' },
+  { name: 'Information Security Incidents', href: '/dashboard/isms-operations/incidents' },
+  { name: 'Document Review Schedule', href: '/dashboard/isms-operations/document-review' },
+  { name: 'DR Drill Schedule', href: '/dashboard/isms-operations/dr-drill' },
+  { name: 'Measurements & Metrics', href: '/dashboard/isms-operations/measurements' },
+]
+
 export default function Sidebar() {
   const pathname = usePathname()
   const [programOpen, setProgramOpen] = useState(false)
+  const [riskManagementOpen, setRiskManagementOpen] = useState(false)
+  const [inventoryOpen, setInventoryOpen] = useState(false)
+  const [complianceOpen, setComplianceOpen] = useState(false)
+  const [ismsOperationsOpen, setIsmsOperationsOpen] = useState(false)
 
   return (
     <aside className="h-full w-64 text-white flex flex-col" style={{ backgroundColor: '#898AC4' }}>
@@ -105,8 +132,172 @@ export default function Sidebar() {
           )}
         </div>
 
+        {/* Inventories Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              inventoryOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: inventoryOpen ? '#A2AADB' : 'transparent' }}
+            onClick={() => setInventoryOpen((open) => !open)}
+          >
+            <Icon name="warehouse" size={20} />
+            <span>Inventories</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                inventoryOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {inventoryOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {inventoryOpen && (
+            <div className="ml-7 mt-1 space-y-1">
+              {inventoryManagementItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Risk Management Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              riskManagementOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: riskManagementOpen ? '#A2AADB' : 'transparent' }}
+            onClick={() => setRiskManagementOpen((open) => !open)}
+          >
+            <Icon name="risk" size={20} />
+            <span>Risk Management</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                riskManagementOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {riskManagementOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {riskManagementOpen && (
+            <div className="ml-7 mt-1 space-y-1">
+              {riskManagementItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Compliance Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              complianceOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: complianceOpen ? '#A2AADB' : 'transparent' }}
+            onClick={() => setComplianceOpen((open) => !open)}
+          >
+            <Icon name="compliance" size={20} />
+            <span>Compliance</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                complianceOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {complianceOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {complianceOpen && (
+            <div className="ml-7 mt-1 space-y-1">
+              {complianceItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ISMS Operations Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              ismsOperationsOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: ismsOperationsOpen ? '#A2AADB' : 'transparent' }}
+            onClick={() => setIsmsOperationsOpen((open) => !open)}
+          >
+            <Icon name="briefcase" size={20} />
+            <span>ISMS Operations</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                ismsOperationsOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {ismsOperationsOpen ? '▲' : '▼'}
+            </span>
+          </button>
+          {ismsOperationsOpen && (
+            <div className="ml-7 mt-1 space-y-1">
+              {ismsOperationsItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Other nav items */}
-        {navItems.slice(1).map((item) => (
+        {navItems.slice(4).map((item) => (
           <Link
             key={item.href}
             href={item.href}

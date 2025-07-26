@@ -14,7 +14,9 @@ import {
   faFileInvoice,
   faCogs,
   faCubes,
-  faBell
+  faBell,
+  faWarehouse,
+  faBriefcase
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -39,6 +41,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     settings_advanced: faCogs,
     cubes: faCubes,
     bell: faBell,
+    warehouse: faWarehouse,
+    briefcase: faBriefcase,
   }
 
   const icon = icons[name]
@@ -72,6 +76,8 @@ function getFallbackEmoji(name: string): string {
     settings_advanced: '⚙️',
     cubes: '🧊',
     bell: '🔔',
+    warehouse: '🏭',
+    briefcase: '💼',
   }
   return emojiMap[name] || '📄'
 } 
