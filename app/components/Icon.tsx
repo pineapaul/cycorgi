@@ -1,18 +1,19 @@
 'use client'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { 
-  faTachometerAlt, 
-  faExclamationTriangle, 
-  faSearch, 
-  faFileAlt, 
-  faCheckCircle, 
-  faChartLine, 
+import {
+  faTachometerAlt,
+  faExclamationTriangle,
+  faSearch,
+  faFileAlt,
+  faCheckCircle,
+  faChartLine,
   faCog,
   faPlus,
   faClipboardList,
   faFileInvoice,
-  faCogs
+  faCogs,
+  faCubes
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -35,6 +36,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     audit_new: faClipboardList,
     report: faFileInvoice,
     settings_advanced: faCogs,
+    cubes: faCubes,
   }
 
   const icon = icons[name]
@@ -45,8 +47,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
   }
 
   return (
-    <FontAwesomeIcon 
-      icon={icon} 
+    <FontAwesomeIcon
+      icon={icon}
       className={className}
       style={{ width: size, height: size }}
     />
@@ -66,6 +68,7 @@ function getFallbackEmoji(name: string): string {
     audit_new: '📋',
     report: '📄',
     settings_advanced: '⚙️',
+    cubes: '🧊',
   }
   return emojiMap[name] || '📄'
 } 
