@@ -27,8 +27,8 @@ export default function DashboardHome() {
               <p className="text-sm font-medium" style={{ color: '#22223B' }}>Total Risks</p>
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>24</p>
             </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <Icon name="risk" size={24} />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <Icon name="risk" size={20} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -43,8 +43,8 @@ export default function DashboardHome() {
               <p className="text-sm font-medium" style={{ color: '#22223B' }}>Active Audits</p>
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>8</p>
             </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <Icon name="audit" size={24} />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <Icon name="audit" size={20} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -59,8 +59,8 @@ export default function DashboardHome() {
               <p className="text-sm font-medium" style={{ color: '#22223B' }}>Compliance Score</p>
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>87%</p>
             </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <Icon name="compliance" size={24} />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <Icon name="compliance" size={20} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -75,8 +75,8 @@ export default function DashboardHome() {
               <p className="text-sm font-medium" style={{ color: '#22223B' }}>Policies</p>
               <p className="text-3xl font-bold" style={{ color: '#22223B' }}>156</p>
             </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#FFF2E0' }}>
-              <Icon name="policies" size={24} />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <Icon name="policies" size={20} />
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
@@ -127,33 +127,33 @@ export default function DashboardHome() {
         <div className="p-6 rounded-xl shadow-sm border" style={{ backgroundColor: '#C0C9EE', borderColor: '#C0C9EE', color: '#22223B' }}>
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#22223B' }}>Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="mb-2">
-                <Icon name="add" size={24} />
+            <button className="p-4 rounded-lg transition-all duration-200 hover:scale-105 text-left" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <div className="mb-3">
+                <Icon name="add" size={20} />
               </div>
-              <div className="text-sm font-medium" style={{ color: '#22223B' }}>Add Risk</div>
-              <div className="text-xs" style={{ color: '#22223B' }}>Create new risk entry</div>
+              <div className="text-sm font-medium" style={{ color: '#FFF2E0' }}>Add Risk</div>
+              <div className="text-xs opacity-80" style={{ color: '#FFF2E0' }}>Create new risk entry</div>
             </button>
-            <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="mb-2">
-                <Icon name="audit_new" size={24} />
+            <button className="p-4 rounded-lg transition-all duration-200 hover:scale-105 text-left" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <div className="mb-3">
+                <Icon name="audit_new" size={20} />
               </div>
-              <div className="text-sm font-medium" style={{ color: '#22223B' }}>New Audit</div>
-              <div className="text-xs" style={{ color: '#22223B' }}>Schedule audit</div>
+              <div className="text-sm font-medium" style={{ color: '#FFF2E0' }}>New Audit</div>
+              <div className="text-xs opacity-80" style={{ color: '#FFF2E0' }}>Schedule audit</div>
             </button>
-            <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="mb-2">
-                <Icon name="report" size={24} />
+            <button className="p-4 rounded-lg transition-all duration-200 hover:scale-105 text-left" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <div className="mb-3">
+                <Icon name="report" size={20} />
               </div>
-              <div className="text-sm font-medium" style={{ color: '#22223B' }}>Generate Report</div>
-              <div className="text-xs" style={{ color: '#22223B' }}>Create compliance report</div>
+              <div className="text-sm font-medium" style={{ color: '#FFF2E0' }}>Generate Report</div>
+              <div className="text-xs opacity-80" style={{ color: '#FFF2E0' }}>Create compliance report</div>
             </button>
-            <button className="p-4 border rounded-lg transition-colors text-left" style={{ borderColor: '#A2AADB', backgroundColor: '#FFF2E0', color: '#22223B' }}>
-              <div className="mb-2">
-                <Icon name="settings_advanced" size={24} />
+            <button className="p-4 rounded-lg transition-all duration-200 hover:scale-105 text-left" style={{ backgroundColor: '#22223B', color: '#FFF2E0' }}>
+              <div className="mb-3">
+                <Icon name="settings_advanced" size={20} />
               </div>
-              <div className="text-sm font-medium" style={{ color: '#22223B' }}>Settings</div>
-              <div className="text-xs" style={{ color: '#22223B' }}>Configure system</div>
+              <div className="text-sm font-medium" style={{ color: '#FFF2E0' }}>Settings</div>
+              <div className="text-xs opacity-80" style={{ color: '#FFF2E0' }}>Configure system</div>
             </button>
           </div>
         </div>
