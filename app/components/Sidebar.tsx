@@ -33,8 +33,8 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b" style={{ borderColor: '#A2AADB' }}>
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#C0C9EE' }}>
-            <span className="text-white font-bold text-sm">C</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#C0C9EE' }}>
+            <img src="/angry-corgi.png" alt="Cycorgi Logo" className="w-6 h-6" />
           </div>
           <div>
             <div className="font-bold text-lg">Cycorgi</div>
