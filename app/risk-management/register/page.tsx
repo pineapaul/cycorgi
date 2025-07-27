@@ -13,199 +13,230 @@ const RISK_PHASES = [
   { id: 'monitoring', name: 'Monitoring', icon: 'eye' },
 ]
 
-// Sample risk data for each phase
-const sampleRisks = {
-  identification: [
-    {
-      id: 'RISK-001',
-      title: 'Data Breach Risk',
-      description: 'Risk of unauthorized access to sensitive customer data',
-      category: 'Information Security',
-      owner: 'IT Security Team',
-      status: 'Identified',
-      dateIdentified: '2024-01-15',
-      priority: 'High',
-    },
-    {
-      id: 'RISK-002',
-      title: 'Third-party Vendor Risk',
-      description: 'Risk associated with third-party vendors accessing company systems',
-      category: 'Vendor Management',
-      owner: 'Procurement Team',
-      status: 'Identified',
-      dateIdentified: '2024-01-20',
-      priority: 'Medium',
-    },
-    {
-      id: 'RISK-003',
-      title: 'Business Continuity Risk',
-      description: 'Risk of business disruption due to system failures',
-      category: 'Business Continuity',
-      owner: 'Operations Team',
-      status: 'Identified',
-      dateIdentified: '2024-01-25',
-      priority: 'High',
-    },
-  ],
-  analysis: [
-    {
-      id: 'RISK-001',
-      title: 'Data Breach Risk',
-      description: 'Risk of unauthorized access to sensitive customer data',
-      category: 'Information Security',
-      owner: 'IT Security Team',
-      status: 'Under Analysis',
-      likelihood: 'Medium',
-      impact: 'High',
-      riskScore: '15',
-      dateAnalyzed: '2024-01-30',
-    },
-    {
-      id: 'RISK-004',
-      title: 'Regulatory Compliance Risk',
-      description: 'Risk of non-compliance with industry regulations',
-      category: 'Compliance',
-      owner: 'Legal Team',
-      status: 'Under Analysis',
-      likelihood: 'Low',
-      impact: 'High',
-      riskScore: '10',
-      dateAnalyzed: '2024-02-05',
-    },
-  ],
-  evaluation: [
-    {
-      id: 'RISK-001',
-      title: 'Data Breach Risk',
-      description: 'Risk of unauthorized access to sensitive customer data',
-      category: 'Information Security',
-      owner: 'IT Security Team',
-      status: 'Evaluated',
-      riskLevel: 'High',
-      riskScore: '15',
-      acceptableRisk: 'No',
-      dateEvaluated: '2024-02-10',
-    },
-    {
-      id: 'RISK-005',
-      title: 'Cloud Security Risk',
-      description: 'Risk of data exposure in cloud environments',
-      category: 'Cloud Security',
-      owner: 'Cloud Team',
-      status: 'Evaluated',
-      riskLevel: 'Medium',
-      riskScore: '12',
-      acceptableRisk: 'Yes',
-      dateEvaluated: '2024-02-15',
-    },
-  ],
-  treatment: [
-    {
-      id: 'RISK-001',
-      title: 'Data Breach Risk',
-      description: 'Risk of unauthorized access to sensitive customer data',
-      category: 'Information Security',
-      owner: 'IT Security Team',
-      status: 'Treatment Planned',
-      treatmentStrategy: 'Mitigate',
-      treatmentActions: 'Implement encryption, access controls',
-      targetDate: '2024-03-15',
-      budget: '$50,000',
-    },
-    {
-      id: 'RISK-006',
-      title: 'Employee Security Risk',
-      description: 'Risk of insider threats and employee security awareness',
-      category: 'Human Resources',
-      owner: 'HR Team',
-      status: 'Treatment In Progress',
-      treatmentStrategy: 'Transfer',
-      treatmentActions: 'Security training, background checks',
-      targetDate: '2024-02-28',
-      budget: '$25,000',
-    },
-  ],
-  monitoring: [
-    {
-      id: 'RISK-001',
-      title: 'Data Breach Risk',
-      description: 'Risk of unauthorized access to sensitive customer data',
-      category: 'Information Security',
-      owner: 'IT Security Team',
-      status: 'Monitored',
-      lastReview: '2024-02-20',
-      nextReview: '2024-03-20',
-      effectiveness: 'Effective',
-      residualRisk: 'Low',
-    },
-    {
-      id: 'RISK-007',
-      title: 'Network Security Risk',
-      description: 'Risk of network infrastructure vulnerabilities',
-      category: 'Network Security',
-      owner: 'Network Team',
-      status: 'Monitored',
-      lastReview: '2024-02-18',
-      nextReview: '2024-03-18',
-      effectiveness: 'Partially Effective',
-      residualRisk: 'Medium',
-    },
-  ],
-}
+// Sample risk data with all columns
+const sampleRisks = [
+  {
+    riskId: 'RISK-001',
+    functionalUnit: 'IT Security',
+    status: 'Identified',
+    jiraTicket: 'SEC-001',
+    dateRiskRaised: '2024-01-15',
+    raisedBy: 'John Smith',
+    riskOwner: 'IT Security Team',
+    affectedSites: 'Head Office, Data Center',
+    informationAssets: 'Customer Database, Payment Systems',
+    threat: 'Unauthorized Access',
+    vulnerability: 'Weak Access Controls',
+    riskStatement: 'Risk of unauthorized access to sensitive customer data',
+    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
+    currentControls: 'Basic password authentication',
+    currentControlsReference: 'IS-001',
+    consequence: 'Data breach, regulatory fines, reputational damage',
+    likelihood: 'Medium',
+    currentRiskRating: 'High',
+    riskAction: 'Requires treatment',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '',
+    riskTreatments: '',
+    dateRiskTreatmentsApproved: '',
+    dateRiskTreatmentsAssigned: '',
+    applicableControlsAfterTreatment: '',
+    residualConsequence: '',
+    residualLikelihood: '',
+    residualRiskRating: '',
+    residualRiskAcceptedByOwner: '',
+    dateResidualRiskAccepted: '',
+    dateRiskTreatmentCompleted: '',
+  },
+  {
+    riskId: 'RISK-002',
+    functionalUnit: 'Procurement',
+    status: 'Under Analysis',
+    jiraTicket: 'PROC-002',
+    dateRiskRaised: '2024-01-20',
+    raisedBy: 'Sarah Johnson',
+    riskOwner: 'Procurement Team',
+    affectedSites: 'All Sites',
+    informationAssets: 'Vendor Management System',
+    threat: 'Third-party Data Breach',
+    vulnerability: 'Insufficient vendor security controls',
+    riskStatement: 'Risk associated with third-party vendors accessing company systems',
+    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
+    currentControls: 'Vendor security questionnaire',
+    currentControlsReference: 'PROC-001',
+    consequence: 'Data exposure, compliance violations',
+    likelihood: 'Medium',
+    currentRiskRating: 'Medium',
+    riskAction: 'Under analysis',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '',
+    riskTreatments: '',
+    dateRiskTreatmentsApproved: '',
+    dateRiskTreatmentsAssigned: '',
+    applicableControlsAfterTreatment: '',
+    residualConsequence: '',
+    residualLikelihood: '',
+    residualRiskRating: '',
+    residualRiskAcceptedByOwner: '',
+    dateResidualRiskAccepted: '',
+    dateRiskTreatmentCompleted: '',
+  },
+  {
+    riskId: 'RISK-003',
+    functionalUnit: 'Operations',
+    status: 'Evaluated',
+    jiraTicket: 'OPS-003',
+    dateRiskRaised: '2024-01-25',
+    raisedBy: 'Mike Davis',
+    riskOwner: 'Operations Team',
+    affectedSites: 'All Sites',
+    informationAssets: 'Core Business Systems',
+    threat: 'System Failure',
+    vulnerability: 'Single point of failure',
+    riskStatement: 'Risk of business disruption due to system failures',
+    impactCIA: 'Confidentiality - Low, Integrity - Medium, Availability - High',
+    currentControls: 'Backup systems',
+    currentControlsReference: 'OPS-001',
+    consequence: 'Business disruption, revenue loss',
+    likelihood: 'Low',
+    currentRiskRating: 'Medium',
+    riskAction: 'Acceptable risk',
+    reasonForAcceptance: 'Cost of treatment exceeds potential loss',
+    dateOfSSCApproval: '2024-02-10',
+    riskTreatments: '',
+    dateRiskTreatmentsApproved: '',
+    dateRiskTreatmentsAssigned: '',
+    applicableControlsAfterTreatment: '',
+    residualConsequence: '',
+    residualLikelihood: '',
+    residualRiskRating: '',
+    residualRiskAcceptedByOwner: '',
+    dateResidualRiskAccepted: '',
+    dateRiskTreatmentCompleted: '',
+  },
+  {
+    riskId: 'RISK-004',
+    functionalUnit: 'Legal',
+    status: 'Treatment Planned',
+    jiraTicket: 'LEG-004',
+    dateRiskRaised: '2024-02-01',
+    raisedBy: 'Lisa Chen',
+    riskOwner: 'Legal Team',
+    affectedSites: 'All Sites',
+    informationAssets: 'Compliance Documentation',
+    threat: 'Regulatory Non-compliance',
+    vulnerability: 'Outdated compliance procedures',
+    riskStatement: 'Risk of non-compliance with industry regulations',
+    impactCIA: 'Confidentiality - Medium, Integrity - High, Availability - Low',
+    currentControls: 'Annual compliance review',
+    currentControlsReference: 'LEG-001',
+    consequence: 'Regulatory fines, legal action',
+    likelihood: 'Medium',
+    currentRiskRating: 'High',
+    riskAction: 'Requires treatment',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '2024-02-15',
+    riskTreatments: 'Update compliance procedures, staff training',
+    dateRiskTreatmentsApproved: '2024-02-20',
+    dateRiskTreatmentsAssigned: '2024-02-25',
+    applicableControlsAfterTreatment: 'Enhanced compliance monitoring',
+    residualConsequence: 'Reduced regulatory exposure',
+    residualLikelihood: 'Low',
+    residualRiskRating: 'Low',
+    residualRiskAcceptedByOwner: '',
+    dateResidualRiskAccepted: '',
+    dateRiskTreatmentCompleted: '',
+  },
+  {
+    riskId: 'RISK-005',
+    functionalUnit: 'Cloud Team',
+    status: 'Monitored',
+    jiraTicket: 'CLOUD-005',
+    dateRiskRaised: '2024-01-10',
+    raisedBy: 'Alex Wong',
+    riskOwner: 'Cloud Team',
+    affectedSites: 'Cloud Infrastructure',
+    informationAssets: 'Cloud Data Storage',
+    threat: 'Data Exposure',
+    vulnerability: 'Misconfigured cloud security',
+    riskStatement: 'Risk of data exposure in cloud environments',
+    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
+    currentControls: 'Cloud security monitoring',
+    currentControlsReference: 'CLOUD-001',
+    consequence: 'Data breach, compliance violations',
+    likelihood: 'Low',
+    currentRiskRating: 'Medium',
+    riskAction: 'Under monitoring',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '2024-01-30',
+    riskTreatments: 'Enhanced cloud security controls',
+    dateRiskTreatmentsApproved: '2024-02-01',
+    dateRiskTreatmentsAssigned: '2024-02-05',
+    applicableControlsAfterTreatment: 'Advanced cloud security monitoring',
+    residualConsequence: 'Minimal data exposure risk',
+    residualLikelihood: 'Very Low',
+    residualRiskRating: 'Low',
+    residualRiskAcceptedByOwner: 'Alex Wong',
+    dateResidualRiskAccepted: '2024-02-15',
+    dateRiskTreatmentCompleted: '2024-02-10',
+  },
+]
 
-// Column definitions for each phase
-const getColumnsForPhase = (phase: string): Column[] => {
-  const baseColumns: Column[] = [
-    { key: 'id', label: 'Risk ID', sortable: true, width: '120px' },
-    { key: 'title', label: 'Risk Title', sortable: true },
-    { key: 'description', label: 'Description', sortable: false },
-    { key: 'category', label: 'Category', sortable: true, width: '150px' },
-    { key: 'owner', label: 'Owner', sortable: true, width: '150px' },
-    { key: 'status', label: 'Status', sortable: true, width: '120px' },
-  ]
-
+// Status mapping for each phase
+const getStatusForPhase = (phase: string): string[] => {
   switch (phase) {
     case 'identification':
-      return [
-        ...baseColumns,
-        { key: 'dateIdentified', label: 'Date Identified', sortable: true, width: '140px' },
-        { key: 'priority', label: 'Priority', sortable: true, width: '100px' },
-      ]
+      return ['Identified']
     case 'analysis':
-      return [
-        ...baseColumns,
-        { key: 'likelihood', label: 'Likelihood', sortable: true, width: '100px' },
-        { key: 'impact', label: 'Impact', sortable: true, width: '100px' },
-        { key: 'riskScore', label: 'Risk Score', sortable: true, width: '100px' },
-        { key: 'dateAnalyzed', label: 'Date Analyzed', sortable: true, width: '140px' },
-      ]
+      return ['Under Analysis']
     case 'evaluation':
-      return [
-        ...baseColumns,
-        { key: 'riskLevel', label: 'Risk Level', sortable: true, width: '100px' },
-        { key: 'riskScore', label: 'Risk Score', sortable: true, width: '100px' },
-        { key: 'acceptableRisk', label: 'Acceptable Risk', sortable: true, width: '130px' },
-        { key: 'dateEvaluated', label: 'Date Evaluated', sortable: true, width: '140px' },
-      ]
+      return ['Evaluated']
     case 'treatment':
-      return [
-        ...baseColumns,
-        { key: 'treatmentStrategy', label: 'Strategy', sortable: true, width: '100px' },
-        { key: 'treatmentActions', label: 'Actions', sortable: false },
-        { key: 'targetDate', label: 'Target Date', sortable: true, width: '120px' },
-        { key: 'budget', label: 'Budget', sortable: true, width: '100px' },
-      ]
+      return ['Treatment Planned', 'Treatment In Progress']
     case 'monitoring':
-      return [
-        ...baseColumns,
-        { key: 'lastReview', label: 'Last Review', sortable: true, width: '120px' },
-        { key: 'nextReview', label: 'Next Review', sortable: true, width: '120px' },
-        { key: 'effectiveness', label: 'Effectiveness', sortable: true, width: '120px' },
-        { key: 'residualRisk', label: 'Residual Risk', sortable: true, width: '120px' },
-      ]
+      return ['Monitored']
     default:
-      return baseColumns
+      return []
   }
+}
+
+// Column definitions for the risk register
+const getColumnsForPhase = (phase: string): Column[] => {
+  const baseColumns: Column[] = [
+    { key: 'riskId', label: 'Risk ID', sortable: true, width: '120px' },
+    { key: 'functionalUnit', label: 'Functional Unit', sortable: true, width: '150px' },
+    { key: 'status', label: 'Status', sortable: true, width: '120px' },
+    { key: 'jiraTicket', label: 'Jira Ticket', sortable: true, width: '120px' },
+    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '140px' },
+    { key: 'raisedBy', label: 'Raised By', sortable: true, width: '120px' },
+    { key: 'riskOwner', label: 'Risk Owner', sortable: true, width: '150px' },
+    { key: 'affectedSites', label: 'Affected Sites', sortable: true, width: '150px' },
+    { key: 'informationAssets', label: 'Information Assets', sortable: true, width: '200px' },
+    { key: 'threat', label: 'Threat', sortable: true, width: '150px' },
+    { key: 'vulnerability', label: 'Vulnerability', sortable: true, width: '150px' },
+    { key: 'riskStatement', label: 'Risk Statement', sortable: false, width: '300px' },
+    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, width: '200px' },
+    { key: 'currentControls', label: 'Current Controls', sortable: true, width: '150px' },
+    { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true, width: '180px' },
+    { key: 'consequence', label: 'Consequence', sortable: true, width: '200px' },
+    { key: 'likelihood', label: 'Likelihood', sortable: true, width: '100px' },
+    { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true, width: '140px' },
+    { key: 'riskAction', label: 'Risk Action', sortable: true, width: '140px' },
+    { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true, width: '200px' },
+    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '160px' },
+    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true, width: '200px' },
+    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '200px' },
+    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '200px' },
+    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true, width: '220px' },
+    { key: 'residualConsequence', label: 'Residual Consequence', sortable: true, width: '180px' },
+    { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true, width: '140px' },
+    { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true, width: '160px' },
+    { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true, width: '200px' },
+    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '180px' },
+    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '200px' },
+  ]
+
+  return baseColumns
 }
 
 export default function RiskRegister() {
@@ -267,6 +298,11 @@ export default function RiskRegister() {
     }
   }
 
+  // Filter data based on active phase
+  const filteredData = sampleRisks.filter(risk => 
+    getStatusForPhase(activePhase).includes(risk.status)
+  )
+
   const columns = getColumnsForPhase(activePhase).map(col => ({
     ...col,
     render: (value: any, row: any) => {
@@ -277,23 +313,16 @@ export default function RiskRegister() {
           </span>
         )
       }
-      if (col.key === 'priority') {
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
-            {value}
-          </span>
-        )
-      }
-      if (col.key === 'riskLevel') {
+      if (col.key === 'currentRiskRating' || col.key === 'residualRiskRating') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskLevelColor(value)}`}>
             {value}
           </span>
         )
       }
-      if (col.key === 'riskScore') {
+      if (col.key === 'likelihood' || col.key === 'residualLikelihood') {
         return (
-          <span className="font-medium text-gray-900">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
             {value}
           </span>
         )
@@ -339,25 +368,27 @@ export default function RiskRegister() {
        </div>
 
              {/* Phase Description */}
-       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+       <div className="rounded-lg p-4" style={{ backgroundColor: '#E8ECF7', borderColor: '#E8ECF7' }}>
          <div className="flex items-start space-x-3">
-           <Icon 
-             name={
-               activePhase === 'identification' ? 'binoculars' :
-               activePhase === 'analysis' ? 'magnifying-glass-chart' :
-               activePhase === 'evaluation' ? 'ruler' :
-               activePhase === 'treatment' ? 'bandage' :
-               activePhase === 'monitoring' ? 'file-waveform' :
-               'info-circle'
-             } 
-             size={20} 
-             className="text-blue-600 mt-0.5" 
-           />
+           <div style={{ color: '#22223B' }}>
+             <Icon 
+               name={
+                 activePhase === 'identification' ? 'binoculars' :
+                 activePhase === 'analysis' ? 'magnifying-glass-chart' :
+                 activePhase === 'evaluation' ? 'ruler' :
+                 activePhase === 'treatment' ? 'bandage' :
+                 activePhase === 'monitoring' ? 'file-waveform' :
+                 'info-circle'
+               } 
+               size={20} 
+               className="mt-0.5" 
+             />
+           </div>
            <div>
-             <h3 className="text-sm font-medium text-blue-900">
+             <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
                {RISK_PHASES.find(p => p.id === activePhase)?.name} Phase
              </h3>
-             <p className="text-sm text-blue-700 mt-1">
+             <p className="text-sm mt-1" style={{ color: '#22223B' }}>
                {activePhase === 'identification' && 'Identify and document potential risks to the organization.'}
                {activePhase === 'analysis' && 'Analyze the likelihood and impact of identified risks.'}
                {activePhase === 'evaluation' && 'Evaluate risks against criteria and determine acceptability.'}
@@ -368,18 +399,18 @@ export default function RiskRegister() {
          </div>
        </div>
 
-      {/* Risk Data Table */}
-      <DataTable
-        columns={columns}
-        data={sampleRisks[activePhase as keyof typeof sampleRisks] || []}
-        title={`${RISK_PHASES.find(p => p.id === activePhase)?.name} Risks`}
-        searchPlaceholder="Search risks..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-      />
+             {/* Risk Data Table */}
+       <DataTable
+         columns={columns}
+         data={filteredData}
+         title={`${RISK_PHASES.find(p => p.id === activePhase)?.name} Risks`}
+         searchPlaceholder="Search risks..."
+         onRowClick={handleRowClick}
+         selectable={true}
+         selectedRows={selectedRows}
+         onSelectionChange={setSelectedRows}
+         onExportCSV={handleExportCSV}
+       />
 
       
     </div>
