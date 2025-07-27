@@ -42,10 +42,14 @@ export default function DataTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showSortDropdown, setShowSortDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Available items per page options
   const itemsPerPageOptions = [5, 10, 25, 50, 100]
+
+  // Get sortable columns
+  const sortableColumns = columns.filter(col => col.sortable !== false)
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -74,14 +78,18 @@ export default function DataTable({
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedData = filteredAndSortedData.slice(startIndex, startIndex + itemsPerPage)
 
-  const handleSort = (columnKey: string) => {
-    if (sortColumn === columnKey) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortColumn(columnKey)
-      setSortDirection('asc')
-    }
+  const handleSort = (columnKey: string, direction: 'asc' | 'desc') => {
+    setSortColumn(columnKey)
+    setSortDirection(direction)
     setCurrentPage(1)
+    setShowSortDropdown(false)
+  }
+
+  const handleClearSort = () => {
+    setSortColumn(null)
+    setSortDirection('asc')
+    setCurrentPage(1)
+    setShowSortDropdown(false)
   }
 
   const handleSearch = (value: string) => {
@@ -206,7 +214,7 @@ export default function DataTable({
             )}
         </div>
 
-        {/* Right side - Search and other actions */}
+        {/* Right side - Search, Sort, and other actions */}
         <div className="flex items-center space-x-2">
           {/* Search Button */}
           <button
@@ -216,6 +224,79 @@ export default function DataTable({
           >
             <Icon name="magnifying-glass" size={16} />
           </button>
+
+          {/* Sort Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border ${
+                sortColumn ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
+              }`}
+              title="Sort"
+            >
+              <Icon name="sort" size={16} />
+            </button>
+            
+            {showSortDropdown && (
+              <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Sort by Column</h3>
+                    <button
+                      onClick={() => setShowSortDropdown(false)}
+                      className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-100 transition-colors"
+                      title="Close"
+                    >
+                      <Icon name="close" size={12} className="text-gray-500" />
+                    </button>
+                  </div>
+                  
+                  {/* Clear Sort Option */}
+                  <button
+                    onClick={handleClearSort}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 transition-colors text-gray-600 mb-2"
+                  >
+                    Clear Sort
+                  </button>
+                  
+                  <div className="border-t mb-2" style={{ borderColor: '#E5E7EB' }}></div>
+                  
+                  {/* Sortable Columns */}
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {sortableColumns.map((column) => (
+                      <div key={column.key} className="space-y-1">
+                        <div className="text-xs font-medium text-gray-700 px-2 py-1">
+                          {column.label}
+                        </div>
+                        <div className="flex space-x-1 px-2">
+                          <button
+                            onClick={() => handleSort(column.key, 'asc')}
+                            className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
+                              sortColumn === column.key && sortDirection === 'asc'
+                                ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                : 'border-gray-300 hover:bg-gray-50 text-gray-600'
+                            }`}
+                          >
+                            A-Z
+                          </button>
+                          <button
+                            onClick={() => handleSort(column.key, 'desc')}
+                            className={`flex-1 px-2 py-1 text-xs rounded border transition-colors ${
+                              sortColumn === column.key && sortDirection === 'desc'
+                                ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                : 'border-gray-300 hover:bg-gray-50 text-gray-600'
+                            }`}
+                          >
+                            Z-A
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Other actions */}
           {actions && (
@@ -272,22 +353,19 @@ export default function DataTable({
                   <th
                     key={column.key}
                     scope="col"
-                    className={`px-3 py-3 md:px-6 md:py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
-                    }`}
+                    className="px-3 py-3 md:px-6 md:py-3 text-left text-xs font-medium uppercase tracking-wider"
                     style={{ 
                       color: '#22223B',
                       width: column.width || 'auto'
                     }}
-                    onClick={() => column.sortable && handleSort(column.key)}
                   >
                     <div className="flex items-center space-x-1">
                       <span>{column.label}</span>
-                      {column.sortable && sortColumn === column.key && (
+                      {sortColumn === column.key && (
                         <Icon 
                           name={sortDirection === 'asc' ? 'sort-up' : 'sort-down'} 
                           size={12} 
-                          className="text-gray-400"
+                          className="text-blue-500"
                         />
                       )}
                     </div>
