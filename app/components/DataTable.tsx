@@ -8,6 +8,7 @@ export interface Column {
   label: string
   sortable?: boolean
   width?: string
+  align?: 'left' | 'center' | 'right'
   render?: (value: any, row: any) => React.ReactNode
 }
 
@@ -567,13 +568,19 @@ export default function DataTable({
                   <th
                     key={column.key}
                     scope="col"
-                    className="px-3 py-3 md:px-6 md:py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className={`px-3 py-3 md:px-6 md:py-3 text-xs font-medium uppercase tracking-wider ${
+                      column.align === 'center' ? 'text-center' : 
+                      column.align === 'right' ? 'text-right' : 'text-left'
+                    }`}
                     style={{ 
                       color: '#22223B',
                       width: column.width || 'auto'
                     }}
                   >
-                    <div className="flex items-center space-x-1">
+                    <div className={`flex items-center space-x-1 ${
+                      column.align === 'center' ? 'justify-center' : 
+                      column.align === 'right' ? 'justify-end' : 'justify-start'
+                    }`}>
                       <span>{column.label}</span>
                       {sortColumn === column.key && (
                         <Icon 
@@ -611,10 +618,16 @@ export default function DataTable({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className="px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm"
+                      className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
+                        column.align === 'center' ? 'text-center' : 
+                        column.align === 'right' ? 'text-right' : 'text-left'
+                      }`}
                       style={{ color: '#22223B' }}
                     >
-                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''}`}>
+                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''} ${
+                        column.align === 'center' ? 'flex justify-center' : 
+                        column.align === 'right' ? 'flex justify-end' : ''
+                      }`}>
                         {column.render 
                           ? column.render(row[column.key], row)
                           : <span className="truncate block">{row[column.key] ? String(row[column.key]) : '-'}</span>

@@ -34,7 +34,13 @@ import {
   faColumns,
   faTimes,
   faChevronLeft,
-  faChevronRight
+  faChevronRight,
+  faEye,
+  faLink,
+  faTrash,
+  faArrowLeft,
+  faPencil,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -79,6 +85,12 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     close: faTimes,
     'chevron-left': faChevronLeft,
     'chevron-right': faChevronRight,
+    eye: faEye,
+    link: faLink,
+    trash: faTrash,
+    'arrow-left': faArrowLeft,
+    pencil: faPencil,
+    check: faCheck,
   }
 
   const icon = icons[name]
@@ -132,6 +144,12 @@ function getFallbackEmoji(name: string): string {
     close: '✕',
     'chevron-left': '◀️',
     'chevron-right': '▶️',
+    eye: '👁️',
+    link: '🔗',
+    trash: '🗑️',
+    'arrow-left': '⬅️',
+    pencil: '✏️',
+    check: '✓',
   }
   return emojiMap[name] || '📄'
 } 

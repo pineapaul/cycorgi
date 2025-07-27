@@ -32,7 +32,7 @@ export default function InformationAssetsPage() {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set([
     'informationAsset', 'category', 'type', 'description', 'location', 'owner', 
     'sme', 'administrator', 'agileReleaseTrain', 'confidentiality', 'integrity', 
-    'availability', 'additionalInfo'
+    'availability', 'additionalInfo', 'actions'
   ]))
 
   useEffect(() => {
@@ -63,7 +63,19 @@ export default function InformationAssetsPage() {
       key: 'informationAsset',
       label: 'Information Asset',
       sortable: true,
-      width: '200px'
+      width: '200px',
+      align: 'center',
+      render: (value, row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            window.location.href = `/inventory/information-assets/${row.id}`
+          }}
+          className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+        >
+          {value}
+        </button>
+      )
     },
     {
       key: 'category',
@@ -175,14 +187,60 @@ export default function InformationAssetsPage() {
           {value}
         </div>
       )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      width: '150px',
+      align: 'center',
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              window.location.href = `/inventory/information-assets/${row.id}`
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
+            title="View Profile"
+          >
+            <Icon name="eye" size={14} className="text-blue-600" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              const url = `${window.location.origin}/inventory/information-assets/${row.id}`
+              navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!')
+              })
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"
+            title="Copy Link"
+          >
+            <Icon name="link" size={14} className="text-green-600" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
+                handleDeleteAsset(row.id)
+              }
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
+            title="Delete Asset"
+          >
+            <Icon name="trash" size={14} className="text-red-600" />
+          </button>
+        </div>
+      )
     }
   ]
 
   const columns = allColumns.filter(col => visibleColumns.has(col.key))
 
   const handleRowClick = (row: InformationAsset) => {
-    // Handle row click - could open a modal or navigate to detail page
-    console.log('Clicked asset:', row)
+    // Navigate to asset profile page
+    window.location.href = `/inventory/information-assets/${row.id}`
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -218,6 +276,26 @@ export default function InformationAssetsPage() {
   const handleAddAsset = () => {
     // Handle adding new asset - could open a modal or navigate to form
     console.log('Add new asset')
+  }
+
+  const handleDeleteAsset = async (assetId: string) => {
+    try {
+      const response = await fetch(`/api/information-assets/${assetId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        // Refresh the assets list
+        fetchAssets()
+      } else {
+        setError(result.error || 'Failed to delete asset')
+      }
+    } catch (err) {
+      setError('Failed to delete asset')
+      console.error('Error deleting asset:', err)
+    }
   }
 
   const handleFilter = () => {
