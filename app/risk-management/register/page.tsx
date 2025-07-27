@@ -13,6 +13,9 @@ const RISK_PHASES = [
   { id: 'monitoring', name: 'Monitoring', icon: 'eye' },
 ]
 
+// Full view tab (not a risk phase)
+const FULL_VIEW = { id: 'full-view', name: 'Full View', icon: 'earth-oceania' }
+
 // Sample risk data with all columns
 const sampleRisks = [
   {
@@ -195,6 +198,8 @@ const getStatusForPhase = (phase: string): string[] => {
       return ['Treatment Planned', 'Treatment In Progress']
     case 'monitoring':
       return ['Monitored']
+    case 'full-view':
+      return [] // No status filter for full view
     default:
       return []
   }
@@ -202,7 +207,7 @@ const getStatusForPhase = (phase: string): string[] => {
 
 // Column definitions for the risk register
 const getColumnsForPhase = (phase: string): Column[] => {
-  const baseColumns: Column[] = [
+  const allColumns: Column[] = [
     { key: 'riskId', label: 'Risk ID', sortable: true, width: '120px' },
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true, width: '150px' },
     { key: 'status', label: 'Status', sortable: true, width: '120px' },
@@ -236,11 +241,32 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '200px' },
   ]
 
-  return baseColumns
+  switch (phase) {
+    case 'identification':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit', 
+        'status',
+        'jiraTicket',
+        'dateRiskRaised',
+        'raisedBy',
+        'riskOwner',
+        'affectedSites',
+        'informationAssets',
+        'threat',
+        'vulnerability',
+        'riskStatement',
+        'impactCIA'
+      ].includes(col.key))
+    case 'full-view':
+      return allColumns // Show all columns for full view
+    default:
+      return allColumns
+  }
 }
 
 export default function RiskRegister() {
-  const [activePhase, setActivePhase] = useState('identification')
+  const [activePhase, setActivePhase] = useState('full-view')
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
   const handleRowClick = (row: any) => {
@@ -299,9 +325,9 @@ export default function RiskRegister() {
   }
 
   // Filter data based on active phase
-  const filteredData = sampleRisks.filter(risk => 
-    getStatusForPhase(activePhase).includes(risk.status)
-  )
+  const filteredData = activePhase === 'full-view' 
+    ? sampleRisks // Show all risks for full view
+    : sampleRisks.filter(risk => getStatusForPhase(activePhase).includes(risk.status))
 
   const columns = getColumnsForPhase(activePhase).map(col => ({
     ...col,
@@ -339,9 +365,6 @@ export default function RiskRegister() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Risk Register</h1>
         </div>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-          <button className="px-3 py-2 md:px-4 md:py-2 rounded-lg transition-colors text-sm md:text-base" style={{ backgroundColor: '#C0C9EE', color: '#898AC4' }}>
-            Export Report
-          </button>
           <button className="px-3 py-2 md:px-4 md:py-2 text-white rounded-lg transition-colors text-sm md:text-base" style={{ backgroundColor: '#898AC4' }}>
             + New Risk
           </button>
@@ -351,6 +374,16 @@ export default function RiskRegister() {
              {/* Phase Tabs */}
        <div className="border-b border-gray-200">
          <nav className="-mb-px flex space-x-8">
+           <button
+             onClick={() => setActivePhase('full-view')}
+             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+               activePhase === 'full-view'
+                 ? 'border-blue-500 text-blue-600'
+                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+             }`}
+           >
+             {FULL_VIEW.name}
+           </button>
            {RISK_PHASES.map((phase) => (
              <button
                key={phase.id}
@@ -386,7 +419,7 @@ export default function RiskRegister() {
            </div>
            <div>
              <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
-               {RISK_PHASES.find(p => p.id === activePhase)?.name} Phase
+               {activePhase === 'full-view' ? FULL_VIEW.name : RISK_PHASES.find(p => p.id === activePhase)?.name + ' Phase'}
              </h3>
              <p className="text-sm mt-1" style={{ color: '#22223B' }}>
                {activePhase === 'identification' && 'Identify and document potential risks to the organization.'}
@@ -394,6 +427,7 @@ export default function RiskRegister() {
                {activePhase === 'evaluation' && 'Evaluate risks against criteria and determine acceptability.'}
                {activePhase === 'treatment' && 'Develop and implement risk treatment strategies.'}
                {activePhase === 'monitoring' && 'Monitor the effectiveness of risk treatments and residual risks.'}
+               {activePhase === 'full-view' && 'View all risks across all phases of the risk management lifecycle.'}
              </p>
            </div>
          </div>
@@ -403,7 +437,7 @@ export default function RiskRegister() {
        <DataTable
          columns={columns}
          data={filteredData}
-         title={`${RISK_PHASES.find(p => p.id === activePhase)?.name} Risks`}
+         title={`${activePhase === 'full-view' ? FULL_VIEW.name : RISK_PHASES.find(p => p.id === activePhase)?.name} Risks`}
          searchPlaceholder="Search risks..."
          onRowClick={handleRowClick}
          selectable={true}
