@@ -4,11 +4,18 @@ A comprehensive cybersecurity risk management and compliance platform built with
 
 ## Overview
 
-Cycorgi provides a modern, intuitive interface for managing cybersecurity risks and information assets. The platform features a dashboard with key metrics, detailed asset management, and compliance tracking capabilities.
+Cycorgi provides a modern, intuitive interface for managing cybersecurity risks and information assets. The platform features a dashboard with key metrics, detailed asset management, comprehensive risk management workflows, and compliance tracking capabilities.
 
 ## Features
 
 ### 🛡️ Risk Management
+- **Risk Register**: Comprehensive risk tracking across all management phases
+  - **Full View**: Complete overview of all risks regardless of status
+  - **Identification**: Risk discovery and initial assessment
+  - **Analysis**: Detailed risk analysis and control evaluation
+  - **Evaluation**: Risk assessment and treatment decisions
+  - **Treatment**: Risk mitigation planning and implementation
+  - **Monitoring**: Ongoing risk monitoring and review
 - **Risk Assessment**: Comprehensive risk evaluation and tracking
 - **Risk Metrics**: Real-time dashboard with key performance indicators
 - **Risk Reporting**: Export and generate detailed risk reports
@@ -19,10 +26,11 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
 - **Asset Classification**: Categorise assets by type, sensitivity, and criticality
 - **Data Export**: CSV export functionality for asset data
 
-### 🎯 Compliance & Auditing
+### 🎯 Governance & Compliance
+- **Policy Management**: Centralised policy documentation and tracking
+- **Security Steering Committee**: Governance oversight and decision tracking
 - **Compliance Tracking**: Monitor regulatory compliance scores
 - **Audit Management**: Schedule and track security audits
-- **Policy Management**: Centralised policy documentation and tracking
 
 ### 📈 Dashboard Analytics
 - **Real-time Metrics**: Live updates on risks, audits, and compliance
@@ -100,8 +108,11 @@ cycorgi/
 │   ├── api/               # API routes
 │   ├── components/        # Reusable components
 │   ├── dashboard/         # Dashboard pages
+│   ├── governance/        # Governance and policy management
 │   ├── inventory/         # Asset management
-│   └── layouts/           # Layout components
+│   ├── layouts/           # Layout components
+│   ├── risk-management/   # Risk management workflows
+│   └── page.tsx          # Landing page
 ├── lib/                   # Utility functions
 ├── public/                # Static assets
 ├── scripts/               # Database seeding scripts
@@ -122,6 +133,39 @@ Each asset includes:
 - **Administrator**: Technical administrator
 - **Agile Release Train**: ART designation
 - **CIA Ratings**: Confidentiality, Integrity, Availability levels
+
+### Risk Register Collection
+Each risk includes comprehensive tracking across all management phases:
+- **Risk ID**: Unique risk identifier
+- **Functional Unit**: Department or team responsible
+- **Status**: Current phase (Identified, Under Analysis, Evaluated, etc.)
+- **Jira Ticket**: Issue tracking reference
+- **Risk Statement**: Detailed risk description
+- **Information Assets**: Affected assets
+- **Threat & Vulnerability**: Risk factors
+- **Impact Assessment**: CIA impact evaluation
+- **Current Controls**: Existing mitigation measures
+- **Risk Ratings**: Current and residual risk levels
+- **Treatment Plans**: Mitigation strategies and timelines
+- **Approval Tracking**: Governance decision records
+
+## Recent Updates
+
+### Risk Management Enhancements
+- **Comprehensive Risk Register**: Complete risk lifecycle management with phase-specific views
+- **Dynamic Data Filtering**: Risk data filtered by status for each management phase
+- **Enhanced UI**: Professional styling with custom icons for each risk phase
+- **Full View Tab**: Complete overview of all risks regardless of status
+
+### Architecture Improvements
+- **Restructured Navigation**: Moved governance and risk management to top-level directories
+- **Enhanced Component Design**: Consistent button styling and professional UI elements
+- **Improved Data Management**: Single database table with comprehensive risk tracking
+
+### User Experience
+- **Phase-Specific Views**: Tailored data tables for each risk management phase
+- **Responsive Design**: Mobile-friendly interface with adaptive layouts
+- **Professional Styling**: Consistent colour palette and modern UI elements
 
 ## Contributing
 
