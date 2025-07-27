@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Icon from './Icon'
 
 export interface Column {
@@ -52,6 +52,11 @@ export default function DataTable({
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  // Refs for dropdown containers
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
+  const filterDropdownRef = useRef<HTMLDivElement>(null)
+  const columnsDropdownRef = useRef<HTMLDivElement>(null)
+
   // Available items per page options
   const itemsPerPageOptions = [5, 10, 25, 50, 100]
 
@@ -69,6 +74,34 @@ export default function DataTable({
     const filteredColumns = filters.map(f => f.column)
     return columns.filter(col => !filteredColumns.includes(col.key))
   }
+
+  // Handle click outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close sort dropdown
+      if (showSortDropdown && sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setShowSortDropdown(false)
+      }
+      
+      // Close filter dropdown
+      if (showFilterDropdown && filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false)
+      }
+      
+      // Close columns dropdown
+      if (showColumnsDropdown && columnsDropdownRef.current && !columnsDropdownRef.current.contains(event.target as Node)) {
+        setShowColumnsDropdown(false)
+      }
+    }
+
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside)
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSortDropdown, showFilterDropdown, showColumnsDropdown])
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -284,7 +317,7 @@ export default function DataTable({
             </button>
             
             {showSortDropdown && (
-              <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={sortDropdownRef} className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Sort by Column</h3>
@@ -357,7 +390,7 @@ export default function DataTable({
             </button>
             
             {showFilterDropdown && (
-              <div className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={filterDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Filter by Column</h3>
@@ -453,7 +486,7 @@ export default function DataTable({
             </button>
             
             {showColumnsDropdown && (
-              <div className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={columnsDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Select Columns</h3>
