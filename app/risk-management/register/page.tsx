@@ -258,6 +258,50 @@ const getColumnsForPhase = (phase: string): Column[] => {
         'riskStatement',
         'impactCIA'
       ].includes(col.key))
+    case 'analysis':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit',
+        'status',
+        'jiraTicket',
+        'informationAssets',
+        'riskStatement',
+        'currentControls',
+        'currentControlsReference',
+        'consequence',
+        'likelihood',
+        'currentRiskRating'
+      ].includes(col.key))
+    case 'evaluation':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit',
+        'status',
+        'jiraTicket',
+        'informationAssets',
+        'riskStatement',
+        'riskAction',
+        'reasonForAcceptance',
+        'dateOfSSCApproval'
+      ].includes(col.key))
+    case 'treatment':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit',
+        'status',
+        'jiraTicket',
+        'informationAssets',
+        'riskStatement',
+        'riskTreatments',
+        'dateRiskTreatmentsApproved',
+        'dateRiskTreatmentsAssigned',
+        'applicableControlsAfterTreatment',
+        'residualConsequence',
+        'residualLikelihood',
+        'residualRiskRating',
+        'residualRiskAcceptedByOwner',
+        'dateResidualRiskAccepted'
+      ].includes(col.key))
     case 'full-view':
       return allColumns // Show all columns for full view
     default:
