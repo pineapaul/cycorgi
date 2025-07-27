@@ -11,13 +11,17 @@ export interface Column {
   render?: (value: any, row: any) => React.ReactNode
 }
 
+export interface Filter {
+  column: string
+  value: string
+}
+
 export interface DataTableProps {
   columns: Column[]
   data: any[]
   title?: string
   searchPlaceholder?: string
   onRowClick?: (row: any) => void
-  actions?: React.ReactNode
   selectable?: boolean
   selectedRows?: Set<number>
   onSelectionChange?: (selectedRows: Set<number>) => void
@@ -30,7 +34,6 @@ export default function DataTable({
   title, 
   searchPlaceholder = "Search...",
   onRowClick,
-  actions,
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange,
@@ -43,6 +46,10 @@ export default function DataTable({
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  const [selectedFilterColumn, setSelectedFilterColumn] = useState<string>('')
+  const [filters, setFilters] = useState<Filter[]>([])
+  const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Available items per page options
@@ -51,6 +58,18 @@ export default function DataTable({
   // Get sortable columns
   const sortableColumns = columns.filter(col => col.sortable !== false)
 
+  // Get unique values for a column
+  const getUniqueValues = (columnKey: string) => {
+    const values = data.map(row => row[columnKey]).filter(value => value != null && value !== '')
+    return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)))
+  }
+
+  // Get available columns for filtering (excluding already filtered columns)
+  const getAvailableFilterColumns = () => {
+    const filteredColumns = filters.map(f => f.column)
+    return columns.filter(col => !filteredColumns.includes(col.key))
+  }
+
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row =>
@@ -58,6 +77,13 @@ export default function DataTable({
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     )
+
+    // Apply filters
+    filters.forEach(filter => {
+      filtered = filtered.filter(row => 
+        String(row[filter.column]).toLowerCase() === String(filter.value).toLowerCase()
+      )
+    })
 
     if (sortColumn) {
       filtered.sort((a, b) => {
@@ -71,7 +97,7 @@ export default function DataTable({
     }
 
     return filtered
-  }, [data, searchTerm, sortColumn, sortDirection])
+  }, [data, searchTerm, sortColumn, sortDirection, filters])
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage)
@@ -90,6 +116,26 @@ export default function DataTable({
     setSortDirection('asc')
     setCurrentPage(1)
     setShowSortDropdown(false)
+  }
+
+  const handleAddFilter = (columnKey: string, value: string) => {
+    const newFilter: Filter = { column: columnKey, value }
+    setFilters([...filters, newFilter])
+    setSelectedFilterColumn('')
+    setCurrentPage(1)
+    setShowFilterDropdown(false)
+  }
+
+  const handleRemoveFilter = (index: number) => {
+    const newFilters = filters.filter((_, i) => i !== index)
+    setFilters(newFilters)
+    setCurrentPage(1)
+  }
+
+  const handleClearAllFilters = () => {
+    setFilters([])
+    setCurrentPage(1)
+    setShowFilterDropdown(false)
   }
 
   const handleSearch = (value: string) => {
@@ -214,7 +260,7 @@ export default function DataTable({
             )}
         </div>
 
-        {/* Right side - Search, Sort, and other actions */}
+        {/* Right side - Search, Sort, Filter, and Columns buttons */}
         <div className="flex items-center space-x-2">
           {/* Search Button */}
           <button
@@ -298,13 +344,148 @@ export default function DataTable({
             )}
           </div>
 
-          {/* Other actions */}
-          {actions && (
-            <div className="flex items-center space-x-2">
-              {actions}
-            </div>
-          )}
+          {/* Filter Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border ${
+                filters.length > 0 ? 'border-orange-300 bg-orange-50' : 'border-gray-300'
+              }`}
+              title="Filter"
+            >
+              <Icon name="filter" size={16} />
+            </button>
+            
+            {showFilterDropdown && (
+              <div className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Filter by Column</h3>
+                    <button
+                      onClick={() => setShowFilterDropdown(false)}
+                      className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-100 transition-colors"
+                      title="Close"
+                    >
+                      <Icon name="close" size={12} className="text-gray-500" />
+                    </button>
+                  </div>
+                  
+                  {/* Active Filters */}
+                  {filters.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-xs font-medium text-gray-700 mb-2">Active Filters:</div>
+                      <div className="space-y-1">
+                        {filters.map((filter, index) => {
+                          const column = columns.find(col => col.key === filter.column)
+                          return (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-xs">
+                              <span className="text-gray-600">
+                                {column?.label}: <span className="font-medium">{filter.value}</span>
+                              </span>
+                              <button
+                                onClick={() => handleRemoveFilter(index)}
+                                className="text-red-500 hover:text-red-700"
+                                title="Remove filter"
+                              >
+                                <Icon name="close" size={10} />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <button
+                        onClick={handleClearAllFilters}
+                        className="text-xs text-red-600 hover:text-red-800 mt-2"
+                      >
+                        Clear All Filters
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Add New Filter */}
+                  {getAvailableFilterColumns().length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-700 mb-2">Add Filter:</div>
+                      <select
+                        value={selectedFilterColumn}
+                        onChange={(e) => setSelectedFilterColumn(e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select column...</option>
+                        {getAvailableFilterColumns().map((column) => (
+                          <option key={column.key} value={column.key}>
+                            {column.label}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {selectedFilterColumn && (
+                        <div className="mt-2">
+                          <div className="text-xs font-medium text-gray-700 mb-1">Select value:</div>
+                          <div className="max-h-32 overflow-y-auto border border-gray-300 rounded">
+                            {getUniqueValues(selectedFilterColumn).map((value) => (
+                              <button
+                                key={value}
+                                onClick={() => handleAddFilter(selectedFilterColumn, String(value))}
+                                className="block w-full text-left px-2 py-1 text-xs hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-b-0"
+                              >
+                                {String(value)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Columns Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+              title="Columns"
+            >
+              <Icon name="columns" size={16} />
+            </button>
+            
+            {showColumnsDropdown && (
+              <div className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Select Columns</h3>
+                    <button
+                      onClick={() => setShowColumnsDropdown(false)}
+                      className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-100 transition-colors"
+                      title="Close"
+                    >
+                      <Icon name="close" size={12} className="text-gray-500" />
+                    </button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    {columns.map((column) => (
+                      <label key={column.key} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={true}
+                          onChange={() => {}}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{column.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Other actions */}
+        {/* Removed actions as they are now built into the component */}
       </div>
 
       {/* Search Input */}
@@ -421,7 +602,7 @@ export default function DataTable({
               <Icon name="search" size={48} />
             </div>
             <p className="text-gray-500" style={{ color: '#22223B' }}>
-              {searchTerm ? 'No results found for your search.' : 'No data available.'}
+              {searchTerm || filters.length > 0 ? 'No results found for your search or filters.' : 'No data available.'}
             </p>
           </div>
         )}

@@ -328,27 +328,6 @@ export default function InformationAssetsPage() {
             selectedRows={selectedRows}
             onSelectionChange={setSelectedRows}
             onExportCSV={handleExportCSV}
-            actions={
-              <div className="flex items-center space-x-2">
-                {/* Filter Button */}
-                <button
-                  onClick={handleFilter}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-                  title="Filter"
-                >
-                  <Icon name="filter" size={16} />
-                </button>
-                
-                {/* Columns Button */}
-                <button
-                  onClick={handleColumns}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-                  title="Columns"
-                >
-                  <Icon name="columns" size={16} />
-                </button>
-              </div>
-            }
           />
 
           {/* Columns Dropdown */}
