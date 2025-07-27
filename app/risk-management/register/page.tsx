@@ -404,18 +404,19 @@ export default function RiskRegister() {
        <div className="rounded-lg p-4" style={{ backgroundColor: '#E8ECF7', borderColor: '#E8ECF7' }}>
          <div className="flex items-start space-x-3">
            <div style={{ color: '#22223B' }}>
-             <Icon 
-               name={
-                 activePhase === 'identification' ? 'binoculars' :
-                 activePhase === 'analysis' ? 'magnifying-glass-chart' :
-                 activePhase === 'evaluation' ? 'ruler' :
-                 activePhase === 'treatment' ? 'bandage' :
-                 activePhase === 'monitoring' ? 'file-waveform' :
-                 'info-circle'
-               } 
-               size={20} 
-               className="mt-0.5" 
-             />
+                        <Icon 
+             name={
+               activePhase === 'full-view' ? 'earth-oceania' :
+               activePhase === 'identification' ? 'binoculars' :
+               activePhase === 'analysis' ? 'magnifying-glass-chart' :
+               activePhase === 'evaluation' ? 'ruler' :
+               activePhase === 'treatment' ? 'bandage' :
+               activePhase === 'monitoring' ? 'file-waveform' :
+               'info-circle'
+             } 
+             size={20} 
+             className="mt-0.5" 
+           />
            </div>
            <div>
              <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
