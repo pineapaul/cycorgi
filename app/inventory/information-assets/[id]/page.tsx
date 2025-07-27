@@ -40,19 +40,29 @@ export default function AssetProfilePage() {
   const fetchAsset = async (id: string) => {
     try {
       setLoading(true)
-      const response = await fetch('/api/information-assets')
+      // First try to fetch the specific asset directly
+      const response = await fetch(`/api/information-assets/${id}`)
       const result = await response.json()
       
       if (result.success) {
-        const foundAsset = result.data.find((a: InformationAsset) => a.id === id)
-        if (foundAsset) {
-          setAsset(foundAsset)
-          setEditedAsset(foundAsset)
-        } else {
-          setError('Asset not found')
-        }
+        setAsset(result.data)
+        setEditedAsset(result.data)
       } else {
-        setError(result.error || 'Failed to fetch asset')
+        // Fallback to fetching all assets and finding the one we need
+        const allAssetsResponse = await fetch('/api/information-assets')
+        const allAssetsResult = await allAssetsResponse.json()
+        
+        if (allAssetsResult.success) {
+          const foundAsset = allAssetsResult.data.find((a: InformationAsset) => a.id === id)
+          if (foundAsset) {
+            setAsset(foundAsset)
+            setEditedAsset(foundAsset)
+          } else {
+            setError('Asset not found')
+          }
+        } else {
+          setError(allAssetsResult.error || 'Failed to fetch asset')
+        }
       }
     } catch (err) {
       setError('Failed to fetch asset details')

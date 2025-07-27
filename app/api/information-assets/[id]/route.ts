@@ -10,7 +10,18 @@ export async function GET(
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
-    const asset = await collection.findOne({ id: params.id })
+    // Try to find by id field first, then by _id if that fails
+    let asset = await collection.findOne({ id: params.id })
+    
+    if (!asset) {
+      // If not found by id, try by _id (MongoDB ObjectId)
+      try {
+        const { ObjectId } = require('mongodb')
+        asset = await collection.findOne({ _id: new ObjectId(params.id) })
+      } catch (e) {
+        // If ObjectId conversion fails, asset is not found
+      }
+    }
     
     if (!asset) {
       return NextResponse.json(
@@ -48,10 +59,24 @@ export async function PUT(
       updatedAt: new Date().toISOString()
     }
     
-    const result = await collection.updateOne(
+    // Try to update by id field first, then by _id if that fails
+    let result = await collection.updateOne(
       { id: params.id },
       { $set: updatedAsset }
     )
+    
+    if (result.matchedCount === 0) {
+      // If not found by id, try by _id (MongoDB ObjectId)
+      try {
+        const { ObjectId } = require('mongodb')
+        result = await collection.updateOne(
+          { _id: new ObjectId(params.id) },
+          { $set: updatedAsset }
+        )
+      } catch (e) {
+        // If ObjectId conversion fails, asset is not found
+      }
+    }
     
     if (result.matchedCount === 0) {
       return NextResponse.json(
@@ -82,7 +107,18 @@ export async function DELETE(
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
-    const result = await collection.deleteOne({ id: params.id })
+    // Try to delete by id field first, then by _id if that fails
+    let result = await collection.deleteOne({ id: params.id })
+    
+    if (result.deletedCount === 0) {
+      // If not found by id, try by _id (MongoDB ObjectId)
+      try {
+        const { ObjectId } = require('mongodb')
+        result = await collection.deleteOne({ _id: new ObjectId(params.id) })
+      } catch (e) {
+        // If ObjectId conversion fails, asset is not found
+      }
+    }
     
     if (result.deletedCount === 0) {
       return NextResponse.json(
