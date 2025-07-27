@@ -280,8 +280,8 @@ export default function InformationAssetsPage() {
           onClick={handleAddAsset}
           className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
           style={{ 
-            backgroundColor: '#898AC4',
-            '--tw-ring-color': '#898AC4'
+            backgroundColor: '#4C1D95',
+            '--tw-ring-color': '#4C1D95'
           } as React.CSSProperties}
         >
           <Icon name="plus" size={16} className="mr-2" />
@@ -396,8 +396,8 @@ export default function InformationAssetsPage() {
           <button
             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ 
-              backgroundColor: '#898AC4',
-              '--tw-ring-color': '#898AC4'
+              backgroundColor: '#4C1D95',
+              '--tw-ring-color': '#4C1D95'
             } as React.CSSProperties}
           >
             <Icon name="plus" size={16} className="mr-2" />

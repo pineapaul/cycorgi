@@ -31,7 +31,9 @@ import {
   faArrowRight,
   faFilter,
   faColumns,
-  faTimes
+  faTimes,
+  faChevronLeft,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -73,6 +75,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     filter: faFilter,
     columns: faColumns,
     close: faTimes,
+    'chevron-left': faChevronLeft,
+    'chevron-right': faChevronRight,
   }
 
   const icon = icons[name]
@@ -123,6 +127,8 @@ function getFallbackEmoji(name: string): string {
     filter: '🔍',
     columns: '📊',
     close: '✕',
+    'chevron-left': '◀️',
+    'chevron-right': '▶️',
   }
   return emojiMap[name] || '📄'
 } 

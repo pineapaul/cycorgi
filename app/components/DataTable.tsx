@@ -42,7 +42,10 @@ export default function DataTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [showSearch, setShowSearch] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
-  const itemsPerPage = 10
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  // Available items per page options
+  const itemsPerPageOptions = [5, 10, 25, 50, 100]
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -86,7 +89,10 @@ export default function DataTable({
     setCurrentPage(1)
   }
 
-
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage)
+    setCurrentPage(1)
+  }
 
   const handleSelectRow = (rowIndex: number, checked: boolean) => {
     if (!onSelectionChange) return
@@ -117,6 +123,43 @@ export default function DataTable({
       onExportCSV(selectedRows)
     }
     setShowDropdown(false)
+  }
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show first page, last page, and pages around current
+      pages.push(1)
+      
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+      
+      if (start > 2) {
+        pages.push('...')
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      if (end < totalPages - 1) {
+        pages.push('...')
+      }
+      
+      if (totalPages > 1) {
+        pages.push(totalPages)
+      }
+    }
+    
+    return pages
   }
 
   return (
@@ -307,56 +350,90 @@ export default function DataTable({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="text-sm text-gray-700 text-center sm:text-left" style={{ color: '#22223B' }}>
-            Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAndSortedData.length)} of{' '}
-            {filteredAndSortedData.length} results
-          </div>
-          <div className="flex justify-center sm:justify-end space-x-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                borderColor: '#C0C9EE',
-                color: '#22223B',
-                backgroundColor: currentPage === 1 ? '#F3F4F6' : '#FFF2E0'
-              }}
-            >
-              Previous
-            </button>
-            <div className="flex space-x-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-2 py-1 text-sm border rounded-md ${
-                    currentPage === page ? 'font-medium' : ''
-                  }`}
-                  style={{
-                    borderColor: '#C0C9EE',
-                    color: '#22223B',
-                    backgroundColor: currentPage === page ? '#C0C9EE' : '#FFF2E0'
-                  }}
-                >
-                  {page}
-                </button>
-              ))}
+      {filteredAndSortedData.length > 0 && (
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          {/* Items per page and results info */}
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            {/* Items per page selector */}
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-600">
+                Items per page:
+              </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700"
+              >
+                {itemsPerPageOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                borderColor: '#C0C9EE',
-                color: '#22223B',
-                backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#FFF2E0'
-              }}
-            >
-              Next
-            </button>
+            
+            {/* Results info */}
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAndSortedData.length)} of{' '}
+              {filteredAndSortedData.length} results
+            </div>
           </div>
+
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center lg:justify-end space-x-1">
+              {/* Previous button */}
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === 1 ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === 1 ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="Previous page"
+              >
+                <Icon name="chevron-left" size={14} />
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center space-x-1">
+                {getPageNumbers().map((page, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                    disabled={page === '...'}
+                    className={`flex items-center justify-center w-8 h-8 rounded-md border transition-all duration-200 ${
+                      page === '...' ? 'cursor-default text-gray-400' : 'hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1'
+                    } ${
+                      currentPage === page ? 'font-medium' : ''
+                    }`}
+                    style={{
+                      borderColor: currentPage === page ? '#3B82F6' : '#D1D5DB',
+                      color: currentPage === page ? '#FFFFFF' : '#6B7280',
+                      backgroundColor: currentPage === page ? '#3B82F6' : '#FFFFFF'
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              {/* Next button */}
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === totalPages ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === totalPages ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="Next page"
+              >
+                <Icon name="chevron-right" size={14} />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

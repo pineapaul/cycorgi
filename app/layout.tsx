@@ -31,9 +31,7 @@ export const metadata: Metadata = {
   title: "Cycorgi - GRC Platform",
   description: "Governance, Risk, and Compliance platform powered by Cycorgi",
   icons: {
-    icon: [
-      { url: '/angry-corgi.png', type: 'image/png' }
-    ],
+    icon: '/angry-corgi.png',
     shortcut: '/angry-corgi.png',
     apple: '/angry-corgi.png',
   },
