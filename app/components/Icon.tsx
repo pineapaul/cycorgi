@@ -40,7 +40,8 @@ import {
   faTrash,
   faArrowLeft,
   faPencil,
-  faCheck
+  faCheck,
+  faBuildingColumns
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -91,6 +92,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'arrow-left': faArrowLeft,
     pencil: faPencil,
     check: faCheck,
+    'building-columns': faBuildingColumns,
   }
 
   const icon = icons[name]
@@ -150,6 +152,7 @@ function getFallbackEmoji(name: string): string {
     'arrow-left': '⬅️',
     pencil: '✏️',
     check: '✓',
+    'building-columns': '🏛️',
   }
   return emojiMap[name] || '📄'
 } 

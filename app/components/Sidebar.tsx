@@ -22,15 +22,20 @@ const programItems = [
   { name: 'Roles', href: '/dashboard/program/roles' },
 ]
 
+const inventoryManagementItems = [
+  { name: 'Information Assets', href: '/inventory/information-assets' },
+  { name: 'Third Parties', href: '/inventory/third-parties' },
+]
+
+const governanceItems = [
+  { name: 'Policies', href: '/dashboard/governance/policies' },
+  { name: 'Security Steering Committee', href: '/dashboard/governance/security-steering-committee' },
+]
+
 const riskManagementItems = [
   { name: 'Risk Register', href: '/dashboard/risk-management/register' },
   { name: 'Risk Assessments', href: '/dashboard/risk-management/assessments' },
   { name: 'Risk Exceptions', href: '/dashboard/risk-management/exceptions' },
-]
-
-const inventoryManagementItems = [
-  { name: 'Information Assets', href: '/inventory/information-assets' },
-  { name: 'Third Parties', href: '/inventory/third-parties' },
 ]
 
 const complianceItems = [
@@ -49,11 +54,11 @@ const ismsOperationsItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const [programOpen, setProgramOpen] = useState(false)
-  const [riskManagementOpen, setRiskManagementOpen] = useState(false)
-  const [inventoryOpen, setInventoryOpen] = useState(false)
-  const [complianceOpen, setComplianceOpen] = useState(false)
-  const [ismsOperationsOpen, setIsmsOperationsOpen] = useState(false)
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+
+  const handleMenuToggle = (menuName: string) => {
+    setOpenMenu(openMenu === menuName ? null : menuName)
+  }
 
   return (
     <aside className="h-full w-64 text-white flex flex-col flex-shrink-0" style={{ backgroundColor: '#898AC4' }}>
@@ -95,10 +100,10 @@ export default function Sidebar() {
           <button
             className={cn(
               'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-              programOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+              openMenu === 'program' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{ backgroundColor: programOpen ? '#A2AADB' : 'transparent' }}
-            onClick={() => setProgramOpen((open) => !open)}
+            style={{ backgroundColor: openMenu === 'program' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('program')}
           >
             <Icon name="cubes" size={20} />
             <span>Program</span>
@@ -106,13 +111,13 @@ export default function Sidebar() {
             <span
               className={cn(
                 "ml-auto transition-opacity",
-                programOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                openMenu === 'program' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             >
-              {programOpen ? '▲' : '▼'}
+              {openMenu === 'program' ? '▲' : '▼'}
             </span>
           </button>
-          {programOpen && (
+          {openMenu === 'program' && (
             <div className="ml-7 mt-1 space-y-1">
               {programItems.map((item) => (
                 <Link
@@ -137,25 +142,66 @@ export default function Sidebar() {
           <button
             className={cn(
               'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-              inventoryOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+              openMenu === 'inventory' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{ backgroundColor: inventoryOpen ? '#A2AADB' : 'transparent' }}
-            onClick={() => setInventoryOpen((open) => !open)}
+            style={{ backgroundColor: openMenu === 'inventory' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('inventory')}
           >
             <Icon name="warehouse" size={20} />
             <span>Inventories</span>
             <span
               className={cn(
                 "ml-auto transition-opacity",
-                inventoryOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                openMenu === 'inventory' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             >
-              {inventoryOpen ? '▲' : '▼'}
+              {openMenu === 'inventory' ? '▲' : '▼'}
             </span>
           </button>
-          {inventoryOpen && (
+          {openMenu === 'inventory' && (
             <div className="ml-7 mt-1 space-y-1">
               {inventoryManagementItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Governance Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              openMenu === 'governance' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: openMenu === 'governance' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('governance')}
+          >
+            <Icon name="building-columns" size={20} />
+            <span>Governance</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                openMenu === 'governance' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {openMenu === 'governance' ? '▲' : '▼'}
+            </span>
+          </button>
+          {openMenu === 'governance' && (
+            <div className="ml-7 mt-1 space-y-1">
+              {governanceItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -178,23 +224,23 @@ export default function Sidebar() {
           <button
             className={cn(
               'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-              riskManagementOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+              openMenu === 'riskManagement' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{ backgroundColor: riskManagementOpen ? '#A2AADB' : 'transparent' }}
-            onClick={() => setRiskManagementOpen((open) => !open)}
+            style={{ backgroundColor: openMenu === 'riskManagement' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('riskManagement')}
           >
             <Icon name="risk" size={20} />
             <span>Risk Management</span>
             <span
               className={cn(
                 "ml-auto transition-opacity",
-                riskManagementOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                openMenu === 'riskManagement' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             >
-              {riskManagementOpen ? '▲' : '▼'}
+              {openMenu === 'riskManagement' ? '▲' : '▼'}
             </span>
           </button>
-          {riskManagementOpen && (
+          {openMenu === 'riskManagement' && (
             <div className="ml-7 mt-1 space-y-1">
               {riskManagementItems.map((item) => (
                 <Link
@@ -219,23 +265,23 @@ export default function Sidebar() {
           <button
             className={cn(
               'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-              complianceOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+              openMenu === 'compliance' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{ backgroundColor: complianceOpen ? '#A2AADB' : 'transparent' }}
-            onClick={() => setComplianceOpen((open) => !open)}
+            style={{ backgroundColor: openMenu === 'compliance' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('compliance')}
           >
             <Icon name="compliance" size={20} />
             <span>Compliance</span>
             <span
               className={cn(
                 "ml-auto transition-opacity",
-                complianceOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                openMenu === 'compliance' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             >
-              {complianceOpen ? '▲' : '▼'}
+              {openMenu === 'compliance' ? '▲' : '▼'}
             </span>
           </button>
-          {complianceOpen && (
+          {openMenu === 'compliance' && (
             <div className="ml-7 mt-1 space-y-1">
               {complianceItems.map((item) => (
                 <Link
@@ -260,23 +306,23 @@ export default function Sidebar() {
           <button
             className={cn(
               'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
-              ismsOperationsOpen ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+              openMenu === 'ismsOperations' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{ backgroundColor: ismsOperationsOpen ? '#A2AADB' : 'transparent' }}
-            onClick={() => setIsmsOperationsOpen((open) => !open)}
+            style={{ backgroundColor: openMenu === 'ismsOperations' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('ismsOperations')}
           >
             <Icon name="briefcase" size={20} />
             <span>ISMS Operations</span>
             <span
               className={cn(
                 "ml-auto transition-opacity",
-                ismsOperationsOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                openMenu === 'ismsOperations' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             >
-              {ismsOperationsOpen ? '▲' : '▼'}
+              {openMenu === 'ismsOperations' ? '▲' : '▼'}
             </span>
           </button>
-          {ismsOperationsOpen && (
+          {openMenu === 'ismsOperations' && (
             <div className="ml-7 mt-1 space-y-1">
               {ismsOperationsItems.map((item) => (
                 <Link
