@@ -53,9 +53,10 @@ export async function PUT(
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
-    // Update the asset with new data and timestamp
+    // Update the asset with new data and timestamp, excluding _id field
+    const { _id, ...bodyWithoutId } = body
     const updatedAsset = {
-      ...body,
+      ...bodyWithoutId,
       updatedAt: new Date().toISOString()
     }
     
