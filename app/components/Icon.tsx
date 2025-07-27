@@ -41,7 +41,11 @@ import {
   faArrowLeft,
   faPencil,
   faCheck,
-  faBuildingColumns
+  faBuildingColumns,
+  faBinoculars,
+  faChartBar,
+  faRuler,
+  faBandage
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -93,6 +97,11 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     pencil: faPencil,
     check: faCheck,
     'building-columns': faBuildingColumns,
+    binoculars: faBinoculars,
+    'magnifying-glass-chart': faChartBar,
+    ruler: faRuler,
+    bandage: faBandage,
+    'file-waveform': faChartLine,
   }
 
   const icon = icons[name]
@@ -153,6 +162,11 @@ function getFallbackEmoji(name: string): string {
     pencil: '✏️',
     check: '✓',
     'building-columns': '🏛️',
+    binoculars: '🔭',
+    'magnifying-glass-chart': '📊🔍',
+    ruler: '📏',
+    bandage: '🩹',
+    'file-waveform': '📈',
   }
   return emojiMap[name] || '📄'
 } 

@@ -28,14 +28,14 @@ const inventoryManagementItems = [
 ]
 
 const governanceItems = [
-  { name: 'Policies', href: '/dashboard/governance/policies' },
-  { name: 'Security Steering Committee', href: '/dashboard/governance/security-steering-committee' },
+  { name: 'Policies', href: '/governance/policies' },
+  { name: 'Security Steering Committee', href: '/governance/security-steering-committee' },
 ]
 
 const riskManagementItems = [
-  { name: 'Risk Register', href: '/dashboard/risk-management/register' },
-  { name: 'Risk Assessments', href: '/dashboard/risk-management/assessments' },
-  { name: 'Risk Exceptions', href: '/dashboard/risk-management/exceptions' },
+  { name: 'Risk Register', href: '/risk-management/register' },
+  { name: 'Risk Assessments', href: '/risk-management/assessments' },
+  { name: 'Risk Exceptions', href: '/risk-management/exceptions' },
 ]
 
 const complianceItems = [
