@@ -13,9 +13,6 @@ const RISK_PHASES = [
   { id: 'monitoring', name: 'Monitoring', icon: 'eye' },
 ]
 
-// Full view tab (not a risk phase)
-const FULL_VIEW = { id: 'full-view', name: 'Full View', icon: 'earth-oceania' }
-
 // Sample risk data with all columns
 const sampleRisks = [
   {
@@ -98,14 +95,14 @@ const sampleRisks = [
     vulnerability: 'Single point of failure',
     riskStatement: 'Risk of business disruption due to system failures',
     impactCIA: 'Confidentiality - Low, Integrity - Medium, Availability - High',
-    currentControls: 'Backup systems',
+    currentControls: 'Backup systems, monitoring',
     currentControlsReference: 'OPS-001',
     consequence: 'Business disruption, revenue loss',
     likelihood: 'Low',
     currentRiskRating: 'Medium',
     riskAction: 'Acceptable risk',
-    reasonForAcceptance: 'Cost of treatment exceeds potential loss',
-    dateOfSSCApproval: '2024-02-10',
+    reasonForAcceptance: 'Risk level within acceptable limits',
+    dateOfSSCApproval: '2024-02-01',
     riskTreatments: '',
     dateRiskTreatmentsApproved: '',
     dateRiskTreatmentsAssigned: '',
@@ -119,73 +116,106 @@ const sampleRisks = [
   },
   {
     riskId: 'RISK-004',
-    functionalUnit: 'Legal',
+    functionalUnit: 'Finance',
     status: 'Treatment Planned',
-    jiraTicket: 'LEG-004',
-    dateRiskRaised: '2024-02-01',
+    jiraTicket: 'FIN-004',
+    dateRiskRaised: '2024-01-30',
     raisedBy: 'Lisa Chen',
-    riskOwner: 'Legal Team',
-    affectedSites: 'All Sites',
-    informationAssets: 'Compliance Documentation',
-    threat: 'Regulatory Non-compliance',
-    vulnerability: 'Outdated compliance procedures',
-    riskStatement: 'Risk of non-compliance with industry regulations',
-    impactCIA: 'Confidentiality - Medium, Integrity - High, Availability - Low',
-    currentControls: 'Annual compliance review',
-    currentControlsReference: 'LEG-001',
-    consequence: 'Regulatory fines, legal action',
+    riskOwner: 'Finance Team',
+    affectedSites: 'Head Office',
+    informationAssets: 'Financial Systems',
+    threat: 'Fraud',
+    vulnerability: 'Insufficient segregation of duties',
+    riskStatement: 'Risk of financial fraud due to inadequate controls',
+    impactCIA: 'Confidentiality - High, Integrity - High, Availability - Medium',
+    currentControls: 'Basic approval workflows',
+    currentControlsReference: 'FIN-001',
+    consequence: 'Financial loss, regulatory penalties',
     likelihood: 'Medium',
     currentRiskRating: 'High',
     riskAction: 'Requires treatment',
     reasonForAcceptance: '',
-    dateOfSSCApproval: '2024-02-15',
-    riskTreatments: 'Update compliance procedures, staff training',
-    dateRiskTreatmentsApproved: '2024-02-20',
-    dateRiskTreatmentsAssigned: '2024-02-25',
-    applicableControlsAfterTreatment: 'Enhanced compliance monitoring',
-    residualConsequence: 'Reduced regulatory exposure',
+    dateOfSSCApproval: '',
+    riskTreatments: 'Implement enhanced approval workflows and monitoring',
+    dateRiskTreatmentsApproved: '2024-02-05',
+    dateRiskTreatmentsAssigned: '2024-02-10',
+    applicableControlsAfterTreatment: 'Enhanced approval workflows, fraud monitoring',
+    residualConsequence: 'Reduced financial loss',
     residualLikelihood: 'Low',
     residualRiskRating: 'Low',
-    residualRiskAcceptedByOwner: '',
-    dateResidualRiskAccepted: '',
+    residualRiskAcceptedByOwner: 'Finance Director',
+    dateResidualRiskAccepted: '2024-02-15',
     dateRiskTreatmentCompleted: '',
   },
   {
     riskId: 'RISK-005',
-    functionalUnit: 'Cloud Team',
-    status: 'Monitored',
-    jiraTicket: 'CLOUD-005',
-    dateRiskRaised: '2024-01-10',
-    raisedBy: 'Alex Wong',
-    riskOwner: 'Cloud Team',
-    affectedSites: 'Cloud Infrastructure',
-    informationAssets: 'Cloud Data Storage',
-    threat: 'Data Exposure',
-    vulnerability: 'Misconfigured cloud security',
-    riskStatement: 'Risk of data exposure in cloud environments',
+    functionalUnit: 'HR',
+    status: 'Treatment In Progress',
+    jiraTicket: 'HR-005',
+    dateRiskRaised: '2024-02-01',
+    raisedBy: 'David Wilson',
+    riskOwner: 'HR Team',
+    affectedSites: 'All Sites',
+    informationAssets: 'HR Systems',
+    threat: 'Data Breach',
+    vulnerability: 'Weak access controls',
+    riskStatement: 'Risk of unauthorized access to employee personal data',
     impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
-    currentControls: 'Cloud security monitoring',
-    currentControlsReference: 'CLOUD-001',
-    consequence: 'Data breach, compliance violations',
+    currentControls: 'Basic authentication',
+    currentControlsReference: 'HR-001',
+    consequence: 'Privacy violations, legal action',
+    likelihood: 'Medium',
+    currentRiskRating: 'High',
+    riskAction: 'Requires treatment',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '',
+    riskTreatments: 'Implement multi-factor authentication and access reviews',
+    dateRiskTreatmentsApproved: '2024-02-10',
+    dateRiskTreatmentsAssigned: '2024-02-15',
+    applicableControlsAfterTreatment: 'Multi-factor authentication, regular access reviews',
+    residualConsequence: 'Reduced privacy risk',
+    residualLikelihood: 'Low',
+    residualRiskRating: 'Low',
+    residualRiskAcceptedByOwner: 'HR Director',
+    dateResidualRiskAccepted: '2024-02-20',
+    dateRiskTreatmentCompleted: '',
+  },
+  {
+    riskId: 'RISK-006',
+    functionalUnit: 'Legal',
+    status: 'Monitored',
+    jiraTicket: 'LEG-006',
+    dateRiskRaised: '2024-02-05',
+    raisedBy: 'Emma Thompson',
+    riskOwner: 'Legal Team',
+    affectedSites: 'All Sites',
+    informationAssets: 'Legal Documents',
+    threat: 'Regulatory Changes',
+    vulnerability: 'Outdated compliance procedures',
+    riskStatement: 'Risk of non-compliance with new regulations',
+    impactCIA: 'Confidentiality - Medium, Integrity - High, Availability - Low',
+    currentControls: 'Regular compliance reviews',
+    currentControlsReference: 'LEG-001',
+    consequence: 'Regulatory fines, legal action',
     likelihood: 'Low',
     currentRiskRating: 'Medium',
-    riskAction: 'Under monitoring',
-    reasonForAcceptance: '',
-    dateOfSSCApproval: '2024-01-30',
-    riskTreatments: 'Enhanced cloud security controls',
-    dateRiskTreatmentsApproved: '2024-02-01',
-    dateRiskTreatmentsAssigned: '2024-02-05',
-    applicableControlsAfterTreatment: 'Advanced cloud security monitoring',
-    residualConsequence: 'Minimal data exposure risk',
-    residualLikelihood: 'Very Low',
+    riskAction: 'Acceptable risk',
+    reasonForAcceptance: 'Risk level acceptable with monitoring',
+    dateOfSSCApproval: '2024-02-15',
+    riskTreatments: 'Enhanced compliance monitoring and training',
+    dateRiskTreatmentsApproved: '2024-02-20',
+    dateRiskTreatmentsAssigned: '2024-02-25',
+    applicableControlsAfterTreatment: 'Enhanced compliance monitoring, regular training',
+    residualConsequence: 'Reduced compliance risk',
+    residualLikelihood: 'Low',
     residualRiskRating: 'Low',
-    residualRiskAcceptedByOwner: 'Alex Wong',
-    dateResidualRiskAccepted: '2024-02-15',
-    dateRiskTreatmentCompleted: '2024-02-10',
+    residualRiskAcceptedByOwner: 'Legal Director',
+    dateResidualRiskAccepted: '2024-03-01',
+    dateRiskTreatmentCompleted: '2024-03-15',
   },
 ]
 
-// Status mapping for each phase
+// Get status values for each phase
 const getStatusForPhase = (phase: string): string[] => {
   switch (phase) {
     case 'identification':
@@ -198,54 +228,67 @@ const getStatusForPhase = (phase: string): string[] => {
       return ['Treatment Planned', 'Treatment In Progress']
     case 'monitoring':
       return ['Monitored']
-    case 'full-view':
-      return [] // No status filter for full view
     default:
       return []
   }
 }
 
-// Column definitions for the risk register
+// Get columns for each phase
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
-    { key: 'riskId', label: 'Risk ID', sortable: true, width: '120px' },
-    { key: 'functionalUnit', label: 'Functional Unit', sortable: true, width: '150px' },
-    { key: 'status', label: 'Status', sortable: true, width: '120px' },
-    { key: 'jiraTicket', label: 'Jira Ticket', sortable: true, width: '120px' },
-    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '140px' },
-    { key: 'raisedBy', label: 'Raised By', sortable: true, width: '120px' },
-    { key: 'riskOwner', label: 'Risk Owner', sortable: true, width: '150px' },
-    { key: 'affectedSites', label: 'Affected Sites', sortable: true, width: '150px' },
-    { key: 'informationAssets', label: 'Information Assets', sortable: true, width: '200px' },
-    { key: 'threat', label: 'Threat', sortable: true, width: '150px' },
-    { key: 'vulnerability', label: 'Vulnerability', sortable: true, width: '150px' },
-    { key: 'riskStatement', label: 'Risk Statement', sortable: false, width: '300px' },
-    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, width: '200px' },
-    { key: 'currentControls', label: 'Current Controls', sortable: true, width: '150px' },
-    { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true, width: '180px' },
-    { key: 'consequence', label: 'Consequence', sortable: true, width: '200px' },
-    { key: 'likelihood', label: 'Likelihood', sortable: true, width: '100px' },
-    { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true, width: '140px' },
-    { key: 'riskAction', label: 'Risk Action', sortable: true, width: '140px' },
-    { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true, width: '200px' },
-    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '160px' },
-    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true, width: '200px' },
-    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '200px' },
-    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '200px' },
-    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true, width: '220px' },
-    { key: 'residualConsequence', label: 'Residual Consequence', sortable: true, width: '180px' },
-    { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true, width: '140px' },
-    { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true, width: '160px' },
-    { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true, width: '200px' },
-    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '180px' },
-    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '200px' },
+    { key: 'riskId', label: 'Risk ID', sortable: true },
+    { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
+    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true },
+    { key: 'raisedBy', label: 'Raised By', sortable: true },
+    { key: 'riskOwner', label: 'Risk Owner', sortable: true },
+    { key: 'affectedSites', label: 'Affected Sites', sortable: true },
+    { key: 'informationAssets', label: 'Information Assets', sortable: true },
+    { key: 'threat', label: 'Threat', sortable: true },
+    { key: 'vulnerability', label: 'Vulnerability', sortable: true },
+    { key: 'riskStatement', label: 'Risk Statement', sortable: true },
+    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true },
+    { key: 'currentControls', label: 'Current Controls', sortable: true },
+    { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
+    { key: 'consequence', label: 'Consequence', sortable: true },
+    { key: 'likelihood', label: 'Likelihood', sortable: true },
+    { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
+    { key: 'riskAction', label: 'Risk Action', sortable: true },
+    { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
+    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true },
+    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
+    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true },
+    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true },
+    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
+    { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
+    { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
+    { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
+    { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
+    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
+    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true },
   ]
 
   switch (phase) {
     case 'identification':
       return allColumns.filter(col => [
         'riskId',
-        'functionalUnit', 
+        'functionalUnit',
+        'status',
+        'jiraTicket',
+        'dateRiskRaised',
+        'raisedBy',
+        'riskOwner',
+        'affectedSites',
+        'informationAssets',
+        'threat',
+        'vulnerability',
+        'riskStatement'
+      ].includes(col.key))
+    case 'analysis':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit',
         'status',
         'jiraTicket',
         'dateRiskRaised',
@@ -256,16 +299,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
         'threat',
         'vulnerability',
         'riskStatement',
-        'impactCIA'
-      ].includes(col.key))
-    case 'analysis':
-      return allColumns.filter(col => [
-        'riskId',
-        'functionalUnit',
-        'status',
-        'jiraTicket',
-        'informationAssets',
-        'riskStatement',
+        'impactCIA',
         'currentControls',
         'currentControlsReference',
         'consequence',
@@ -278,8 +312,20 @@ const getColumnsForPhase = (phase: string): Column[] => {
         'functionalUnit',
         'status',
         'jiraTicket',
+        'dateRiskRaised',
+        'raisedBy',
+        'riskOwner',
+        'affectedSites',
         'informationAssets',
+        'threat',
+        'vulnerability',
         'riskStatement',
+        'impactCIA',
+        'currentControls',
+        'currentControlsReference',
+        'consequence',
+        'likelihood',
+        'currentRiskRating',
         'riskAction',
         'reasonForAcceptance',
         'dateOfSSCApproval'
@@ -290,8 +336,23 @@ const getColumnsForPhase = (phase: string): Column[] => {
         'functionalUnit',
         'status',
         'jiraTicket',
+        'dateRiskRaised',
+        'raisedBy',
+        'riskOwner',
+        'affectedSites',
         'informationAssets',
+        'threat',
+        'vulnerability',
         'riskStatement',
+        'impactCIA',
+        'currentControls',
+        'currentControlsReference',
+        'consequence',
+        'likelihood',
+        'currentRiskRating',
+        'riskAction',
+        'reasonForAcceptance',
+        'dateOfSSCApproval',
         'riskTreatments',
         'dateRiskTreatmentsApproved',
         'dateRiskTreatmentsAssigned',
@@ -302,15 +363,47 @@ const getColumnsForPhase = (phase: string): Column[] => {
         'residualRiskAcceptedByOwner',
         'dateResidualRiskAccepted'
       ].includes(col.key))
-    case 'full-view':
-      return allColumns // Show all columns for full view
+    case 'monitoring':
+      return allColumns.filter(col => [
+        'riskId',
+        'functionalUnit',
+        'status',
+        'jiraTicket',
+        'dateRiskRaised',
+        'raisedBy',
+        'riskOwner',
+        'affectedSites',
+        'informationAssets',
+        'threat',
+        'vulnerability',
+        'riskStatement',
+        'impactCIA',
+        'currentControls',
+        'currentControlsReference',
+        'consequence',
+        'likelihood',
+        'currentRiskRating',
+        'riskAction',
+        'reasonForAcceptance',
+        'dateOfSSCApproval',
+        'riskTreatments',
+        'dateRiskTreatmentsApproved',
+        'dateRiskTreatmentsAssigned',
+        'applicableControlsAfterTreatment',
+        'residualConsequence',
+        'residualLikelihood',
+        'residualRiskRating',
+        'residualRiskAcceptedByOwner',
+        'dateResidualRiskAccepted',
+        'dateRiskTreatmentCompleted'
+      ].includes(col.key))
     default:
-      return allColumns
+      return allColumns // Show all columns for full view
   }
 }
 
 export default function RiskRegister() {
-  const [activePhase, setActivePhase] = useState('full-view')
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
   const handleRowClick = (row: any) => {
@@ -321,6 +414,10 @@ export default function RiskRegister() {
   const handleExportCSV = (selectedRows: Set<number>) => {
     console.log('Exporting selected risks:', selectedRows)
     // TODO: Implement CSV export
+  }
+
+  const handlePhaseSelect = (phase: string | null) => {
+    setSelectedPhase(phase)
   }
 
   const getStatusColor = (status: string) => {
@@ -368,12 +465,12 @@ export default function RiskRegister() {
     }
   }
 
-  // Filter data based on active phase
-  const filteredData = activePhase === 'full-view' 
-    ? sampleRisks // Show all risks for full view
-    : sampleRisks.filter(risk => getStatusForPhase(activePhase).includes(risk.status))
+  // Filter data based on selected phase
+  const filteredData = selectedPhase 
+    ? sampleRisks.filter(risk => getStatusForPhase(selectedPhase).includes(risk.status))
+    : sampleRisks // Show all risks when no phase is selected
 
-  const columns = getColumnsForPhase(activePhase).map(col => ({
+  const columns = getColumnsForPhase(selectedPhase || 'full-view').map(col => ({
     ...col,
     render: (value: any, row: any) => {
       if (col.key === 'status') {
@@ -423,83 +520,55 @@ export default function RiskRegister() {
         </div>
       </div>
 
-             {/* Phase Tabs */}
-       <div className="border-b border-gray-200">
-         <nav className="-mb-px flex space-x-8">
-           <button
-             onClick={() => setActivePhase('full-view')}
-             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-               activePhase === 'full-view'
-                 ? 'border-blue-500 text-blue-600'
-                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-             }`}
-           >
-             {FULL_VIEW.name}
-           </button>
-           {RISK_PHASES.map((phase) => (
-             <button
-               key={phase.id}
-               onClick={() => setActivePhase(phase.id)}
-               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                 activePhase === phase.id
-                   ? 'border-blue-500 text-blue-600'
-                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-               }`}
-             >
-               {phase.name}
-             </button>
-           ))}
-         </nav>
-       </div>
+      {/* Phase Description */}
+      {selectedPhase && (
+        <div className="rounded-lg p-4" style={{ backgroundColor: '#E8ECF7', borderColor: '#E8ECF7' }}>
+          <div className="flex items-start space-x-3">
+            <div style={{ color: '#22223B' }}>
+              <Icon 
+                name={
+                  selectedPhase === 'identification' ? 'binoculars' :
+                  selectedPhase === 'analysis' ? 'magnifying-glass-chart' :
+                  selectedPhase === 'evaluation' ? 'ruler' :
+                  selectedPhase === 'treatment' ? 'bandage' :
+                  selectedPhase === 'monitoring' ? 'file-waveform' :
+                  'info-circle'
+                } 
+                size={20} 
+                className="mt-0.5" 
+              />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
+                {RISK_PHASES.find(p => p.id === selectedPhase)?.name} Phase
+              </h3>
+              <p className="text-sm mt-1" style={{ color: '#22223B' }}>
+                {selectedPhase === 'identification' && 'Identify and document potential risks to the organization.'}
+                {selectedPhase === 'analysis' && 'Analyze the likelihood and impact of identified risks.'}
+                {selectedPhase === 'evaluation' && 'Evaluate risks against criteria and determine acceptability.'}
+                {selectedPhase === 'treatment' && 'Develop and implement risk treatment strategies.'}
+                {selectedPhase === 'monitoring' && 'Monitor the effectiveness of risk treatments and residual risks.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-             {/* Phase Description */}
-       <div className="rounded-lg p-4" style={{ backgroundColor: '#E8ECF7', borderColor: '#E8ECF7' }}>
-         <div className="flex items-start space-x-3">
-           <div style={{ color: '#22223B' }}>
-                        <Icon 
-             name={
-               activePhase === 'full-view' ? 'earth-oceania' :
-               activePhase === 'identification' ? 'binoculars' :
-               activePhase === 'analysis' ? 'magnifying-glass-chart' :
-               activePhase === 'evaluation' ? 'ruler' :
-               activePhase === 'treatment' ? 'bandage' :
-               activePhase === 'monitoring' ? 'file-waveform' :
-               'info-circle'
-             } 
-             size={20} 
-             className="mt-0.5" 
-           />
-           </div>
-           <div>
-             <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
-               {activePhase === 'full-view' ? FULL_VIEW.name : RISK_PHASES.find(p => p.id === activePhase)?.name + ' Phase'}
-             </h3>
-             <p className="text-sm mt-1" style={{ color: '#22223B' }}>
-               {activePhase === 'identification' && 'Identify and document potential risks to the organization.'}
-               {activePhase === 'analysis' && 'Analyze the likelihood and impact of identified risks.'}
-               {activePhase === 'evaluation' && 'Evaluate risks against criteria and determine acceptability.'}
-               {activePhase === 'treatment' && 'Develop and implement risk treatment strategies.'}
-               {activePhase === 'monitoring' && 'Monitor the effectiveness of risk treatments and residual risks.'}
-               {activePhase === 'full-view' && 'View all risks across all phases of the risk management lifecycle.'}
-             </p>
-           </div>
-         </div>
-       </div>
-
-             {/* Risk Data Table */}
-       <DataTable
-         columns={columns}
-         data={filteredData}
-         title={`${activePhase === 'full-view' ? FULL_VIEW.name : RISK_PHASES.find(p => p.id === activePhase)?.name} Risks`}
-         searchPlaceholder="Search risks..."
-         onRowClick={handleRowClick}
-         selectable={true}
-         selectedRows={selectedRows}
-         onSelectionChange={setSelectedRows}
-         onExportCSV={handleExportCSV}
-       />
-
-      
+      {/* Risk Data Table */}
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
+        searchPlaceholder="Search risks..."
+        onRowClick={handleRowClick}
+        selectable={true}
+        selectedRows={selectedRows}
+        onSelectionChange={setSelectedRows}
+        onExportCSV={handleExportCSV}
+        phaseButtons={RISK_PHASES}
+        selectedPhase={selectedPhase}
+        onPhaseSelect={handlePhaseSelect}
+      />
     </div>
   )
 } 

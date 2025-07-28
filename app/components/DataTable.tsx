@@ -17,6 +17,12 @@ export interface Filter {
   value: string
 }
 
+export interface PhaseButton {
+  id: string
+  name: string
+  icon: string
+}
+
 export interface DataTableProps {
   columns: Column[]
   data: any[]
@@ -27,6 +33,9 @@ export interface DataTableProps {
   selectedRows?: Set<number>
   onSelectionChange?: (selectedRows: Set<number>) => void
   onExportCSV?: (selectedRows: Set<number>) => void
+  phaseButtons?: PhaseButton[]
+  selectedPhase?: string | null
+  onPhaseSelect?: (phase: string | null) => void
 }
 
 export default function DataTable({ 
@@ -38,7 +47,10 @@ export default function DataTable({
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange,
-  onExportCSV
+  onExportCSV,
+  phaseButtons,
+  selectedPhase,
+  onPhaseSelect
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
@@ -296,6 +308,28 @@ export default function DataTable({
 
         {/* Right side - Search, Sort, Filter, and Columns buttons */}
         <div className="flex items-center space-x-2">
+          {/* Phase Buttons */}
+          {phaseButtons && phaseButtons.length > 0 && (
+            <div className="flex items-center space-x-1 mr-2">
+              <span className="text-xs font-medium text-gray-600 mr-2">Phases:</span>
+              {phaseButtons.map((phase) => (
+                <button
+                  key={phase.id}
+                  onClick={() => onPhaseSelect?.(selectedPhase === phase.id ? null : phase.id)}
+                  className={`flex items-center px-2 py-1 rounded text-xs font-medium transition-all duration-200 ${
+                    selectedPhase === phase.id
+                      ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title={phase.name}
+                >
+                  <Icon name={phase.icon} size={12} className="mr-1" />
+                  <span className="hidden sm:inline">{phase.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Search Button */}
           <button
             onClick={() => setShowSearch(!showSearch)}
