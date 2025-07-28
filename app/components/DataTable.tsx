@@ -17,6 +17,12 @@ export interface Filter {
   value: string
 }
 
+export interface PhaseButton {
+  id: string
+  name: string
+  icon: string
+}
+
 export interface DataTableProps {
   columns: Column[]
   data: any[]
@@ -27,6 +33,9 @@ export interface DataTableProps {
   selectedRows?: Set<number>
   onSelectionChange?: (selectedRows: Set<number>) => void
   onExportCSV?: (selectedRows: Set<number>) => void
+  phaseButtons?: PhaseButton[]
+  selectedPhase?: string | null
+  onPhaseSelect?: (phase: string | null) => void
 }
 
 export default function DataTable({ 
@@ -38,7 +47,10 @@ export default function DataTable({
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange,
-  onExportCSV
+  onExportCSV,
+  phaseButtons,
+  selectedPhase,
+  onPhaseSelect
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
@@ -254,17 +266,20 @@ export default function DataTable({
     <div className="space-y-4">
       {/* Actions Bar */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-        {/* Left side - Options dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-            title="Options"
-          >
-            <Icon name="chart-simple" size={16} />
-          </button>
-          
-                      {showDropdown && (
+        {/* Left side - Options and Phase Buttons */}
+        <div className="flex items-center space-x-4">
+          {/* Options dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), DROPDOWN_BLUR_TIMEOUT)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+              title="Options"
+            >
+              <Icon name="chart-simple" size={16} />
+            </button>
+            
+            {showDropdown && (
               <div className="absolute top-full left-0 mt-1 w-40 bg-white rounded-lg shadow-lg border z-10" style={{ borderColor: '#C0C9EE' }}>
                 <div className="py-1">
                   <button
@@ -292,10 +307,45 @@ export default function DataTable({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Phase Buttons */}
+          {phaseButtons && phaseButtons.length > 0 && (
+            <div className="flex items-center space-x-1">
+              <span className="text-xs font-medium text-gray-600 mr-2">Phases:</span>
+              {phaseButtons.map((phase) => (
+                <button
+                  key={phase.id}
+                  onClick={() => onPhaseSelect?.(selectedPhase === phase.id ? null : phase.id)}
+                  className={`flex items-center px-2 py-1 rounded text-xs font-medium transition-all duration-200 ${
+                    selectedPhase === phase.id
+                      ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title={phase.name}
+                >
+                  <Icon 
+                    name={
+                      phase.id === 'identification' ? 'binoculars' :
+                      phase.id === 'analysis' ? 'magnifying-glass-chart' :
+                      phase.id === 'evaluation' ? 'ruler' :
+                      phase.id === 'treatment' ? 'bandage' :
+                      phase.id === 'monitoring' ? 'file-waveform' :
+                      phase.icon
+                    } 
+                    size={12} 
+                    className="mr-1" 
+                  />
+                  <span className="hidden sm:inline">{phase.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right side - Search, Sort, Filter, and Columns buttons */}
         <div className="flex items-center space-x-2">
+
           {/* Search Button */}
           <button
             onClick={() => setShowSearch(!showSearch)}
