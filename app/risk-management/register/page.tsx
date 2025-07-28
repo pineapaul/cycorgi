@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 
@@ -47,6 +48,7 @@ const sampleRisks = [
     residualRiskAcceptedByOwner: '',
     dateResidualRiskAccepted: '',
     dateRiskTreatmentCompleted: '',
+    treatmentCount: 1,
   },
   {
     riskId: 'RISK-002',
@@ -80,6 +82,7 @@ const sampleRisks = [
     residualRiskAcceptedByOwner: '',
     dateResidualRiskAccepted: '',
     dateRiskTreatmentCompleted: '',
+    treatmentCount: 1,
   },
   {
     riskId: 'RISK-003',
@@ -113,6 +116,7 @@ const sampleRisks = [
     residualRiskAcceptedByOwner: '',
     dateResidualRiskAccepted: '',
     dateRiskTreatmentCompleted: '',
+    treatmentCount: 0,
   },
   {
     riskId: 'RISK-004',
@@ -146,6 +150,7 @@ const sampleRisks = [
     residualRiskAcceptedByOwner: 'Finance Director',
     dateResidualRiskAccepted: '2024-02-15',
     dateRiskTreatmentCompleted: '',
+    treatmentCount: 1,
   },
   {
     riskId: 'RISK-005',
@@ -212,6 +217,7 @@ const sampleRisks = [
     residualRiskAcceptedByOwner: 'Legal Director',
     dateResidualRiskAccepted: '2024-03-01',
     dateRiskTreatmentCompleted: '2024-03-15',
+    treatmentCount: 1,
   },
 ]
 
@@ -267,6 +273,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
     { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
     { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true },
+    { key: 'treatmentCount', label: 'Treatments', sortable: true },
   ]
 
   switch (phase) {
@@ -494,6 +501,23 @@ export default function RiskRegister() {
           </span>
         )
       }
+      if (col.key === 'treatmentCount') {
+        if (value === 0) {
+          return <span className="text-gray-400">0</span>
+        }
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              // Navigate to specific risk treatments page
+              window.location.href = `/risk-management/treatments/${row.riskId}`
+            }}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+          >
+            {value}
+          </button>
+        )
+      }
       return undefined
     }
   }))
@@ -503,7 +527,7 @@ export default function RiskRegister() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Risk Register</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Risk Management</h1>
         </div>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <button 
@@ -518,6 +542,24 @@ export default function RiskRegister() {
             <span className="sm:hidden">New</span>
           </button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <Link
+            href="/risk-management/register"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-blue-500 text-blue-600"
+          >
+            Register
+          </Link>
+          <Link
+            href="/risk-management/treatments"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          >
+            Treatments
+          </Link>
+        </nav>
       </div>
 
       {/* Phase Description */}
