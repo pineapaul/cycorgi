@@ -52,6 +52,7 @@ export default function DataTable({
   selectedPhase,
   onPhaseSelect
 }: DataTableProps) {
+
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -65,6 +66,7 @@ export default function DataTable({
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columns.map(col => col.key)))
+
 
   // Constants
   const DROPDOWN_BLUR_TIMEOUT = 150
@@ -153,6 +155,11 @@ export default function DataTable({
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedData = filteredAndSortedData.slice(startIndex, startIndex + itemsPerPage)
+  
+  console.log('🔍 DataTable - Data length:', data.length)
+  console.log('🔍 DataTable - Filtered and sorted data length:', filteredAndSortedData.length)
+  console.log('🔍 DataTable - Paginated data length:', paginatedData.length)
+  console.log('🔍 DataTable - Paginated data sample:', paginatedData[0])
 
   const handleSort = (columnKey: string, direction: 'asc' | 'desc') => {
     setSortColumn(columnKey)
@@ -630,6 +637,7 @@ export default function DataTable({
       {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="overflow-x-auto">
+
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -689,6 +697,7 @@ export default function DataTable({
                   key={rowIndex}
                   className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick && onRowClick(row)}
+
                 >
                   {selectable && (
                     <td
@@ -704,26 +713,29 @@ export default function DataTable({
                       />
                     </td>
                   )}
-                  {columns.filter(column => visibleColumns.has(column.key)).map((column) => (
-                    <td
-                      key={column.key}
-                      className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
-                        column.align === 'center' ? 'text-center' : 
-                        column.align === 'right' ? 'text-right' : 'text-left'
-                      }`}
-                      style={{ color: '#22223B' }}
-                    >
-                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''} ${
-                        column.align === 'center' ? 'flex justify-center' : 
-                        column.align === 'right' ? 'flex justify-end' : ''
-                      }`}>
-                        {column.render 
-                          ? column.render(row[column.key], row)
-                          : <span className="truncate block">{row[column.key] ? String(row[column.key]) : '-'}</span>
-                        }
-                      </div>
-                    </td>
-                  ))}
+                  {columns.filter(column => visibleColumns.has(column.key)).map((column) => {
+                    const cellValue = row[column.key]
+                    return (
+                      <td
+                        key={column.key}
+                        className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
+                          column.align === 'center' ? 'text-center' : 
+                          column.align === 'right' ? 'text-right' : 'text-left'
+                        }`}
+                        style={{ color: '#22223B' }}
+                      >
+                        <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''} ${
+                          column.align === 'center' ? 'flex justify-center' : 
+                          column.align === 'right' ? 'flex justify-end' : ''
+                        }`}>
+                          {column.render 
+                            ? column.render(cellValue, row)
+                            : <span className="truncate block">{cellValue ? String(cellValue) : '-'}</span>
+                          }
+                        </div>
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>

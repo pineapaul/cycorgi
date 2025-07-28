@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
@@ -92,6 +92,40 @@ const sampleTreatments = [
 
 export default function Treatments() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [treatments, setTreatments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch treatments from MongoDB
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/treatments')
+        const result = await response.json()
+        
+        if (result.success) {
+          // Transform the data to match the expected format
+          const transformedTreatments = result.data.map((treatment: any) => ({
+            ...treatment,
+            dueDate: treatment.dateRiskTreatmentDue,
+            dateRiskTreatmentsCompleted: treatment.completionDate,
+            dateOfClosureApproval: treatment.closureApproval === 'Approved' ? treatment.completionDate : '',
+          }))
+          setTreatments(transformedTreatments)
+        } else {
+          setError(result.error || 'Failed to fetch treatments')
+        }
+      } catch (err) {
+        setError('Failed to fetch treatments')
+        console.error('Error fetching treatments:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTreatments()
+  }, [])
 
   const handleRowClick = (row: any) => {
     console.log('Treatment clicked:', row)
@@ -215,18 +249,48 @@ export default function Treatments() {
         </nav>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading treatments...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <Icon name="warning" size={48} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Treatments</h3>
+          <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{ backgroundColor: '#898AC4', color: 'white' }}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Treatments Data Table */}
-      <DataTable
-        columns={columns}
-        data={sampleTreatments}
-        title="All Risk Treatments"
-        searchPlaceholder="Search treatments..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-      />
+      {!loading && !error && (
+        <DataTable
+          columns={columns}
+          data={treatments}
+          title="All Risk Treatments"
+          searchPlaceholder="Search treatments..."
+          onRowClick={handleRowClick}
+          selectable={true}
+          selectedRows={selectedRows}
+          onSelectionChange={setSelectedRows}
+          onExportCSV={handleExportCSV}
+        />
+      )}
     </div>
   )
 } 

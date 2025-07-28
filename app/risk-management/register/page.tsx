@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
@@ -410,8 +410,121 @@ const getColumnsForPhase = (phase: string): Column[] => {
 }
 
 export default function RiskRegister() {
+
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [risks, setRisks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch risks from MongoDB
+  useEffect(() => {
+    console.log('🚀 useEffect triggered - fetching risks')
+    const fetchRisks = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/risks')
+        const result = await response.json()
+        
+        if (result.success) {
+          console.log('🔍 Raw risk data structure:', Object.keys(result.data[0]))
+          console.log('🔍 Raw risk data sample:', result.data[0])
+          // Transform the data to match the expected format - simplified
+          const transformedRisks = result.data.map((risk: any) => {
+            // Create a new object with only the properties we need - simplified
+            const transformed = {
+              riskId: risk.riskId,
+              functionalUnit: risk.functionalUnit,
+              status: 'Identified',
+              jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
+              dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
+              raisedBy: risk.riskOwner,
+              riskOwner: risk.riskOwner, // Add this for the riskOwner column
+              affectedSites: 'All Sites',
+              informationAssets: risk.informationAsset,
+              threat: risk.threat,
+              vulnerability: risk.vulnerability,
+              riskStatement: risk.riskStatement,
+              impactCIA: risk.impact ? `C:${risk.impact.confidentiality} I:${risk.impact.integrity} A:${risk.impact.availability}` : 'Not specified',
+              currentControls: risk.currentControls,
+              currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
+              consequence: risk.consequenceRating,
+              likelihood: risk.likelihoodRating,
+              currentRiskRating: risk.riskRating,
+              riskAction: 'Requires treatment',
+              reasonForAcceptance: '',
+              dateOfSSCApproval: '',
+              riskTreatments: '',
+              dateRiskTreatmentsApproved: '',
+              dateRiskTreatmentsAssigned: '',
+              applicableControlsAfterTreatment: '',
+              residualConsequence: '',
+              residualLikelihood: '',
+              residualRiskRating: '',
+              residualRiskAcceptedByOwner: '',
+              dateResidualRiskAccepted: '',
+              dateRiskTreatmentCompleted: '',
+              treatmentCount: 4,
+            }
+            return transformed
+          })
+          console.log('🔍 Transformed risk data structure:', Object.keys(transformedRisks[0]))
+          console.log('🔍 Transformed risk data sample:', transformedRisks[0])
+          setRisks(transformedRisks)
+        } else {
+          setError(result.error || 'Failed to fetch risks')
+        }
+              } catch (err) {
+          setError('Failed to fetch risks')
+          console.error('Error fetching risks:', err)
+        } finally {
+          setLoading(false)
+        }
+    }
+
+    fetchRisks()
+  }, []) // Remove selectedPhase dependency to avoid infinite re-renders
+
+  // Update status when selectedPhase changes
+  useEffect(() => {
+    if (risks.length > 0 && selectedPhase) {
+      const updatedRisks = risks.map(risk => ({
+        riskId: risk.riskId,
+        functionalUnit: risk.functionalUnit,
+        status: getStatusForPhase(selectedPhase)[0] || 'Identified',
+        jiraTicket: risk.jiraTicket,
+        dateRiskRaised: risk.dateRiskRaised,
+        raisedBy: risk.raisedBy,
+        riskOwner: risk.riskOwner,
+        affectedSites: risk.affectedSites,
+        informationAssets: risk.informationAssets,
+        threat: risk.threat,
+        vulnerability: risk.vulnerability,
+        riskStatement: risk.riskStatement,
+        impactCIA: risk.impactCIA,
+        currentControls: risk.currentControls,
+        currentControlsReference: risk.currentControlsReference,
+        consequence: risk.consequence,
+        likelihood: risk.likelihood,
+        currentRiskRating: risk.currentRiskRating,
+        riskAction: risk.riskAction,
+        reasonForAcceptance: risk.reasonForAcceptance,
+        dateOfSSCApproval: risk.dateOfSSCApproval,
+        riskTreatments: risk.riskTreatments,
+        dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved,
+        dateRiskTreatmentsAssigned: risk.dateRiskTreatmentsAssigned,
+        applicableControlsAfterTreatment: risk.applicableControlsAfterTreatment,
+        residualConsequence: risk.residualConsequence,
+        residualLikelihood: risk.residualLikelihood,
+        residualRiskRating: risk.residualRiskRating,
+        residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner,
+        dateResidualRiskAccepted: risk.dateResidualRiskAccepted,
+        dateRiskTreatmentCompleted: risk.dateRiskTreatmentCompleted,
+        treatmentCount: risk.treatmentCount,
+      }))
+      setRisks(updatedRisks)
+    }
+  }, [selectedPhase])
 
   const handleRowClick = (row: any) => {
     console.log('Risk clicked:', row)
@@ -474,10 +587,19 @@ export default function RiskRegister() {
 
   // Filter data based on selected phase
   const filteredData = selectedPhase 
-    ? sampleRisks.filter(risk => getStatusForPhase(selectedPhase).includes(risk.status))
-    : sampleRisks // Show all risks when no phase is selected
+    ? risks.filter(risk => getStatusForPhase(selectedPhase).includes(risk.status))
+    : risks // Show all risks when no phase is selected
 
-  const columns = getColumnsForPhase(selectedPhase || 'full-view').map(col => ({
+  console.log('🔍 Filtered data length:', filteredData.length)
+  console.log('🔍 Filtered data sample:', filteredData[0])
+  console.log('🔍 Selected phase:', selectedPhase)
+  console.log('🔍 Risks state length:', risks.length)
+
+  const baseColumns = getColumnsForPhase(selectedPhase || 'full-view')
+  console.log('🔍 Base columns:', baseColumns.map(col => col.key))
+  console.log('🔍 Base columns length:', baseColumns.length)
+  
+  const columns = baseColumns.map(col => ({
     ...col,
     render: (value: any, row: any) => {
       if (col.key === 'status') {
@@ -518,7 +640,7 @@ export default function RiskRegister() {
           </button>
         )
       }
-      return undefined
+      return value // Return the value for all other columns
     }
   }))
 
@@ -596,21 +718,51 @@ export default function RiskRegister() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading risks...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <Icon name="warning" size={48} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Risks</h3>
+          <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{ backgroundColor: '#898AC4', color: 'white' }}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Risk Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredData}
-        title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
-        searchPlaceholder="Search risks..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-        phaseButtons={RISK_PHASES}
-        selectedPhase={selectedPhase}
-        onPhaseSelect={handlePhaseSelect}
-      />
+      {!loading && !error && (
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
+          searchPlaceholder="Search risks..."
+          onRowClick={handleRowClick}
+          selectable={true}
+          selectedRows={selectedRows}
+          onSelectionChange={setSelectedRows}
+          onExportCSV={handleExportCSV}
+          phaseButtons={RISK_PHASES}
+          selectedPhase={selectedPhase}
+          onPhaseSelect={handlePhaseSelect}
+        />
+      )}
     </div>
   )
 } 

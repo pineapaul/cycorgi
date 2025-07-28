@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../../components/DataTable'
 import Icon from '../../../components/Icon'
@@ -252,9 +252,49 @@ export default function RiskTreatments() {
   const router = useRouter()
   const riskId = params.riskId as string
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [riskDetails, setRiskDetails] = useState<any>(null)
+  const [treatments, setTreatments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const riskDetails = getRiskDetails(riskId)
-  const treatments = getRiskTreatments(riskId)
+  // Fetch risk details and treatments from MongoDB
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch risk details
+        const riskResponse = await fetch(`/api/risks/${riskId}`)
+        const riskResult = await riskResponse.json()
+        
+        if (!riskResult.success) {
+          setError('Risk not found')
+          setLoading(false)
+          return
+        }
+        
+        setRiskDetails(riskResult.data)
+        
+        // Fetch treatments for this risk
+        const treatmentsResponse = await fetch(`/api/treatments/${riskId}`)
+        const treatmentsResult = await treatmentsResponse.json()
+        
+        if (treatmentsResult.success) {
+          setTreatments(treatmentsResult.data)
+        }
+        
+      } catch (err) {
+        setError('Failed to fetch risk details')
+        console.error('Error fetching data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [riskId])
+
+
 
   const handleRowClick = (row: any) => {
     console.log('Treatment clicked:', row)
@@ -347,13 +387,32 @@ export default function RiskTreatments() {
     }
   }))
 
-  if (!riskDetails) {
+  // Loading State
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading risk details...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error State
+  if (error || !riskDetails) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
           <Icon name="exclamation-triangle" size={48} className="mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Risk Not Found</h2>
-          <p className="text-gray-600">The risk with ID "{riskId}" could not be found.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {error ? 'Error Loading Risk' : 'Risk Not Found'}
+          </h2>
+          <p className="text-gray-600">
+            {error || `The risk with ID "${riskId}" could not be found.`}
+          </p>
         </div>
       </div>
     )
