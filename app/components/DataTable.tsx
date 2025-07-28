@@ -634,10 +634,16 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="overflow-x-auto">
-
+      {/* Table with sticky horizontal scroll bar */}
+      <div className="bg-white rounded-lg border border-gray-200 relative">
+        {/* Table container with fixed height and scroll */}
+        <div 
+          className="overflow-x-auto overflow-y-auto data-table-container" 
+          style={{ 
+            maxHeight: 'calc(100vh - 300px)', 
+            minHeight: '400px'
+          }}
+        >
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>

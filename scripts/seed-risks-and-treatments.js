@@ -189,6 +189,10 @@ function generateRisks() {
       impact = { confidentiality: 'Low', integrity: 'Medium', availability: 'High' };
     }
 
+    // Distribute phases equally among 20 risks (4 risks per phase)
+    const phases = ['identification', 'analysis', 'evaluation', 'treatment', 'monitoring'];
+    const currentPhase = phases[Math.floor((i - 1) / 4)]; // 4 risks per phase
+
     const risk = {
       riskId,
       functionalUnit,
@@ -202,6 +206,16 @@ function generateRisks() {
       threat,
       vulnerability,
       currentControls: currentControlsValue,
+      currentPhase, // Add current phase field
+      // Add missing fields
+      reasonForAcceptance: i <= 5 ? 'High business impact requires immediate attention' : i <= 10 ? 'Moderate risk acceptable with monitoring' : i <= 15 ? 'Risk accepted pending treatment implementation' : 'Low risk acceptable with current controls',
+      dateOfSSCApproval: i <= 5 ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() : null,
+      dateRiskTreatmentsApproved: i <= 5 ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() : null,
+      residualConsequence: i <= 5 ? 'Medium' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
+      residualLikelihood: i <= 5 ? 'Low' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
+      residualRiskRating: i <= 5 ? 'Medium' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
+      residualRiskAcceptedByOwner: i <= 5 ? `${functionalUnit} Director` : i <= 10 ? `${functionalUnit} Manager` : i <= 15 ? `${functionalUnit} Director` : `${functionalUnit} Manager`,
+      dateResidualRiskAccepted: i <= 5 ? new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() : null,
       createdAt: new Date(),
       updatedAt: new Date()
     };

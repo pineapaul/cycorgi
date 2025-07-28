@@ -244,7 +244,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
     { key: 'riskId', label: 'Risk ID', sortable: true },
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
+    { key: 'currentPhase', label: 'Current Phase', sortable: true },
     { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
     { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true },
     { key: 'raisedBy', label: 'Raised By', sortable: true },
@@ -263,16 +263,12 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'riskAction', label: 'Risk Action', sortable: true },
     { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
     { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true },
-    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
     { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true },
-    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true },
-    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
     { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
     { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
     { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
     { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
     { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
-    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true },
     { key: 'treatmentCount', label: 'Treatments', sortable: true },
   ]
 
@@ -432,10 +428,22 @@ export default function RiskRegister() {
           // Transform the data to match the expected format - simplified
           const transformedRisks = result.data.map((risk: any) => {
             // Create a new object with only the properties we need - simplified
+            // Map phase values to display names
+            const getPhaseDisplayName = (phase: string) => {
+              const phaseMap: { [key: string]: string } = {
+                'identification': 'Identification',
+                'analysis': 'Analysis', 
+                'evaluation': 'Evaluation',
+                'treatment': 'Treatment',
+                'monitoring': 'Monitoring'
+              };
+              return phaseMap[phase] || phase;
+            };
+
             const transformed = {
               riskId: risk.riskId,
               functionalUnit: risk.functionalUnit,
-              status: 'Identified',
+              currentPhase: getPhaseDisplayName(risk.currentPhase),
               jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
               dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
               raisedBy: risk.riskOwner,
@@ -452,17 +460,17 @@ export default function RiskRegister() {
               likelihood: risk.likelihoodRating,
               currentRiskRating: risk.riskRating,
               riskAction: 'Requires treatment',
-              reasonForAcceptance: '',
-              dateOfSSCApproval: '',
+              reasonForAcceptance: risk.reasonForAcceptance || '',
+              dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
               riskTreatments: '',
-              dateRiskTreatmentsApproved: '',
+              dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
               dateRiskTreatmentsAssigned: '',
               applicableControlsAfterTreatment: '',
-              residualConsequence: '',
-              residualLikelihood: '',
-              residualRiskRating: '',
-              residualRiskAcceptedByOwner: '',
-              dateResidualRiskAccepted: '',
+              residualConsequence: risk.residualConsequence || '',
+              residualLikelihood: risk.residualLikelihood || '',
+              residualRiskRating: risk.residualRiskRating || '',
+              residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
+              dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
               dateRiskTreatmentCompleted: '',
               treatmentCount: 4,
             }
@@ -541,18 +549,18 @@ export default function RiskRegister() {
   }
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
+    
     switch (status.toLowerCase()) {
-      case 'identified':
+      case 'identification':
         return 'bg-blue-100 text-blue-800'
-      case 'under analysis':
+      case 'analysis':
         return 'bg-yellow-100 text-yellow-800'
-      case 'evaluated':
+      case 'evaluation':
         return 'bg-purple-100 text-purple-800'
-      case 'treatment planned':
+      case 'treatment':
         return 'bg-orange-100 text-orange-800'
-      case 'treatment in progress':
-        return 'bg-indigo-100 text-indigo-800'
-      case 'monitored':
+      case 'monitoring':
         return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
@@ -560,6 +568,8 @@ export default function RiskRegister() {
   }
 
   const getPriorityColor = (priority: string) => {
+    if (!priority) return 'bg-gray-100 text-gray-800'
+    
     switch (priority.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800'
@@ -573,6 +583,8 @@ export default function RiskRegister() {
   }
 
   const getRiskLevelColor = (level: string) => {
+    if (!level) return 'bg-gray-100 text-gray-800'
+    
     switch (level.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800'
@@ -602,7 +614,7 @@ export default function RiskRegister() {
   const columns = baseColumns.map(col => ({
     ...col,
     render: (value: any, row: any) => {
-      if (col.key === 'status') {
+      if (col.key === 'currentPhase') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
             {value}
