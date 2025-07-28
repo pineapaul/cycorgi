@@ -5,90 +5,7 @@ import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 
-// Sample treatment data
-const sampleTreatments = [
-  {
-    riskId: 'RISK-001',
-    treatmentJiraTicket: 'TREAT-001',
-    riskStatement: 'Risk of unauthorized access to sensitive customer data',
-    informationAsset: 'Customer Database, Payment Systems',
-    riskTreatment: 'Implement multi-factor authentication and access controls',
-    riskTreatmentOwner: 'IT Security Team',
-    dueDate: '2024-03-15',
-    extendedDueDate: '2024-04-15',
-    dateRiskTreatmentsCompleted: '2024-04-10',
-    dateOfClosureApproval: '2024-04-12',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-15',
-        approver: 'Security Manager',
-        dateApproved: '2024-03-10'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-002',
-    treatmentJiraTicket: 'TREAT-002',
-    riskStatement: 'Risk associated with third-party vendors accessing company systems',
-    informationAsset: 'Vendor Management System',
-    riskTreatment: 'Enhanced vendor security assessments and monitoring',
-    riskTreatmentOwner: 'Procurement Team',
-    dueDate: '2024-03-20',
-    extendedDueDate: '2024-05-20',
-    dateRiskTreatmentsCompleted: '',
-    dateOfClosureApproval: '',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-20',
-        approver: 'Procurement Director',
-        dateApproved: '2024-03-15'
-      },
-      {
-        extendedDueDate: '2024-05-20',
-        approver: 'Procurement Director',
-        dateApproved: '2024-04-15'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-004',
-    treatmentJiraTicket: 'TREAT-004',
-    riskStatement: 'Risk of financial fraud due to inadequate controls',
-    informationAsset: 'Financial Systems',
-    riskTreatment: 'Implement enhanced approval workflows and monitoring',
-    riskTreatmentOwner: 'Finance Team',
-    dueDate: '2024-03-30',
-    extendedDueDate: '2024-04-30',
-    dateRiskTreatmentsCompleted: '2024-04-25',
-    dateOfClosureApproval: '2024-04-28',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-30',
-        approver: 'Finance Director',
-        dateApproved: '2024-03-25'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-005',
-    treatmentJiraTicket: 'TREAT-005',
-    riskStatement: 'Risk of unauthorized access to employee personal data',
-    informationAsset: 'HR Systems',
-    riskTreatment: 'Implement multi-factor authentication and access reviews',
-    riskTreatmentOwner: 'HR Team',
-    dueDate: '2024-04-15',
-    extendedDueDate: '2024-05-15',
-    dateRiskTreatmentsCompleted: '',
-    dateOfClosureApproval: '',
-    extensions: [
-      {
-        extendedDueDate: '2024-05-15',
-        approver: 'HR Director',
-        dateApproved: '2024-04-10'
-      }
-    ]
-  }
-]
+
 
 export default function Treatments() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
@@ -128,13 +45,11 @@ export default function Treatments() {
   }, [])
 
   const handleRowClick = (row: any) => {
-    console.log('Treatment clicked:', row)
     // TODO: Navigate to specific risk treatments page
     // window.location.href = `/risk-management/treatments/${row.riskId}`
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    console.log('Exporting selected treatments:', selectedRows)
     // TODO: Implement CSV export
   }
 
@@ -205,7 +120,19 @@ export default function Treatments() {
         if (!value) return <span className="text-gray-400">-</span>
         return <span>{value}</span>
       }
-      return undefined
+      // Implement tooltip rendering for all content
+      const cellValue = value ? String(value) : '-'
+      return (
+        <div className="relative group">
+          <span className="truncate block max-w-full">
+            {cellValue}
+          </span>
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+            {cellValue}
+            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )
     }
   }))
 

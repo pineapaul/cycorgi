@@ -75,6 +75,7 @@ export default function DataTable({
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const filterDropdownRef = useRef<HTMLDivElement>(null)
   const columnsDropdownRef = useRef<HTMLDivElement>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // Available items per page options
   const itemsPerPageOptions = [5, 10, 25, 50, 100]
@@ -122,6 +123,20 @@ export default function DataTable({
     }
   }, [showSortDropdown, showFilterDropdown, showColumnsDropdown])
 
+  // Ensure horizontal scroll bar is always visible when data changes
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      // Force a reflow to ensure scroll dimensions are calculated correctly
+      tableContainerRef.current.style.overflowX = 'scroll'
+      // Small delay to ensure the DOM has updated
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.style.overflowX = 'auto'
+        }
+      }, 100)
+    }
+  }, [data, columns, visibleColumns])
+
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row =>
@@ -155,11 +170,6 @@ export default function DataTable({
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedData = filteredAndSortedData.slice(startIndex, startIndex + itemsPerPage)
-  
-  console.log('🔍 DataTable - Data length:', data.length)
-  console.log('🔍 DataTable - Filtered and sorted data length:', filteredAndSortedData.length)
-  console.log('🔍 DataTable - Paginated data length:', paginatedData.length)
-  console.log('🔍 DataTable - Paginated data sample:', paginatedData[0])
 
   const handleSort = (columnKey: string, direction: 'asc' | 'desc') => {
     setSortColumn(columnKey)
@@ -638,13 +648,14 @@ export default function DataTable({
       <div className="bg-white rounded-lg border border-gray-200 relative">
         {/* Table container with fixed height and scroll */}
         <div 
+          ref={tableContainerRef}
           className="overflow-x-auto overflow-y-auto data-table-container" 
           style={{ 
-            maxHeight: 'calc(100vh - 300px)', 
+            maxHeight: 'calc(100vh - 380px)', 
             minHeight: '400px'
           }}
         >
-          <table className="min-w-full">
+          <table className="min-w-full" style={{ minWidth: '1200px' }}>
             <thead className="bg-gray-50">
               <tr>
                 {selectable && (
@@ -730,13 +741,27 @@ export default function DataTable({
                         }`}
                         style={{ color: '#22223B' }}
                       >
-                        <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''} ${
+                        <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
+                          column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 
+                          column.key === 'riskStatement' ? 'max-w-96' :
+                          column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' : ''
+                        } ${
                           column.align === 'center' ? 'flex justify-center' : 
                           column.align === 'right' ? 'flex justify-end' : ''
                         }`}>
                           {column.render 
                             ? column.render(cellValue, row)
-                            : <span className="truncate block">{cellValue ? String(cellValue) : '-'}</span>
+                            : (
+                                <div className="relative group">
+                                  <span className="truncate block max-w-full">
+                                    {cellValue ? String(cellValue) : '-'}
+                                  </span>
+                                  <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+                                    {cellValue ? String(cellValue) : '-'}
+                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                  </div>
+                                </div>
+                              )
                           }
                         </div>
                       </td>
@@ -794,6 +819,20 @@ export default function DataTable({
           {/* Pagination controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center lg:justify-end space-x-1">
+              {/* First page button */}
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === 1 ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === 1 ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="First page"
+              >
+                <Icon name="chevron-double-left" size={14} />
+              </button>
+
               {/* Previous button */}
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -843,6 +882,20 @@ export default function DataTable({
                 title="Next page"
               >
                 <Icon name="chevron-right" size={14} />
+              </button>
+
+              {/* Last page button */}
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === totalPages ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === totalPages ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="Last page"
+              >
+                <Icon name="chevron-double-right" size={14} />
               </button>
             </div>
           )}

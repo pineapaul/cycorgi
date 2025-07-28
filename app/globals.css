@@ -53,3 +53,24 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .data-table-container {
   overflow-x: scroll !important;
 }
+
+/* Ensure horizontal scrollbar is always visible */
+.data-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f1f5f9;
+}
+
+/* Force horizontal scrollbar to be visible */
+.data-table-container::-webkit-scrollbar:horizontal {
+  height: 8px !important;
+}
+
+.data-table-container::-webkit-scrollbar-thumb:horizontal {
+  background: #cbd5e0 !important;
+  border-radius: 4px !important;
+}
+
+.data-table-container::-webkit-scrollbar-track:horizontal {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}

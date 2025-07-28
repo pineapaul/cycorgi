@@ -297,12 +297,10 @@ export default function RiskTreatments() {
 
 
   const handleRowClick = (row: any) => {
-    console.log('Treatment clicked:', row)
     // TODO: Navigate to treatment detail page
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    console.log('Exporting selected treatments:', selectedRows)
     // TODO: Implement CSV export
   }
 
@@ -383,7 +381,19 @@ export default function RiskTreatments() {
         if (!value) return <span className="text-gray-400">-</span>
         return <span>{value}</span>
       }
-      return undefined
+      // Implement tooltip rendering for all content
+      const cellValue = value ? String(value) : '-'
+      return (
+        <div className="relative group">
+          <span className="truncate block max-w-full">
+            {cellValue}
+          </span>
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+            {cellValue}
+            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )
     }
   }))
 
