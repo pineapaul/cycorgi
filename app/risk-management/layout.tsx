@@ -1,5 +1,28 @@
+'use client'
+
+import { useState } from 'react'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import DashboardLayout from '../layouts/DashboardLayout'
+import Icon from '../components/Icon'
 
 export default function RiskManagementLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardLayout>{children}</DashboardLayout>
+  const pathname = usePathname()
+  
+  const tabs = [
+    {
+      name: 'Register',
+      href: '/risk-management/register'
+    },
+    {
+      name: 'Treatments',
+      href: '/risk-management/treatments'
+    }
+  ]
+
+  return (
+    <DashboardLayout>
+      {children}
+    </DashboardLayout>
+  )
 } 
