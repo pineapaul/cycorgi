@@ -79,6 +79,60 @@ const getRiskDetails = (riskId: string) => {
       threat: 'Unauthorized access to sensitive employee information',
       vulnerability: 'Weak access controls, insufficient monitoring of HR system access',
       currentControls: 'Basic access controls, annual access reviews, data encryption'
+    },
+    'RISK-006': {
+      riskId: 'RISK-006',
+      functionalUnit: 'Operations',
+      informationAsset: 'Production Systems, Network Infrastructure',
+      riskStatement: 'Risk of system downtime and data loss due to inadequate backup procedures and disaster recovery planning, potentially leading to business interruption and revenue loss.',
+      riskRating: 'Medium',
+      consequenceRating: 'High',
+      likelihoodRating: 'Low',
+      impact: {
+        confidentiality: 'Low',
+        integrity: 'Medium',
+        availability: 'High'
+      },
+      riskOwner: 'Operations Director',
+      threat: 'Hardware failures, natural disasters, cyber attacks causing system outages',
+      vulnerability: 'Inadequate backup procedures, lack of disaster recovery testing, insufficient redundancy',
+      currentControls: 'Weekly backups, basic disaster recovery plan, annual testing'
+    },
+    'RISK-007': {
+      riskId: 'RISK-007',
+      functionalUnit: 'Legal',
+      informationAsset: 'Contract Management System, Legal Documents',
+      riskStatement: 'Risk of non-compliance with regulatory requirements and contractual obligations due to inadequate legal review processes and documentation management.',
+      riskRating: 'High',
+      consequenceRating: 'High',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'Medium',
+        integrity: 'High',
+        availability: 'Low'
+      },
+      riskOwner: 'Legal Director',
+      threat: 'Regulatory violations, contractual breaches, legal disputes',
+      vulnerability: 'Inadequate legal review processes, poor documentation management, lack of compliance monitoring',
+      currentControls: 'Basic contract review process, annual compliance audits, legal document storage'
+    },
+    'RISK-008': {
+      riskId: 'RISK-008',
+      functionalUnit: 'Marketing',
+      informationAsset: 'Customer Data, Marketing Campaigns',
+      riskStatement: 'Risk of data privacy violations and reputational damage due to inadequate customer consent management and data protection measures in marketing activities.',
+      riskRating: 'Medium',
+      consequenceRating: 'Medium',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'High',
+        integrity: 'Low',
+        availability: 'Low'
+      },
+      riskOwner: 'Marketing Director',
+      threat: 'Data privacy violations, customer complaints, regulatory fines',
+      vulnerability: 'Inadequate consent management, poor data protection practices, insufficient privacy controls',
+      currentControls: 'Basic consent collection, quarterly privacy reviews, data encryption'
     }
   }
   return riskDetails[riskId as keyof typeof riskDetails] || null
@@ -133,6 +187,56 @@ const getRiskTreatments = (riskId: string) => {
         riskTreatmentOwner: 'HR Team',
         dateRiskTreatmentDue: '2024-04-15',
         extendedDueDate: '2024-05-15',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
+    ],
+    'RISK-006': [
+      {
+        riskTreatment: 'Implement comprehensive backup and disaster recovery procedures',
+        treatmentJiraTicket: 'TREAT-006',
+        riskTreatmentOwner: 'Operations Team',
+        dateRiskTreatmentDue: '2024-05-01',
+        extendedDueDate: '2024-06-01',
+        numberOfExtensions: 1,
+        completionDate: '2024-05-28',
+        closureApproval: 'Approved',
+        closureApprovedBy: 'Operations Director'
+      },
+      {
+        riskTreatment: 'Conduct disaster recovery testing and training',
+        treatmentJiraTicket: 'TREAT-006A',
+        riskTreatmentOwner: 'Operations Team',
+        dateRiskTreatmentDue: '2024-06-15',
+        extendedDueDate: '2024-07-15',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
+    ],
+    'RISK-007': [
+      {
+        riskTreatment: 'Implement enhanced legal review and compliance monitoring processes',
+        treatmentJiraTicket: 'TREAT-007',
+        riskTreatmentOwner: 'Legal Team',
+        dateRiskTreatmentDue: '2024-05-10',
+        extendedDueDate: '2024-06-10',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
+    ],
+    'RISK-008': [
+      {
+        riskTreatment: 'Implement enhanced customer consent management and data protection',
+        treatmentJiraTicket: 'TREAT-008',
+        riskTreatmentOwner: 'Marketing Team',
+        dateRiskTreatmentDue: '2024-05-20',
+        extendedDueDate: '2024-06-20',
         numberOfExtensions: 1,
         completionDate: '',
         closureApproval: 'Pending',

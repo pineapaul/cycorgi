@@ -64,6 +64,10 @@ export default function DataTable({
   const [filters, setFilters] = useState<Filter[]>([])
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columns.map(col => col.key)))
+
+  // Constants
+  const DROPDOWN_BLUR_TIMEOUT = 150
 
   // Refs for dropdown containers
   const sortDropdownRef = useRef<HTMLDivElement>(null)
@@ -223,6 +227,24 @@ export default function DataTable({
       onExportCSV(selectedRows)
     }
     setShowDropdown(false)
+  }
+
+  const handleColumnToggle = (columnKey: string) => {
+    const newVisibleColumns = new Set(visibleColumns)
+    if (newVisibleColumns.has(columnKey)) {
+      newVisibleColumns.delete(columnKey)
+    } else {
+      newVisibleColumns.add(columnKey)
+    }
+    setVisibleColumns(newVisibleColumns)
+  }
+
+  const handleShowAllColumns = () => {
+    setVisibleColumns(new Set(columns.map(col => col.key)))
+  }
+
+  const handleHideAllColumns = () => {
+    setVisibleColumns(new Set())
   }
 
   // Generate page numbers for pagination
@@ -549,13 +571,30 @@ export default function DataTable({
                       <Icon name="close" size={12} className="text-gray-500" />
                     </button>
                   </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="flex space-x-2 mb-3">
+                    <button
+                      onClick={handleShowAllColumns}
+                      className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      Show All
+                    </button>
+                    <button
+                      onClick={handleHideAllColumns}
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                    >
+                      Hide All
+                    </button>
+                  </div>
+                  
                   <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                     {columns.map((column) => (
                       <label key={column.key} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={true}
-                          onChange={() => {}}
+                          checked={visibleColumns.has(column.key)}
+                          onChange={() => handleColumnToggle(column.key)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{column.label}</span>
@@ -614,7 +653,7 @@ export default function DataTable({
                     />
                   </th>
                 )}
-                {columns.map((column) => (
+                {columns.filter(column => visibleColumns.has(column.key)).map((column) => (
                   <th
                     key={column.key}
                     scope="col"
@@ -665,7 +704,7 @@ export default function DataTable({
                       />
                     </td>
                   )}
-                  {columns.map((column) => (
+                  {columns.filter(column => visibleColumns.has(column.key)).map((column) => (
                     <td
                       key={column.key}
                       className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
