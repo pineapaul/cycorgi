@@ -34,8 +34,9 @@ export default function Treatments() {
           setError(result.error || 'Failed to fetch treatments')
         }
       } catch (err) {
-        setError('Failed to fetch treatments')
-        console.error('Error fetching treatments:', err)
+        const errorMessage = err instanceof Error ? `Failed to fetch treatments: ${err.message}` : 'Failed to fetch treatments: An unknown error occurred';
+        setError(errorMessage);
+        console.error('Error fetching treatments:', err);
       } finally {
         setLoading(false)
       }
