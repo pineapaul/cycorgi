@@ -47,7 +47,9 @@ import {
   faRuler,
   faBandage,
   faGlobe,
-  faEarthOceania
+  faEarthOceania,
+  faAnglesLeft,
+  faAnglesRight
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -106,6 +108,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'file-waveform': faChartLine,
     globe: faGlobe,
     'earth-oceania': faEarthOceania,
+    'chevron-double-left': faAnglesLeft,
+    'chevron-double-right': faAnglesRight,
   }
 
   const icon = icons[name]
@@ -173,6 +177,8 @@ function getFallbackEmoji(name: string): string {
     'file-waveform': '📈',
     globe: '🌍',
     'earth-oceania': '🌍',
+    'chevron-double-left': '⏪',
+    'chevron-double-right': '⏩',
   }
   return emojiMap[name] || '📄'
 } 

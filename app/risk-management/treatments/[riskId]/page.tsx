@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../../components/DataTable'
 import Icon from '../../../components/Icon'
@@ -79,6 +79,60 @@ const getRiskDetails = (riskId: string) => {
       threat: 'Unauthorized access to sensitive employee information',
       vulnerability: 'Weak access controls, insufficient monitoring of HR system access',
       currentControls: 'Basic access controls, annual access reviews, data encryption'
+    },
+    'RISK-006': {
+      riskId: 'RISK-006',
+      functionalUnit: 'Operations',
+      informationAsset: 'Production Systems, Network Infrastructure',
+      riskStatement: 'Risk of system downtime and data loss due to inadequate backup procedures and disaster recovery planning, potentially leading to business interruption and revenue loss.',
+      riskRating: 'Medium',
+      consequenceRating: 'High',
+      likelihoodRating: 'Low',
+      impact: {
+        confidentiality: 'Low',
+        integrity: 'Medium',
+        availability: 'High'
+      },
+      riskOwner: 'Operations Director',
+      threat: 'Hardware failures, natural disasters, cyber attacks causing system outages',
+      vulnerability: 'Inadequate backup procedures, lack of disaster recovery testing, insufficient redundancy',
+      currentControls: 'Weekly backups, basic disaster recovery plan, annual testing'
+    },
+    'RISK-007': {
+      riskId: 'RISK-007',
+      functionalUnit: 'Legal',
+      informationAsset: 'Contract Management System, Legal Documents',
+      riskStatement: 'Risk of non-compliance with regulatory requirements and contractual obligations due to inadequate legal review processes and documentation management.',
+      riskRating: 'High',
+      consequenceRating: 'High',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'Medium',
+        integrity: 'High',
+        availability: 'Low'
+      },
+      riskOwner: 'Legal Director',
+      threat: 'Regulatory violations, contractual breaches, legal disputes',
+      vulnerability: 'Inadequate legal review processes, poor documentation management, lack of compliance monitoring',
+      currentControls: 'Basic contract review process, annual compliance audits, legal document storage'
+    },
+    'RISK-008': {
+      riskId: 'RISK-008',
+      functionalUnit: 'Marketing',
+      informationAsset: 'Customer Data, Marketing Campaigns',
+      riskStatement: 'Risk of data privacy violations and reputational damage due to inadequate customer consent management and data protection measures in marketing activities.',
+      riskRating: 'Medium',
+      consequenceRating: 'Medium',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'High',
+        integrity: 'Low',
+        availability: 'Low'
+      },
+      riskOwner: 'Marketing Director',
+      threat: 'Data privacy violations, customer complaints, regulatory fines',
+      vulnerability: 'Inadequate consent management, poor data protection practices, insufficient privacy controls',
+      currentControls: 'Basic consent collection, quarterly privacy reviews, data encryption'
     }
   }
   return riskDetails[riskId as keyof typeof riskDetails] || null
@@ -138,6 +192,56 @@ const getRiskTreatments = (riskId: string) => {
         closureApproval: 'Pending',
         closureApprovedBy: ''
       }
+    ],
+    'RISK-006': [
+      {
+        riskTreatment: 'Implement comprehensive backup and disaster recovery procedures',
+        treatmentJiraTicket: 'TREAT-006',
+        riskTreatmentOwner: 'Operations Team',
+        dateRiskTreatmentDue: '2024-05-01',
+        extendedDueDate: '2024-06-01',
+        numberOfExtensions: 1,
+        completionDate: '2024-05-28',
+        closureApproval: 'Approved',
+        closureApprovedBy: 'Operations Director'
+      },
+      {
+        riskTreatment: 'Conduct disaster recovery testing and training',
+        treatmentJiraTicket: 'TREAT-006A',
+        riskTreatmentOwner: 'Operations Team',
+        dateRiskTreatmentDue: '2024-06-15',
+        extendedDueDate: '2024-07-15',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
+    ],
+    'RISK-007': [
+      {
+        riskTreatment: 'Implement enhanced legal review and compliance monitoring processes',
+        treatmentJiraTicket: 'TREAT-007',
+        riskTreatmentOwner: 'Legal Team',
+        dateRiskTreatmentDue: '2024-05-10',
+        extendedDueDate: '2024-06-10',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
+    ],
+    'RISK-008': [
+      {
+        riskTreatment: 'Implement enhanced customer consent management and data protection',
+        treatmentJiraTicket: 'TREAT-008',
+        riskTreatmentOwner: 'Marketing Team',
+        dateRiskTreatmentDue: '2024-05-20',
+        extendedDueDate: '2024-06-20',
+        numberOfExtensions: 1,
+        completionDate: '',
+        closureApproval: 'Pending',
+        closureApprovedBy: ''
+      }
     ]
   }
   return treatments[riskId as keyof typeof treatments] || []
@@ -148,17 +252,55 @@ export default function RiskTreatments() {
   const router = useRouter()
   const riskId = params.riskId as string
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [riskDetails, setRiskDetails] = useState<any>(null)
+  const [treatments, setTreatments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const riskDetails = getRiskDetails(riskId)
-  const treatments = getRiskTreatments(riskId)
+  // Fetch risk details and treatments from MongoDB
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch risk details
+        const riskResponse = await fetch(`/api/risks/${riskId}`)
+        const riskResult = await riskResponse.json()
+        
+        if (!riskResult.success) {
+          setError('Risk not found')
+          setLoading(false)
+          return
+        }
+        
+        setRiskDetails(riskResult.data)
+        
+        // Fetch treatments for this risk
+        const treatmentsResponse = await fetch(`/api/treatments/${riskId}`)
+        const treatmentsResult = await treatmentsResponse.json()
+        
+        if (treatmentsResult.success) {
+          setTreatments(treatmentsResult.data)
+        }
+        
+      } catch (err) {
+        setError('Failed to fetch risk details')
+        console.error('Error fetching data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [riskId])
+
+
 
   const handleRowClick = (row: any) => {
-    console.log('Treatment clicked:', row)
     // TODO: Navigate to treatment detail page
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    console.log('Exporting selected treatments:', selectedRows)
     // TODO: Implement CSV export
   }
 
@@ -239,17 +381,48 @@ export default function RiskTreatments() {
         if (!value) return <span className="text-gray-400">-</span>
         return <span>{value}</span>
       }
-      return undefined
+      // Implement tooltip rendering for all content
+      const cellValue = value ? String(value) : '-'
+      return (
+        <div className="relative group">
+          <span className="truncate block max-w-full">
+            {cellValue}
+          </span>
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+            {cellValue}
+            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )
     }
   }))
 
-  if (!riskDetails) {
+  // Loading State
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading risk details...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error State
+  if (error || !riskDetails) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
           <Icon name="exclamation-triangle" size={48} className="mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Risk Not Found</h2>
-          <p className="text-gray-600">The risk with ID "{riskId}" could not be found.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {error ? 'Error Loading Risk' : 'Risk Not Found'}
+          </h2>
+          <p className="text-gray-600">
+            {error || `The risk with ID "${riskId}" could not be found.`}
+          </p>
         </div>
       </div>
     )

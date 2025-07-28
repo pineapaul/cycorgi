@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
@@ -14,228 +14,23 @@ const RISK_PHASES = [
   { id: 'monitoring', name: 'Monitoring', icon: 'eye' },
 ]
 
-// Sample risk data with all columns
-const sampleRisks = [
-  {
-    riskId: 'RISK-001',
-    functionalUnit: 'IT Security',
-    status: 'Identified',
-    jiraTicket: 'SEC-001',
-    dateRiskRaised: '2024-01-15',
-    raisedBy: 'John Smith',
-    riskOwner: 'IT Security Team',
-    affectedSites: 'Head Office, Data Center',
-    informationAssets: 'Customer Database, Payment Systems',
-    threat: 'Unauthorized Access',
-    vulnerability: 'Weak Access Controls',
-    riskStatement: 'Risk of unauthorized access to sensitive customer data',
-    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
-    currentControls: 'Basic password authentication',
-    currentControlsReference: 'IS-001',
-    consequence: 'Data breach, regulatory fines, reputational damage',
-    likelihood: 'Medium',
-    currentRiskRating: 'High',
-    riskAction: 'Requires treatment',
-    reasonForAcceptance: '',
-    dateOfSSCApproval: '',
-    riskTreatments: '',
-    dateRiskTreatmentsApproved: '',
-    dateRiskTreatmentsAssigned: '',
-    applicableControlsAfterTreatment: '',
-    residualConsequence: '',
-    residualLikelihood: '',
-    residualRiskRating: '',
-    residualRiskAcceptedByOwner: '',
-    dateResidualRiskAccepted: '',
-    dateRiskTreatmentCompleted: '',
-    treatmentCount: 1,
-  },
-  {
-    riskId: 'RISK-002',
-    functionalUnit: 'Procurement',
-    status: 'Under Analysis',
-    jiraTicket: 'PROC-002',
-    dateRiskRaised: '2024-01-20',
-    raisedBy: 'Sarah Johnson',
-    riskOwner: 'Procurement Team',
-    affectedSites: 'All Sites',
-    informationAssets: 'Vendor Management System',
-    threat: 'Third-party Data Breach',
-    vulnerability: 'Insufficient vendor security controls',
-    riskStatement: 'Risk associated with third-party vendors accessing company systems',
-    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
-    currentControls: 'Vendor security questionnaire',
-    currentControlsReference: 'PROC-001',
-    consequence: 'Data exposure, compliance violations',
-    likelihood: 'Medium',
-    currentRiskRating: 'Medium',
-    riskAction: 'Under analysis',
-    reasonForAcceptance: '',
-    dateOfSSCApproval: '',
-    riskTreatments: '',
-    dateRiskTreatmentsApproved: '',
-    dateRiskTreatmentsAssigned: '',
-    applicableControlsAfterTreatment: '',
-    residualConsequence: '',
-    residualLikelihood: '',
-    residualRiskRating: '',
-    residualRiskAcceptedByOwner: '',
-    dateResidualRiskAccepted: '',
-    dateRiskTreatmentCompleted: '',
-    treatmentCount: 1,
-  },
-  {
-    riskId: 'RISK-003',
-    functionalUnit: 'Operations',
-    status: 'Evaluated',
-    jiraTicket: 'OPS-003',
-    dateRiskRaised: '2024-01-25',
-    raisedBy: 'Mike Davis',
-    riskOwner: 'Operations Team',
-    affectedSites: 'All Sites',
-    informationAssets: 'Core Business Systems',
-    threat: 'System Failure',
-    vulnerability: 'Single point of failure',
-    riskStatement: 'Risk of business disruption due to system failures',
-    impactCIA: 'Confidentiality - Low, Integrity - Medium, Availability - High',
-    currentControls: 'Backup systems, monitoring',
-    currentControlsReference: 'OPS-001',
-    consequence: 'Business disruption, revenue loss',
-    likelihood: 'Low',
-    currentRiskRating: 'Medium',
-    riskAction: 'Acceptable risk',
-    reasonForAcceptance: 'Risk level within acceptable limits',
-    dateOfSSCApproval: '2024-02-01',
-    riskTreatments: '',
-    dateRiskTreatmentsApproved: '',
-    dateRiskTreatmentsAssigned: '',
-    applicableControlsAfterTreatment: '',
-    residualConsequence: '',
-    residualLikelihood: '',
-    residualRiskRating: '',
-    residualRiskAcceptedByOwner: '',
-    dateResidualRiskAccepted: '',
-    dateRiskTreatmentCompleted: '',
-    treatmentCount: 0,
-  },
-  {
-    riskId: 'RISK-004',
-    functionalUnit: 'Finance',
-    status: 'Treatment Planned',
-    jiraTicket: 'FIN-004',
-    dateRiskRaised: '2024-01-30',
-    raisedBy: 'Lisa Chen',
-    riskOwner: 'Finance Team',
-    affectedSites: 'Head Office',
-    informationAssets: 'Financial Systems',
-    threat: 'Fraud',
-    vulnerability: 'Insufficient segregation of duties',
-    riskStatement: 'Risk of financial fraud due to inadequate controls',
-    impactCIA: 'Confidentiality - High, Integrity - High, Availability - Medium',
-    currentControls: 'Basic approval workflows',
-    currentControlsReference: 'FIN-001',
-    consequence: 'Financial loss, regulatory penalties',
-    likelihood: 'Medium',
-    currentRiskRating: 'High',
-    riskAction: 'Requires treatment',
-    reasonForAcceptance: '',
-    dateOfSSCApproval: '',
-    riskTreatments: 'Implement enhanced approval workflows and monitoring',
-    dateRiskTreatmentsApproved: '2024-02-05',
-    dateRiskTreatmentsAssigned: '2024-02-10',
-    applicableControlsAfterTreatment: 'Enhanced approval workflows, fraud monitoring',
-    residualConsequence: 'Reduced financial loss',
-    residualLikelihood: 'Low',
-    residualRiskRating: 'Low',
-    residualRiskAcceptedByOwner: 'Finance Director',
-    dateResidualRiskAccepted: '2024-02-15',
-    dateRiskTreatmentCompleted: '',
-    treatmentCount: 1,
-  },
-  {
-    riskId: 'RISK-005',
-    functionalUnit: 'HR',
-    status: 'Treatment In Progress',
-    jiraTicket: 'HR-005',
-    dateRiskRaised: '2024-02-01',
-    raisedBy: 'David Wilson',
-    riskOwner: 'HR Team',
-    affectedSites: 'All Sites',
-    informationAssets: 'HR Systems',
-    threat: 'Data Breach',
-    vulnerability: 'Weak access controls',
-    riskStatement: 'Risk of unauthorized access to employee personal data',
-    impactCIA: 'Confidentiality - High, Integrity - Medium, Availability - Low',
-    currentControls: 'Basic authentication',
-    currentControlsReference: 'HR-001',
-    consequence: 'Privacy violations, legal action',
-    likelihood: 'Medium',
-    currentRiskRating: 'High',
-    riskAction: 'Requires treatment',
-    reasonForAcceptance: '',
-    dateOfSSCApproval: '',
-    riskTreatments: 'Implement multi-factor authentication and access reviews',
-    dateRiskTreatmentsApproved: '2024-02-10',
-    dateRiskTreatmentsAssigned: '2024-02-15',
-    applicableControlsAfterTreatment: 'Multi-factor authentication, regular access reviews',
-    residualConsequence: 'Reduced privacy risk',
-    residualLikelihood: 'Low',
-    residualRiskRating: 'Low',
-    residualRiskAcceptedByOwner: 'HR Director',
-    dateResidualRiskAccepted: '2024-02-20',
-    dateRiskTreatmentCompleted: '',
-  },
-  {
-    riskId: 'RISK-006',
-    functionalUnit: 'Legal',
-    status: 'Monitored',
-    jiraTicket: 'LEG-006',
-    dateRiskRaised: '2024-02-05',
-    raisedBy: 'Emma Thompson',
-    riskOwner: 'Legal Team',
-    affectedSites: 'All Sites',
-    informationAssets: 'Legal Documents',
-    threat: 'Regulatory Changes',
-    vulnerability: 'Outdated compliance procedures',
-    riskStatement: 'Risk of non-compliance with new regulations',
-    impactCIA: 'Confidentiality - Medium, Integrity - High, Availability - Low',
-    currentControls: 'Regular compliance reviews',
-    currentControlsReference: 'LEG-001',
-    consequence: 'Regulatory fines, legal action',
-    likelihood: 'Low',
-    currentRiskRating: 'Medium',
-    riskAction: 'Acceptable risk',
-    reasonForAcceptance: 'Risk level acceptable with monitoring',
-    dateOfSSCApproval: '2024-02-15',
-    riskTreatments: 'Enhanced compliance monitoring and training',
-    dateRiskTreatmentsApproved: '2024-02-20',
-    dateRiskTreatmentsAssigned: '2024-02-25',
-    applicableControlsAfterTreatment: 'Enhanced compliance monitoring, regular training',
-    residualConsequence: 'Reduced compliance risk',
-    residualLikelihood: 'Low',
-    residualRiskRating: 'Low',
-    residualRiskAcceptedByOwner: 'Legal Director',
-    dateResidualRiskAccepted: '2024-03-01',
-    dateRiskTreatmentCompleted: '2024-03-15',
-    treatmentCount: 1,
-  },
-]
+
 
 // Get status values for each phase
-const getStatusForPhase = (phase: string): string[] => {
+const getCurrentPhaseForFilter = (phase: string): string => {
   switch (phase) {
     case 'identification':
-      return ['Identified']
+      return 'Identification'
     case 'analysis':
-      return ['Under Analysis']
+      return 'Analysis'
     case 'evaluation':
-      return ['Evaluated']
+      return 'Evaluation'
     case 'treatment':
-      return ['Treatment Planned', 'Treatment In Progress']
+      return 'Treatment'
     case 'monitoring':
-      return ['Monitored']
+      return 'Monitoring'
     default:
-      return []
+      return ''
   }
 }
 
@@ -244,7 +39,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
     { key: 'riskId', label: 'Risk ID', sortable: true },
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
+    { key: 'currentPhase', label: 'Current Phase', sortable: true },
     { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
     { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true },
     { key: 'raisedBy', label: 'Raised By', sortable: true },
@@ -263,16 +58,12 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'riskAction', label: 'Risk Action', sortable: true },
     { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
     { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true },
-    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
     { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true },
-    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true },
-    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
     { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
     { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
     { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
     { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
     { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
-    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true },
     { key: 'treatmentCount', label: 'Treatments', sortable: true },
   ]
 
@@ -410,16 +201,101 @@ const getColumnsForPhase = (phase: string): Column[] => {
 }
 
 export default function RiskRegister() {
+
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [risks, setRisks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch risks from MongoDB
+  useEffect(() => {
+    const fetchRisks = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/risks')
+        const result = await response.json()
+        
+        if (result.success) {
+          // Transform the data to match the expected format - simplified
+          const transformedRisks = result.data.map((risk: any) => {
+            // Create a new object with only the properties we need - simplified
+            // Map phase values to display names
+            const getPhaseDisplayName = (phase: string) => {
+              const phaseMap: { [key: string]: string } = {
+                'identification': 'Identification',
+                'analysis': 'Analysis', 
+                'evaluation': 'Evaluation',
+                'treatment': 'Treatment',
+                'monitoring': 'Monitoring'
+              };
+              return phaseMap[phase] || phase;
+            };
+
+            const transformed = {
+              riskId: risk.riskId,
+              functionalUnit: risk.functionalUnit,
+              currentPhase: getPhaseDisplayName(risk.currentPhase),
+              jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
+              dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
+              raisedBy: risk.riskOwner,
+              riskOwner: risk.riskOwner, // Add this for the riskOwner column
+              affectedSites: 'All Sites',
+              informationAssets: risk.informationAsset,
+              threat: risk.threat,
+              vulnerability: risk.vulnerability,
+              riskStatement: risk.riskStatement,
+              impactCIA: risk.impact ? `C:${risk.impact.confidentiality} I:${risk.impact.integrity} A:${risk.impact.availability}` : 'Not specified',
+              currentControls: risk.currentControls,
+              currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
+              consequence: risk.consequenceRating,
+              likelihood: risk.likelihoodRating,
+              currentRiskRating: risk.riskRating,
+              riskAction: 'Requires treatment',
+              reasonForAcceptance: risk.reasonForAcceptance || '',
+              dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
+              riskTreatments: '',
+              dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
+              dateRiskTreatmentsAssigned: '',
+              applicableControlsAfterTreatment: '',
+              residualConsequence: risk.residualConsequence || '',
+              residualLikelihood: risk.residualLikelihood || '',
+              residualRiskRating: risk.residualRiskRating || '',
+              residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
+              dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
+              dateRiskTreatmentCompleted: '',
+              treatmentCount: 4,
+            }
+            return transformed
+          })
+          setRisks(transformedRisks)
+        } else {
+          setError(result.error || 'Failed to fetch risks')
+        }
+              } catch (err) {
+          if (err instanceof TypeError) {
+            setError('Network error: Failed to fetch risks. Please check your connection.')
+          } else if (err instanceof SyntaxError) {
+            setError('Parsing error: Received malformed data from the server.')
+          } else {
+            setError('Unexpected error: Failed to fetch risks.')
+          }
+          console.error('Error fetching risks:', err)
+        } finally {
+          setLoading(false)
+        }
+    }
+
+    fetchRisks()
+  }, []) // Remove selectedPhase dependency to avoid infinite re-renders
+
+
 
   const handleRowClick = (row: any) => {
-    console.log('Risk clicked:', row)
     // TODO: Implement risk detail view
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    console.log('Exporting selected risks:', selectedRows)
     // TODO: Implement CSV export
   }
 
@@ -428,18 +304,18 @@ export default function RiskRegister() {
   }
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
+    
     switch (status.toLowerCase()) {
-      case 'identified':
+      case 'identification':
         return 'bg-blue-100 text-blue-800'
-      case 'under analysis':
+      case 'analysis':
         return 'bg-yellow-100 text-yellow-800'
-      case 'evaluated':
+      case 'evaluation':
         return 'bg-purple-100 text-purple-800'
-      case 'treatment planned':
+      case 'treatment':
         return 'bg-orange-100 text-orange-800'
-      case 'treatment in progress':
-        return 'bg-indigo-100 text-indigo-800'
-      case 'monitored':
+      case 'monitoring':
         return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
@@ -447,6 +323,8 @@ export default function RiskRegister() {
   }
 
   const getPriorityColor = (priority: string) => {
+    if (!priority) return 'bg-gray-100 text-gray-800'
+    
     switch (priority.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800'
@@ -460,6 +338,8 @@ export default function RiskRegister() {
   }
 
   const getRiskLevelColor = (level: string) => {
+    if (!level) return 'bg-gray-100 text-gray-800'
+    
     switch (level.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800'
@@ -474,13 +354,15 @@ export default function RiskRegister() {
 
   // Filter data based on selected phase
   const filteredData = selectedPhase 
-    ? sampleRisks.filter(risk => getStatusForPhase(selectedPhase).includes(risk.status))
-    : sampleRisks // Show all risks when no phase is selected
+    ? risks.filter(risk => risk.currentPhase === getCurrentPhaseForFilter(selectedPhase))
+    : risks // Show all risks when no phase is selected
 
-  const columns = getColumnsForPhase(selectedPhase || 'full-view').map(col => ({
+  const baseColumns = getColumnsForPhase(selectedPhase || 'full-view')
+  
+  const columns = baseColumns.map(col => ({
     ...col,
     render: (value: any, row: any) => {
-      if (col.key === 'status') {
+      if (col.key === 'currentPhase') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
             {value}
@@ -495,6 +377,13 @@ export default function RiskRegister() {
         )
       }
       if (col.key === 'likelihood' || col.key === 'residualLikelihood') {
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
+            {value}
+          </span>
+        )
+      }
+      if (col.key === 'consequence' || col.key === 'residualConsequence') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
             {value}
@@ -518,7 +407,19 @@ export default function RiskRegister() {
           </button>
         )
       }
-      return undefined
+      // Implement tooltip rendering for all content
+      const cellValue = value ? String(value) : '-'
+      return (
+        <div className="relative group">
+          <span className="truncate block max-w-full">
+            {cellValue}
+          </span>
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+            {cellValue}
+            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )
     }
   }))
 
@@ -596,21 +497,51 @@ export default function RiskRegister() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading risks...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <Icon name="warning" size={48} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Risks</h3>
+          <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{ backgroundColor: '#898AC4', color: 'white' }}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Risk Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredData}
-        title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
-        searchPlaceholder="Search risks..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-        phaseButtons={RISK_PHASES}
-        selectedPhase={selectedPhase}
-        onPhaseSelect={handlePhaseSelect}
-      />
+      {!loading && !error && (
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
+          searchPlaceholder="Search risks..."
+          onRowClick={handleRowClick}
+          selectable={true}
+          selectedRows={selectedRows}
+          onSelectionChange={setSelectedRows}
+          onExportCSV={handleExportCSV}
+          phaseButtons={RISK_PHASES}
+          selectedPhase={selectedPhase}
+          onPhaseSelect={handlePhaseSelect}
+        />
+      )}
     </div>
   )
 } 

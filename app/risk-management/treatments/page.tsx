@@ -1,106 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 
-// Sample treatment data
-const sampleTreatments = [
-  {
-    riskId: 'RISK-001',
-    treatmentJiraTicket: 'TREAT-001',
-    riskStatement: 'Risk of unauthorized access to sensitive customer data',
-    informationAsset: 'Customer Database, Payment Systems',
-    riskTreatment: 'Implement multi-factor authentication and access controls',
-    riskTreatmentOwner: 'IT Security Team',
-    dueDate: '2024-03-15',
-    extendedDueDate: '2024-04-15',
-    dateRiskTreatmentsCompleted: '2024-04-10',
-    dateOfClosureApproval: '2024-04-12',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-15',
-        approver: 'Security Manager',
-        dateApproved: '2024-03-10'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-002',
-    treatmentJiraTicket: 'TREAT-002',
-    riskStatement: 'Risk associated with third-party vendors accessing company systems',
-    informationAsset: 'Vendor Management System',
-    riskTreatment: 'Enhanced vendor security assessments and monitoring',
-    riskTreatmentOwner: 'Procurement Team',
-    dueDate: '2024-03-20',
-    extendedDueDate: '2024-05-20',
-    dateRiskTreatmentsCompleted: '',
-    dateOfClosureApproval: '',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-20',
-        approver: 'Procurement Director',
-        dateApproved: '2024-03-15'
-      },
-      {
-        extendedDueDate: '2024-05-20',
-        approver: 'Procurement Director',
-        dateApproved: '2024-04-15'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-004',
-    treatmentJiraTicket: 'TREAT-004',
-    riskStatement: 'Risk of financial fraud due to inadequate controls',
-    informationAsset: 'Financial Systems',
-    riskTreatment: 'Implement enhanced approval workflows and monitoring',
-    riskTreatmentOwner: 'Finance Team',
-    dueDate: '2024-03-30',
-    extendedDueDate: '2024-04-30',
-    dateRiskTreatmentsCompleted: '2024-04-25',
-    dateOfClosureApproval: '2024-04-28',
-    extensions: [
-      {
-        extendedDueDate: '2024-04-30',
-        approver: 'Finance Director',
-        dateApproved: '2024-03-25'
-      }
-    ]
-  },
-  {
-    riskId: 'RISK-005',
-    treatmentJiraTicket: 'TREAT-005',
-    riskStatement: 'Risk of unauthorized access to employee personal data',
-    informationAsset: 'HR Systems',
-    riskTreatment: 'Implement multi-factor authentication and access reviews',
-    riskTreatmentOwner: 'HR Team',
-    dueDate: '2024-04-15',
-    extendedDueDate: '2024-05-15',
-    dateRiskTreatmentsCompleted: '',
-    dateOfClosureApproval: '',
-    extensions: [
-      {
-        extendedDueDate: '2024-05-15',
-        approver: 'HR Director',
-        dateApproved: '2024-04-10'
-      }
-    ]
-  }
-]
+
 
 export default function Treatments() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [treatments, setTreatments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch treatments from MongoDB
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/treatments')
+        const result = await response.json()
+        
+        if (result.success) {
+          // Transform the data to match the expected format
+          const transformedTreatments = result.data.map((treatment: any) => ({
+            ...treatment,
+            dueDate: treatment.dateRiskTreatmentDue,
+            dateRiskTreatmentsCompleted: treatment.completionDate,
+            dateOfClosureApproval: treatment.closureApproval === 'Approved' ? treatment.completionDate : '',
+          }))
+          setTreatments(transformedTreatments)
+        } else {
+          setError(result.error || 'Failed to fetch treatments')
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? `Failed to fetch treatments: ${err.message}` : 'Failed to fetch treatments: An unknown error occurred';
+        setError(errorMessage);
+        console.error('Error fetching treatments:', err);
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTreatments()
+  }, [])
 
   const handleRowClick = (row: any) => {
-    console.log('Treatment clicked:', row)
     // TODO: Navigate to specific risk treatments page
     // window.location.href = `/risk-management/treatments/${row.riskId}`
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    console.log('Exporting selected treatments:', selectedRows)
     // TODO: Implement CSV export
   }
 
@@ -151,8 +101,8 @@ export default function Treatments() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              // TODO: Navigate to specific risk treatments page
-              console.log('Navigate to risk treatments for:', value)
+              // Navigate to specific risk treatments page
+              window.location.href = `/risk-management/treatments/${value}`
             }}
             className="text-blue-600 hover:text-blue-800 underline font-medium"
           >
@@ -171,7 +121,19 @@ export default function Treatments() {
         if (!value) return <span className="text-gray-400">-</span>
         return <span>{value}</span>
       }
-      return undefined
+      // Implement tooltip rendering for all content
+      const cellValue = value ? String(value) : '-'
+      return (
+        <div className="relative group">
+          <span className="truncate block max-w-full">
+            {cellValue}
+          </span>
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+            {cellValue}
+            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )
     }
   }))
 
@@ -215,18 +177,48 @@ export default function Treatments() {
         </nav>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading treatments...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">
+            <Icon name="warning" size={48} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Treatments</h3>
+          <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{ backgroundColor: '#898AC4', color: 'white' }}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Treatments Data Table */}
-      <DataTable
-        columns={columns}
-        data={sampleTreatments}
-        title="All Risk Treatments"
-        searchPlaceholder="Search treatments..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-      />
+      {!loading && !error && (
+        <DataTable
+          columns={columns}
+          data={treatments}
+          title="All Risk Treatments"
+          searchPlaceholder="Search treatments..."
+          onRowClick={handleRowClick}
+          selectable={true}
+          selectedRows={selectedRows}
+          onSelectionChange={setSelectedRows}
+          onExportCSV={handleExportCSV}
+        />
+      )}
     </div>
   )
 } 

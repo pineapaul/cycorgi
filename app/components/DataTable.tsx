@@ -52,6 +52,7 @@ export default function DataTable({
   selectedPhase,
   onPhaseSelect
 }: DataTableProps) {
+
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -64,11 +65,17 @@ export default function DataTable({
   const [filters, setFilters] = useState<Filter[]>([])
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columns.map(col => col.key)))
+
+
+  // Constants
+  const DROPDOWN_BLUR_TIMEOUT = 150
 
   // Refs for dropdown containers
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const filterDropdownRef = useRef<HTMLDivElement>(null)
   const columnsDropdownRef = useRef<HTMLDivElement>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   // Available items per page options
   const itemsPerPageOptions = [5, 10, 25, 50, 100]
@@ -115,6 +122,20 @@ export default function DataTable({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showSortDropdown, showFilterDropdown, showColumnsDropdown])
+
+  // Ensure horizontal scroll bar is always visible when data changes
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      // Force a reflow to ensure scroll dimensions are calculated correctly
+      tableContainerRef.current.style.overflowX = 'scroll'
+      // Small delay to ensure the DOM has updated
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.style.overflowX = 'auto'
+        }
+      }, 100)
+    }
+  }, [data, columns, visibleColumns])
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -223,6 +244,24 @@ export default function DataTable({
       onExportCSV(selectedRows)
     }
     setShowDropdown(false)
+  }
+
+  const handleColumnToggle = (columnKey: string) => {
+    const newVisibleColumns = new Set(visibleColumns)
+    if (newVisibleColumns.has(columnKey)) {
+      newVisibleColumns.delete(columnKey)
+    } else {
+      newVisibleColumns.add(columnKey)
+    }
+    setVisibleColumns(newVisibleColumns)
+  }
+
+  const handleShowAllColumns = () => {
+    setVisibleColumns(new Set(columns.map(col => col.key)))
+  }
+
+  const handleHideAllColumns = () => {
+    setVisibleColumns(new Set())
   }
 
   // Generate page numbers for pagination
@@ -549,13 +588,30 @@ export default function DataTable({
                       <Icon name="close" size={12} className="text-gray-500" />
                     </button>
                   </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="flex space-x-2 mb-3">
+                    <button
+                      onClick={handleShowAllColumns}
+                      className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      Show All
+                    </button>
+                    <button
+                      onClick={handleHideAllColumns}
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                    >
+                      Hide All
+                    </button>
+                  </div>
+                  
                   <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                     {columns.map((column) => (
                       <label key={column.key} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={true}
-                          onChange={() => {}}
+                          checked={visibleColumns.has(column.key)}
+                          onChange={() => handleColumnToggle(column.key)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{column.label}</span>
@@ -588,10 +644,18 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
+      {/* Table with sticky horizontal scroll bar */}
+      <div className="bg-white rounded-lg border border-gray-200 relative">
+        {/* Table container with fixed height and scroll */}
+        <div 
+          ref={tableContainerRef}
+          className="overflow-x-auto overflow-y-auto data-table-container" 
+          style={{ 
+            maxHeight: 'calc(100vh - 380px)', 
+            minHeight: '400px'
+          }}
+        >
+          <table className="min-w-full" style={{ minWidth: '1200px' }}>
             <thead className="bg-gray-50">
               <tr>
                 {selectable && (
@@ -614,7 +678,7 @@ export default function DataTable({
                     />
                   </th>
                 )}
-                {columns.map((column) => (
+                {columns.filter(column => visibleColumns.has(column.key)).map((column) => (
                   <th
                     key={column.key}
                     scope="col"
@@ -650,6 +714,7 @@ export default function DataTable({
                   key={rowIndex}
                   className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick && onRowClick(row)}
+
                 >
                   {selectable && (
                     <td
@@ -665,26 +730,43 @@ export default function DataTable({
                       />
                     </td>
                   )}
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
-                        column.align === 'center' ? 'text-center' : 
-                        column.align === 'right' ? 'text-right' : 'text-left'
-                      }`}
-                      style={{ color: '#22223B' }}
-                    >
-                      <div className={`${column.width ? 'max-w-full' : ''} ${column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : ''} ${
-                        column.align === 'center' ? 'flex justify-center' : 
-                        column.align === 'right' ? 'flex justify-end' : ''
-                      }`}>
-                        {column.render 
-                          ? column.render(row[column.key], row)
-                          : <span className="truncate block">{row[column.key] ? String(row[column.key]) : '-'}</span>
-                        }
-                      </div>
-                    </td>
-                  ))}
+                  {columns.filter(column => visibleColumns.has(column.key)).map((column) => {
+                    const cellValue = row[column.key]
+                    return (
+                      <td
+                        key={column.key}
+                        className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
+                          column.align === 'center' ? 'text-center' : 
+                          column.align === 'right' ? 'text-right' : 'text-left'
+                        }`}
+                        style={{ color: '#22223B' }}
+                      >
+                        <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
+                          column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 
+                          column.key === 'riskStatement' ? 'max-w-96' :
+                          column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' : ''
+                        } ${
+                          column.align === 'center' ? 'flex justify-center' : 
+                          column.align === 'right' ? 'flex justify-end' : ''
+                        }`}>
+                          {column.render 
+                            ? column.render(cellValue, row)
+                            : (
+                                <div className="relative group">
+                                  <span className="truncate block max-w-full">
+                                    {cellValue ? String(cellValue) : '-'}
+                                  </span>
+                                  <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+                                    {cellValue ? String(cellValue) : '-'}
+                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                  </div>
+                                </div>
+                              )
+                          }
+                        </div>
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -737,6 +819,20 @@ export default function DataTable({
           {/* Pagination controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center lg:justify-end space-x-1">
+              {/* First page button */}
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === 1 ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === 1 ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="First page"
+              >
+                <Icon name="chevron-double-left" size={14} />
+              </button>
+
               {/* Previous button */}
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -786,6 +882,20 @@ export default function DataTable({
                 title="Next page"
               >
                 <Icon name="chevron-right" size={14} />
+              </button>
+
+              {/* Last page button */}
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                style={{ 
+                  color: currentPage === totalPages ? '#9CA3AF' : '#6B7280',
+                  backgroundColor: currentPage === totalPages ? '#F9FAFB' : '#FFFFFF'
+                }}
+                title="Last page"
+              >
+                <Icon name="chevron-double-right" size={14} />
               </button>
             </div>
           )}

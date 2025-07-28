@@ -93,11 +93,20 @@ export default function InformationAssetsPage() {
       key: 'description',
       label: 'Description',
       sortable: false,
-      render: (value) => (
-        <div className="max-w-xs truncate" title={value}>
-          {value}
-        </div>
-      )
+      render: (value) => {
+        const cellValue = value ? String(value) : '-'
+        return (
+          <div className="relative group">
+            <span className="truncate block max-w-full">
+              {cellValue}
+            </span>
+            <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+              {cellValue}
+              <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        )
+      }
     },
     {
       key: 'location',
@@ -182,11 +191,20 @@ export default function InformationAssetsPage() {
       key: 'additionalInfo',
       label: 'Additional Info',
       sortable: false,
-      render: (value) => (
-        <div className="max-w-xs truncate" title={value}>
-          {value}
-        </div>
-      )
+      render: (value) => {
+        const cellValue = value ? String(value) : '-'
+        return (
+          <div className="relative group">
+            <span className="truncate block max-w-full">
+              {cellValue}
+            </span>
+            <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+              {cellValue}
+              <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        )
+      }
     },
     {
       key: 'actions',
@@ -275,7 +293,6 @@ export default function InformationAssetsPage() {
 
   const handleAddAsset = () => {
     // Handle adding new asset - could open a modal or navigate to form
-    console.log('Add new asset')
   }
 
   const handleDeleteAsset = async (assetId: string) => {
@@ -300,7 +317,6 @@ export default function InformationAssetsPage() {
 
   const handleFilter = () => {
     setShowFilter(!showFilter)
-    console.log('Filter button clicked')
   }
 
   const handleColumns = () => {

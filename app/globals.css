@@ -28,3 +28,49 @@ body {
 h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-rubik), Arial, Helvetica, sans-serif;
 }
+
+/* Custom scrollbar styles for DataTable */
+.data-table-container::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.data-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.data-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.data-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Always show horizontal scrollbar */
+.data-table-container {
+  overflow-x: scroll !important;
+}
+
+/* Ensure horizontal scrollbar is always visible */
+.data-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f1f5f9;
+}
+
+/* Force horizontal scrollbar to be visible */
+.data-table-container::-webkit-scrollbar:horizontal {
+  height: 8px !important;
+}
+
+.data-table-container::-webkit-scrollbar-thumb:horizontal {
+  background: #cbd5e0 !important;
+  border-radius: 4px !important;
+}
+
+.data-table-container::-webkit-scrollbar-track:horizontal {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
