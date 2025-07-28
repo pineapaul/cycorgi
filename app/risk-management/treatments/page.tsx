@@ -151,8 +151,8 @@ export default function Treatments() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              // TODO: Navigate to specific risk treatments page
-              console.log('Navigate to risk treatments for:', value)
+              // Navigate to specific risk treatments page
+              window.location.href = `/risk-management/treatments/${value}`
             }}
             className="text-blue-600 hover:text-blue-800 underline font-medium"
           >
