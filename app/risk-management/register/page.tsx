@@ -273,7 +273,13 @@ export default function RiskRegister() {
           setError(result.error || 'Failed to fetch risks')
         }
               } catch (err) {
-          setError('Failed to fetch risks')
+          if (err instanceof TypeError) {
+            setError('Network error: Failed to fetch risks. Please check your connection.')
+          } else if (err instanceof SyntaxError) {
+            setError('Parsing error: Received malformed data from the server.')
+          } else {
+            setError('Unexpected error: Failed to fetch risks.')
+          }
           console.error('Error fetching risks:', err)
         } finally {
           setLoading(false)
