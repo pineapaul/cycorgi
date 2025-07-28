@@ -272,7 +272,7 @@ export default function DataTable({
           <div className="relative">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), DROPDOWN_BLUR_TIMEOUT)}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
               title="Options"
             >

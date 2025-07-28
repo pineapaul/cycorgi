@@ -11,25 +11,24 @@ export default function Topbar() {
 
   // Get tabs based on current page
   const getTabs = () => {
-    if (pathname.includes('/inventory/assets')) {
+    if (pathname.includes('/inventory/information-assets')) {
       return [
-        { name: 'Assets', href: '/dashboard/inventory/assets', active: true },
-        { name: 'Assessments', href: '/dashboard/inventory/cia-assessments', active: false }
+        { name: 'Information Assets', href: '/inventory/information-assets', active: true },
+        { name: 'Third Parties', href: '/inventory/third-parties', active: false }
       ]
     }
     
     if (pathname.includes('/inventory/third-parties')) {
       return [
-        { name: 'Partners', href: '/dashboard/inventory/third-parties', active: true },
-        { name: 'Risks', href: '/dashboard/inventory/third-party-risks', active: false }
+        { name: 'Information Assets', href: '/inventory/information-assets', active: false },
+        { name: 'Third Parties', href: '/inventory/third-parties', active: true }
       ]
     }
     
     if (pathname.includes('/risk-management')) {
       return [
-        { name: 'Register', href: '/dashboard/risk-management/register', active: pathname.includes('/register') },
-        { name: 'Assessments', href: '/dashboard/risk-management/assessments', active: pathname.includes('/assessments') },
-        { name: 'Exceptions', href: '/dashboard/risk-management/exceptions', active: pathname.includes('/exceptions') }
+        { name: 'Register', href: '/risk-management/register', active: pathname.includes('/register') },
+        { name: 'Treatments', href: '/risk-management/treatments', active: pathname.includes('/treatments') }
       ]
     }
     

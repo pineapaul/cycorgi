@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../../components/DataTable'
 import Icon from '../../../components/Icon'
 
@@ -12,29 +12,73 @@ const getRiskDetails = (riskId: string) => {
       riskId: 'RISK-001',
       functionalUnit: 'IT Security',
       informationAsset: 'Customer Database, Payment Systems',
-      riskStatement: 'Risk of unauthorized access to sensitive customer data',
-      riskRating: 'High'
+      riskStatement: 'Risk of unauthorized access to sensitive customer data through weak authentication mechanisms and insufficient access controls, potentially leading to data breaches and regulatory non-compliance.',
+      riskRating: 'High',
+      consequenceRating: 'High',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'High',
+        integrity: 'Medium',
+        availability: 'Low'
+      },
+      riskOwner: 'IT Security Manager',
+      threat: 'Malicious actors attempting to gain unauthorized access to customer data',
+      vulnerability: 'Weak password policies, lack of multi-factor authentication, insufficient access controls',
+      currentControls: 'Basic password authentication, quarterly access reviews, network segmentation'
     },
     'RISK-002': {
       riskId: 'RISK-002',
       functionalUnit: 'Procurement',
       informationAsset: 'Vendor Management System',
-      riskStatement: 'Risk associated with third-party vendors accessing company systems',
-      riskRating: 'Medium'
+      riskStatement: 'Risk associated with third-party vendors accessing company systems without proper security controls and monitoring, potentially leading to data exposure and compliance violations.',
+      riskRating: 'Medium',
+      consequenceRating: 'Medium',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'Medium',
+        integrity: 'Low',
+        availability: 'Low'
+      },
+      riskOwner: 'Procurement Director',
+      threat: 'Third-party vendors with excessive or inappropriate access to company systems',
+      vulnerability: 'Lack of vendor access controls, insufficient monitoring of vendor activities',
+      currentControls: 'Basic vendor agreements, annual security assessments'
     },
     'RISK-004': {
       riskId: 'RISK-004',
       functionalUnit: 'Finance',
       informationAsset: 'Financial Systems',
-      riskStatement: 'Risk of financial fraud due to inadequate controls',
-      riskRating: 'High'
+      riskStatement: 'Risk of financial fraud due to inadequate controls and monitoring in financial systems, potentially leading to significant financial losses and regulatory penalties.',
+      riskRating: 'High',
+      consequenceRating: 'High',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'Medium',
+        integrity: 'High',
+        availability: 'Medium'
+      },
+      riskOwner: 'Finance Director',
+      threat: 'Internal fraud, external cyber attacks targeting financial data',
+      vulnerability: 'Inadequate segregation of duties, weak approval workflows, insufficient monitoring',
+      currentControls: 'Basic approval workflows, monthly reconciliations, annual audits'
     },
     'RISK-005': {
       riskId: 'RISK-005',
       functionalUnit: 'HR',
       informationAsset: 'HR Systems',
-      riskStatement: 'Risk of unauthorized access to employee personal data',
-      riskRating: 'High'
+      riskStatement: 'Risk of unauthorized access to employee personal data through weak access controls and insufficient monitoring, potentially leading to privacy violations and regulatory non-compliance.',
+      riskRating: 'High',
+      consequenceRating: 'High',
+      likelihoodRating: 'Medium',
+      impact: {
+        confidentiality: 'High',
+        integrity: 'Low',
+        availability: 'Low'
+      },
+      riskOwner: 'HR Director',
+      threat: 'Unauthorized access to sensitive employee information',
+      vulnerability: 'Weak access controls, insufficient monitoring of HR system access',
+      currentControls: 'Basic access controls, annual access reviews, data encryption'
     }
   }
   return riskDetails[riskId as keyof typeof riskDetails] || null
@@ -101,6 +145,7 @@ const getRiskTreatments = (riskId: string) => {
 
 export default function RiskTreatments() {
   const params = useParams()
+  const router = useRouter()
   const riskId = params.riskId as string
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
@@ -132,6 +177,19 @@ export default function RiskTreatments() {
 
   const getRiskRatingColor = (rating: string) => {
     switch (rating.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'low':
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getCIAImpactColor = (impact: string) => {
+    switch (impact.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800'
       case 'medium':
@@ -202,11 +260,19 @@ export default function RiskTreatments() {
       {/* Header with Risk Details */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Risk Treatments - {riskDetails.riskId}
-            </h1>
-            <p className="text-gray-600 mt-1">Manage treatments for this specific risk</p>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/risk-management/register')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+              title="Back to Register"
+            >
+              <Icon name="arrow-left" size={16} />
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Risk Treatments - {riskDetails.riskId}
+              </h1>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button 
@@ -224,28 +290,106 @@ export default function RiskTreatments() {
         </div>
 
         {/* Risk Information Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Risk ID</label>
-            <p className="text-sm text-gray-900 font-mono">{riskDetails.riskId}</p>
+        <div className="space-y-4">
+          {/* Risk Statement - Prominent Display */}
+          <div className="bg-gray-50 rounded-lg p-4 border-l-4" style={{ borderLeftColor: '#4C1D95' }}>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Risk Statement</label>
+            <p className="text-gray-900 leading-relaxed">{riskDetails.riskStatement}</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Functional Unit</label>
-            <p className="text-sm text-gray-900">{riskDetails.functionalUnit}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Risk Rating</label>
-            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRiskRatingColor(riskDetails.riskRating)}`}>
-              {riskDetails.riskRating}
-            </span>
-          </div>
-          <div className="md:col-span-2 lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Information Asset</label>
-            <p className="text-sm text-gray-900">{riskDetails.informationAsset}</p>
-          </div>
-          <div className="md:col-span-2 lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Risk Statement</label>
-            <p className="text-sm text-gray-900">{riskDetails.riskStatement}</p>
+
+          {/* Two Cards Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left Card - Risk Assessment */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Risk Assessment</h3>
+              <div className="space-y-4">
+                {/* Risk Rating with Hover */}
+                <div className="relative group">
+                  <span className="text-xs text-gray-500">Risk Rating</span>
+                  <div className="mt-1">
+                    <span className={`inline-flex px-2 py-1 rounded text-xs font-medium cursor-help ${getRiskRatingColor(riskDetails.riskRating)}`}>
+                      {riskDetails.riskRating}
+                    </span>
+                  </div>
+                  {/* Hover Tooltip */}
+                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                    <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span>Consequence:</span>
+                          <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getRiskRatingColor(riskDetails.consequenceRating)}`}>
+                            {riskDetails.consequenceRating}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Likelihood:</span>
+                          <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getRiskRatingColor(riskDetails.likelihoodRating)}`}>
+                            {riskDetails.likelihoodRating}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Impact CIA */}
+                <div>
+                  <span className="text-xs text-gray-500">Impact (CIA)</span>
+                  <div className="mt-1 flex space-x-3">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs text-gray-500">C:</span>
+                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.confidentiality)}`}>
+                        {riskDetails.impact.confidentiality}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs text-gray-500">I:</span>
+                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.integrity)}`}>
+                        {riskDetails.impact.integrity}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs text-gray-500">A:</span>
+                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.availability)}`}>
+                        {riskDetails.impact.availability}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Threat */}
+                <div>
+                  <span className="text-xs text-gray-500">Threat</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.threat}</p>
+                </div>
+
+                {/* Vulnerability */}
+                <div>
+                  <span className="text-xs text-gray-500">Vulnerability</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.vulnerability}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card - Ownership & Asset */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Ownership & Asset</h3>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500">Risk Owner</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.riskOwner}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">Functional Unit</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.functionalUnit}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">Information Asset</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.informationAsset}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
