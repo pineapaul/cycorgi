@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Icon from '../../../components/Icon'
 
 interface Risk {
@@ -28,7 +29,6 @@ interface Risk {
   riskTreatments: string
   dateRiskTreatmentsApproved: string
   riskTreatmentAssignedTo: string
-  applicableControlsAfterRiskTreatments: string
   residualConsequence: string
   residualLikelihood: string
   residualRiskRating: string
@@ -86,7 +86,6 @@ export default function RiskInformationPage() {
           riskTreatments: result.data.riskTreatments || '',
           dateRiskTreatmentsApproved: result.data.dateRiskTreatmentsApproved ? new Date(result.data.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
           riskTreatmentAssignedTo: result.data.riskTreatmentAssignedTo || '',
-          applicableControlsAfterRiskTreatments: result.data.applicableControlsAfterRiskTreatments || '',
           residualConsequence: result.data.residualConsequence || '',
           residualLikelihood: result.data.residualLikelihood || '',
           residualRiskRating: result.data.residualRiskRating || '',
@@ -149,7 +148,6 @@ export default function RiskInformationPage() {
         riskTreatments: editedRisk.riskTreatments,
         dateRiskTreatmentsApproved: editedRisk.dateRiskTreatmentsApproved,
         riskTreatmentAssignedTo: editedRisk.riskTreatmentAssignedTo,
-        applicableControlsAfterRiskTreatments: editedRisk.applicableControlsAfterRiskTreatments,
         residualConsequence: editedRisk.residualConsequence,
         residualLikelihood: editedRisk.residualLikelihood,
         residualRiskRating: editedRisk.residualRiskRating,
@@ -301,10 +299,10 @@ export default function RiskInformationPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-              {isEditing ? 'Edit Risk' : `Risk ${risk.riskId}`}
+              {isEditing ? 'Edit Risk' : `${risk.riskId} - Risk Information`}
             </h1>
             <p className="text-gray-600" style={{ color: '#22223B' }}>
-              Risk Information
+              Comprehensive risk details and management
             </p>
           </div>
         </div>
@@ -447,18 +445,61 @@ export default function RiskInformationPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Risk Statement</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Functional Unit</label>
               {isEditing ? (
-                <textarea
-                  value={editedRisk?.riskStatement || ''}
-                  onChange={(e) => handleFieldChange('riskStatement', e.target.value)}
-                  rows={3}
+                <input
+                  type="text"
+                  value={editedRisk?.functionalUnit || ''}
+                  onChange={(e) => handleFieldChange('functionalUnit', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{risk.riskStatement}</p>
+                <p className="text-gray-900">{risk.functionalUnit}</p>
               )}
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">JIRA Ticket</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedRisk?.jiraTicket || ''}
+                  onChange={(e) => handleFieldChange('jiraTicket', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-gray-900">{risk.jiraTicket}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Risk Statement - Prominent Display */}
+          <div className="mt-6">
+            <label className="block text-lg font-semibold text-gray-800 mb-3">Risk Statement</label>
+            {isEditing ? (
+              <textarea
+                value={editedRisk?.riskStatement || ''}
+                onChange={(e) => handleFieldChange('riskStatement', e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                placeholder="Describe the risk in detail..."
+              />
+            ) : (
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <p className="text-gray-900 text-base leading-relaxed">{risk.riskStatement}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Risk Treatments Link */}
+          <div className="mt-4">
+            <Link
+              href={`/risk-management/treatments/${risk.riskId}`}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <Icon name="bandage" size={16} className="mr-2" />
+              View Risk Treatments
+            </Link>
           </div>
 
           {/* Risk Assessment */}
@@ -709,91 +750,7 @@ export default function RiskInformationPage() {
           </div>
         </div>
 
-        {/* Risk Treatment */}
-        <div className="mt-8 space-y-6">
-          <h3 className="text-lg font-semibold border-b pb-2" style={{ color: '#22223B' }}>
-            <Icon name="bandage" size={20} className="mr-2 inline" />
-            Risk Treatment
-          </h3>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Risk Action</label>
-              {isEditing ? (
-                <select
-                  value={editedRisk?.riskAction || ''}
-                  onChange={(e) => handleFieldChange('riskAction', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Accept">Accept</option>
-                  <option value="Transfer">Transfer</option>
-                  <option value="Avoid">Avoid</option>
-                  <option value="Mitigate">Mitigate</option>
-                </select>
-              ) : (
-                <p className="text-gray-900">{risk.riskAction}</p>
-              )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Risk Treatments</label>
-              {isEditing ? (
-                <textarea
-                  value={editedRisk?.riskTreatments || ''}
-                  onChange={(e) => handleFieldChange('riskTreatments', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900">{risk.riskTreatments}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Treatment Assigned To</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedRisk?.riskTreatmentAssignedTo || ''}
-                  onChange={(e) => handleFieldChange('riskTreatmentAssignedTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900">{risk.riskTreatmentAssignedTo}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date Treatments Approved</label>
-              {isEditing ? (
-                <input
-                  type="date"
-                  value={editedRisk?.dateRiskTreatmentsApproved || ''}
-                  onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900">{risk.dateRiskTreatmentsApproved}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date Treatment Completed</label>
-              {isEditing ? (
-                <input
-                  type="date"
-                  value={editedRisk?.dateRiskTreatmentCompleted || ''}
-                  onChange={(e) => handleFieldChange('dateRiskTreatmentCompleted', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900">{risk.dateRiskTreatmentCompleted}</p>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Residual Risk */}
         <div className="mt-8 space-y-6">
@@ -863,20 +820,6 @@ export default function RiskInformationPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Applicable Controls After Treatment</label>
-              {isEditing ? (
-                <textarea
-                  value={editedRisk?.applicableControlsAfterRiskTreatments || ''}
-                  onChange={(e) => handleFieldChange('applicableControlsAfterRiskTreatments', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900">{risk.applicableControlsAfterRiskTreatments}</p>
-              )}
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Acceptance</label>
               {isEditing ? (
                 <textarea
@@ -945,23 +888,16 @@ export default function RiskInformationPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Current Phase</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date Treatments Approved</label>
               {isEditing ? (
-                <select
-                  value={editedRisk?.currentPhase || ''}
-                  onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
+                <input
+                  type="date"
+                  value={editedRisk?.dateRiskTreatmentsApproved || ''}
+                  onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Identification">Identification</option>
-                  <option value="Analysis">Analysis</option>
-                  <option value="Evaluation">Evaluation</option>
-                  <option value="Treatment">Treatment</option>
-                  <option value="Monitoring">Monitoring</option>
-                </select>
+                />
               ) : (
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(risk.currentPhase)}`}>
-                  {risk.currentPhase}
-                </span>
+                <p className="text-gray-900">{risk.dateRiskTreatmentsApproved}</p>
               )}
             </div>
           </div>
