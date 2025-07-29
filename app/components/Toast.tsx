@@ -124,7 +124,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<ToastProps[]>([])
 
   const showToast = (toast: Omit<ToastProps, 'id' | 'onClose'>) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    // Use crypto.randomUUID() for cryptographically secure, collision-resistant ID generation
+    // Fallback to timestamp + random for older browsers that don't support crypto.randomUUID()
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID() 
+      : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
     const newToast: ToastProps = {
       ...toast,
       id,
