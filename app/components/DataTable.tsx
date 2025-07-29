@@ -308,17 +308,17 @@ export default function DataTable({
         {/* Left side - Options and Phase Buttons */}
         <div className="flex items-center space-x-4">
           {/* Options dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
+        <div className="relative">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
               onBlur={() => setTimeout(() => setShowDropdown(false), DROPDOWN_BLUR_TIMEOUT)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-              title="Options"
-            >
-              <Icon name="chart-simple" size={16} />
-            </button>
-            
-            {showDropdown && (
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+            title="Options"
+          >
+            <Icon name="chart-simple" size={16} />
+          </button>
+          
+                      {showDropdown && (
               <div className="absolute top-full left-0 mt-1 w-40 bg-white rounded-lg shadow-lg border z-10" style={{ borderColor: '#C0C9EE' }}>
                 <div className="py-1">
                   <button
@@ -378,8 +378,8 @@ export default function DataTable({
                   <span className="hidden sm:inline">{phase.name}</span>
                 </button>
               ))}
-            </div>
-          )}
+              </div>
+            )}
         </div>
 
         {/* Right side - Search, Sort, Filter, and Columns buttons */}
@@ -733,23 +733,23 @@ export default function DataTable({
                   {columns.filter(column => visibleColumns.has(column.key)).map((column) => {
                     const cellValue = row[column.key]
                     return (
-                      <td
-                        key={column.key}
-                        className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
-                          column.align === 'center' ? 'text-center' : 
-                          column.align === 'right' ? 'text-right' : 'text-left'
-                        }`}
-                        style={{ color: '#22223B' }}
-                      >
+                    <td
+                      key={column.key}
+                      className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
+                        column.align === 'center' ? 'text-center' : 
+                        column.align === 'right' ? 'text-right' : 'text-left'
+                      }`}
+                      style={{ color: '#22223B' }}
+                    >
                         <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
                           column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 
                           column.key === 'riskStatement' ? 'max-w-96' :
                           column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' : ''
                         } ${
-                          column.align === 'center' ? 'flex justify-center' : 
-                          column.align === 'right' ? 'flex justify-end' : ''
-                        }`}>
-                          {column.render 
+                        column.align === 'center' ? 'flex justify-center' : 
+                        column.align === 'right' ? 'flex justify-end' : ''
+                      }`}>
+                        {column.render 
                             ? column.render(cellValue, row)
                             : (
                                 <div className="relative group">
@@ -762,9 +762,9 @@ export default function DataTable({
                                   </div>
                                 </div>
                               )
-                          }
-                        </div>
-                      </td>
+                        }
+                      </div>
+                    </td>
                     )
                   })}
                 </tr>

@@ -190,6 +190,46 @@ export default function RiskInformation() {
     }
   }
 
+  // Format date to dd MMM yyyy format
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString || dateString === 'Not specified') return 'Not specified'
+    
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid date'
+      
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch (error) {
+      return 'Invalid date'
+    }
+  }
+
+  // Get relative time (e.g., "2 days ago", "1 week ago")
+  const getRelativeTime = (dateString: string | null | undefined): string => {
+    if (!dateString || dateString === 'Not specified') return ''
+    
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+      
+      const now = new Date()
+      const diffTime = Math.abs(now.getTime() - date.getTime())
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 1) return '1 day ago'
+      if (diffDays < 7) return `${diffDays} days ago`
+      if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
+      if (diffDays < 365) return `${Math.ceil(diffDays / 30)} months ago`
+      return `${Math.ceil(diffDays / 365)} years ago`
+    } catch (error) {
+      return ''
+    }
+  }
+
   const handleRowClick = (row: any) => {
     // TODO: Navigate to treatment detail page
   }
@@ -393,7 +433,12 @@ export default function RiskInformation() {
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Date Risk Raised</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.dateRiskRaised}</p>
+                  <div className="mt-1">
+                    <span className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskRaised)}</span>
+                    {getRelativeTime(riskDetails.dateRiskRaised) && (
+                      <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskRaised)}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -446,15 +491,24 @@ export default function RiskInformation() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date of SSC Approval</span>
-                <p className="text-sm text-gray-900 font-medium">{riskDetails.dateOfSSCApproval || 'Not specified'}</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateOfSSCApproval)}</p>
+                {getRelativeTime(riskDetails.dateOfSSCApproval) && (
+                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateOfSSCApproval)}</p>
+                )}
               </div>
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Risk Treatments Approved</span>
-                <p className="text-sm text-gray-900 font-medium">{riskDetails.dateRiskTreatmentsApproved || 'Not specified'}</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskTreatmentsApproved)}</p>
+                {getRelativeTime(riskDetails.dateRiskTreatmentsApproved) && (
+                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskTreatmentsApproved)}</p>
+                )}
               </div>
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Residual Risk Accepted</span>
-                <p className="text-sm text-gray-900 font-medium">{riskDetails.dateResidualRiskAccepted || 'Not specified'}</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateResidualRiskAccepted)}</p>
+                {getRelativeTime(riskDetails.dateResidualRiskAccepted) && (
+                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateResidualRiskAccepted)}</p>
+                )}
               </div>
             </div>
             <div>
@@ -467,10 +521,33 @@ export default function RiskInformation() {
 
       {/* Risk Treatments DataTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Risk Treatments ({treatments.length})
-          </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-lg">
+              <Icon name="bandage" size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Risk Treatments</h3>
+              <p className="text-sm text-gray-500">
+                {treatments.length} treatment{treatments.length !== 1 ? 's' : ''} for this risk
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
+              <Icon name="check-circle" size={16} className="text-green-500" />
+              <span className="text-sm font-medium text-green-700">
+                {treatments.filter(t => t.completionDate).length} completed
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 px-3 py-2 bg-orange-50 rounded-lg">
+              <Icon name="clock" size={16} className="text-orange-500" />
+              <span className="text-sm font-medium text-orange-700">
+                {treatments.filter(t => !t.completionDate).length} pending
+              </span>
+            </div>
+          </div>
         </div>
         
         {treatments.length === 0 ? (
@@ -518,7 +595,7 @@ export default function RiskInformation() {
                 }
                 if (col.key === 'dateRiskTreatmentDue' || col.key === 'extendedDueDate' || col.key === 'completionDate') {
                   if (!value) return <span className="text-gray-400">-</span>
-                  return <span>{value}</span>
+                  return <span className="text-sm font-medium">{formatDate(value)}</span>
                 }
                 // Implement tooltip rendering for all content
                 const cellValue = value ? String(value) : '-'
