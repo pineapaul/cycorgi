@@ -542,11 +542,25 @@ export default function RiskInformation() {
               </span>
             </div>
             <div className="flex items-center space-x-2 px-3 py-2 bg-orange-50 rounded-lg">
-              <Icon name="clock" size={16} className="text-orange-500" />
+              <Icon name="hourglass-half" size={16} className="text-orange-500" />
               <span className="text-sm font-medium text-orange-700">
                 {treatments.filter(t => !t.completionDate).length} pending
               </span>
             </div>
+            <button
+              onClick={() => {
+                // TODO: Implement add new treatment functionality
+                console.log('Add new treatment clicked')
+              }}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ 
+                backgroundColor: '#4C1D95',
+                '--tw-ring-color': '#4C1D95'
+              } as React.CSSProperties}
+            >
+              <Icon name="plus" size={16} className="mr-2" />
+              Add Treatment
+            </button>
           </div>
         </div>
         
