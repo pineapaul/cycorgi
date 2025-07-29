@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 
@@ -38,6 +39,7 @@ const getCurrentPhaseForFilter = (phase: string): string => {
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
     { key: 'riskId', label: 'Risk ID', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false },
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
     { key: 'currentPhase', label: 'Current Phase', sortable: true },
     { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
@@ -71,8 +73,9 @@ const getColumnsForPhase = (phase: string): Column[] => {
     case 'identification':
       return allColumns.filter(col => [
         'riskId',
+        'actions',
         'functionalUnit',
-        'status',
+        'currentPhase',
         'jiraTicket',
         'dateRiskRaised',
         'raisedBy',
@@ -86,8 +89,9 @@ const getColumnsForPhase = (phase: string): Column[] => {
     case 'analysis':
       return allColumns.filter(col => [
         'riskId',
+        'actions',
         'functionalUnit',
-        'status',
+        'currentPhase',
         'jiraTicket',
         'dateRiskRaised',
         'raisedBy',
@@ -107,8 +111,9 @@ const getColumnsForPhase = (phase: string): Column[] => {
     case 'evaluation':
       return allColumns.filter(col => [
         'riskId',
+        'actions',
         'functionalUnit',
-        'status',
+        'currentPhase',
         'jiraTicket',
         'dateRiskRaised',
         'raisedBy',
@@ -131,8 +136,9 @@ const getColumnsForPhase = (phase: string): Column[] => {
     case 'treatment':
       return allColumns.filter(col => [
         'riskId',
+        'actions',
         'functionalUnit',
-        'status',
+        'currentPhase',
         'jiraTicket',
         'dateRiskRaised',
         'raisedBy',
@@ -164,8 +170,9 @@ const getColumnsForPhase = (phase: string): Column[] => {
     case 'monitoring':
       return allColumns.filter(col => [
         'riskId',
+        'actions',
         'functionalUnit',
-        'status',
+        'currentPhase',
         'jiraTicket',
         'dateRiskRaised',
         'raisedBy',
@@ -201,6 +208,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
 }
 
 export default function RiskRegister() {
+  const router = useRouter()
 
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
@@ -292,7 +300,8 @@ export default function RiskRegister() {
 
 
   const handleRowClick = (row: any) => {
-    // TODO: Implement risk detail view
+    // Navigate to risk information page
+    router.push(`/risk-management/register/${row.riskId}`)
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -362,6 +371,46 @@ export default function RiskRegister() {
   const columns = baseColumns.map(col => ({
     ...col,
     render: (value: any, row: any) => {
+      if (col.key === 'riskId') {
+        return (
+          <Link
+            href={`/risk-management/register/${row.riskId}`}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {value}
+          </Link>
+        )
+      }
+      if (col.key === 'actions') {
+        return (
+          <div className="flex items-center space-x-2">
+            <Link
+              href={`/risk-management/register/${row.riskId}`}
+              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+              title="View Risk Details"
+            >
+              <Icon name="eye" size={12} className="mr-1" />
+              View
+            </Link>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const url = `${window.location.origin}/risk-management/register/${row.riskId}`
+                navigator.clipboard.writeText(url).then(() => {
+                  alert('Link copied to clipboard!')
+                })
+              }}
+              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+              title="Copy Link"
+            >
+              <Icon name="link" size={12} className="mr-1" />
+              Copy
+            </button>
+          </div>
+        )
+      }
       if (col.key === 'currentPhase') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
@@ -388,6 +437,20 @@ export default function RiskRegister() {
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
             {value}
           </span>
+        )
+      }
+      if (col.key === 'riskId') {
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              // Navigate to risk information page
+              window.location.href = `/risk-management/register/${value}`
+            }}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+          >
+            {value}
+          </button>
         )
       }
       if (col.key === 'treatmentCount') {
