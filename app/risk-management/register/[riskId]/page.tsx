@@ -89,6 +89,7 @@ export default function RiskInformation() {
   const [editedRisk, setEditedRisk] = useState<RiskDetails | null>(null)
   const [originalRisk, setOriginalRisk] = useState<RiskDetails | null>(null)
   const [saving, setSaving] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -343,6 +344,377 @@ export default function RiskInformation() {
     // TODO: Implement CSV export
   }
 
+  const handleExportPDF = async () => {
+    if (!riskDetails) return
+
+    try {
+      setExportingPDF(true)
+      
+      // Generate HTML content for PDF
+      const htmlContent = generatePDFHTML(riskDetails, treatments)
+      
+      // Call the PDF generation API
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: htmlContent,
+          filename: `${riskDetails.riskId}-risk-information.pdf`
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${riskDetails.riskId}-risk-information.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      showToast({
+        type: 'success',
+        title: 'PDF Exported Successfully',
+        message: `Risk information for ${riskDetails.riskId} has been exported to PDF.`,
+        duration: 4000
+      })
+    } catch (error) {
+      console.error('PDF export error:', error)
+      showToast({
+        type: 'error',
+        title: 'PDF Export Failed',
+        message: 'Failed to generate PDF. Please try again.',
+        duration: 6000
+      })
+    } finally {
+      setExportingPDF(false)
+    }
+  }
+
+  const generatePDFHTML = (risk: RiskDetails, treatments: Treatment[]) => {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${risk.riskId} - Risk Information</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background: white;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4C1D95;
+          }
+          .header h1 {
+            color: #22223B;
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+          }
+          .header p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+          }
+          .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+          }
+          .section h2 {
+            color: #4C1D95;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #E8ECF7;
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .field {
+            margin-bottom: 12px;
+          }
+          .field-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+          }
+          .field-value {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.4;
+          }
+          .risk-statement {
+            background: #F8F9FA;
+            padding: 15px;
+            border-left: 4px solid #4C1D95;
+            margin-bottom: 25px;
+            border-radius: 4px;
+          }
+          .risk-statement h3 {
+            color: #4C1D95;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+          }
+          .risk-statement p {
+            margin: 0;
+            color: #333;
+            line-height: 1.5;
+          }
+          .treatments-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+          }
+          .treatments-table th,
+          .treatments-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          .treatments-table th {
+            background: #F8F9FA;
+            font-weight: 600;
+            color: #4C1D95;
+          }
+          .treatments-table tr:nth-child(even) {
+            background: #F8F9FA;
+          }
+          .status-badge {
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+          }
+          .status-completed {
+            background: #D1FAE5;
+            color: #065F46;
+          }
+          .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+          }
+          .page-break {
+            page-break-before: always;
+          }
+          @media print {
+            body { margin: 0; }
+            .page-break { page-break-before: always; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${risk.riskId} - Risk Information</h1>
+          <p>Risk Profile Report</p>
+          <p>Generated on ${new Date().toLocaleDateString('en-AU')}</p>
+        </div>
+
+        <div class="risk-statement">
+          <h3>Risk Statement</h3>
+          <p>${risk.riskStatement}</p>
+        </div>
+
+        <div class="section">
+          <h2>Risk Assessment</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Risk Rating</div>
+              <div class="field-value">${risk.currentRiskRating}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Impact (CIA)</div>
+              <div class="field-value">${risk.impactCIA}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Threat</div>
+              <div class="field-value">${risk.threat}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Vulnerability</div>
+              <div class="field-value">${risk.vulnerability}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Ownership & Asset</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Risk Owner</div>
+              <div class="field-value">${risk.riskOwner}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Functional Unit</div>
+              <div class="field-value">${risk.functionalUnit}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Information Asset</div>
+              <div class="field-value">${risk.informationAssets}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Affected Sites</div>
+              <div class="field-value">${risk.affectedSites}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Current Status</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Current Phase</div>
+              <div class="field-value">${risk.currentPhase}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Risk Action</div>
+              <div class="field-value">${risk.riskAction}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Current Controls</div>
+              <div class="field-value">${risk.currentControls}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Jira Ticket</div>
+              <div class="field-value">${risk.jiraTicket}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Risk Details</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Date Risk Raised</div>
+              <div class="field-value">${formatDate(risk.dateRiskRaised)}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Raised By</div>
+              <div class="field-value">${risk.raisedBy}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Consequence</div>
+              <div class="field-value">${risk.consequence}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Likelihood</div>
+              <div class="field-value">${risk.likelihood}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Residual Risk Assessment</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Residual Consequence</div>
+              <div class="field-value">${risk.residualConsequence || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Likelihood</div>
+              <div class="field-value">${risk.residualLikelihood || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Rating</div>
+              <div class="field-value">${risk.residualRiskRating || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Accepted By Owner</div>
+              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Approvals & Dates</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Date of SSC Approval</div>
+              <div class="field-value">${formatDate(risk.dateOfSSCApproval)}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Date Risk Treatments Approved</div>
+              <div class="field-value">${formatDate(risk.dateRiskTreatmentsApproved)}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Date Residual Risk Accepted</div>
+              <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Reason for Acceptance</div>
+              <div class="field-value">${risk.reasonForAcceptance || 'Not specified'}</div>
+            </div>
+          </div>
+        </div>
+
+        ${treatments.length > 0 ? `
+        <div class="section page-break">
+          <h2>Risk Treatments</h2>
+          <table class="treatments-table">
+            <thead>
+              <tr>
+                <th>Treatment</th>
+                <th>Jira Ticket</th>
+                <th>Owner</th>
+                <th>Due Date</th>
+                <th>Extended Due Date</th>
+                <th>Extensions</th>
+                <th>Completion Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${treatments.map(treatment => `
+                <tr>
+                  <td>${treatment.riskTreatment}</td>
+                  <td>${treatment.treatmentJiraTicket}</td>
+                  <td>${treatment.riskTreatmentOwner}</td>
+                  <td>${formatDate(treatment.dateRiskTreatmentDue)}</td>
+                  <td>${formatDate(treatment.extendedDueDate)}</td>
+                  <td>${treatment.numberOfExtensions}</td>
+                  <td>${formatDate(treatment.completionDate)}</td>
+                  <td>
+                    <span class="status-badge ${treatment.closureApproval === 'Approved' ? 'status-completed' : 'status-pending'}">
+                      ${treatment.closureApproval}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+      </body>
+      </html>
+    `
+  }
+
   const handleCopyLink = () => {
     const url = window.location.href
     navigator.clipboard.writeText(url).then(() => {
@@ -552,16 +924,23 @@ export default function RiskInformation() {
                   Edit
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Implement PDF export functionality
-                    console.log('Export to PDF clicked')
-                  }}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  onClick={handleExportPDF}
+                  disabled={exportingPDF}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
                   style={{ backgroundColor: '#4C1D95' }}
                   title="Export to PDF"
                 >
-                  <Icon name="file-pdf" size={16} className="mr-2" />
-                  Export PDF
+                  {exportingPDF ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="file-pdf" size={16} className="mr-2" />
+                      Export PDF
+                    </>
+                  )}
                 </button>
               </>
             )}
