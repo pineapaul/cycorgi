@@ -292,7 +292,8 @@ export default function RiskRegister() {
 
 
   const handleRowClick = (row: any) => {
-    // TODO: Implement risk detail view
+    // Navigate to risk information page
+    window.location.href = `/risk-management/register/${row.riskId}`
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -388,6 +389,20 @@ export default function RiskRegister() {
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
             {value}
           </span>
+        )
+      }
+      if (col.key === 'riskId') {
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              // Navigate to risk information page
+              window.location.href = `/risk-management/register/${value}`
+            }}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+          >
+            {value}
+          </button>
         )
       }
       if (col.key === 'treatmentCount') {

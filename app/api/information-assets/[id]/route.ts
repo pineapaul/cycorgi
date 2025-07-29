@@ -3,21 +3,22 @@ import clientPromise from '@/lib/mongodb'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
     // Try to find by id field first, then by _id if that fails
-    let asset = await collection.findOne({ id: params.id })
+    let asset = await collection.findOne({ id })
     
     if (!asset) {
       // If not found by id, try by _id (MongoDB ObjectId)
       try {
         const { ObjectId } = require('mongodb')
-        asset = await collection.findOne({ _id: new ObjectId(params.id) })
+        asset = await collection.findOne({ _id: new ObjectId(id) })
       } catch (e) {
         // If ObjectId conversion fails, asset is not found
       }
@@ -45,9 +46,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const client = await clientPromise
     const db = client.db('cycorgi')
@@ -62,7 +64,7 @@ export async function PUT(
     
     // Try to update by id field first, then by _id if that fails
     let result = await collection.updateOne(
-      { id: params.id },
+      { id },
       { $set: updatedAsset }
     )
     
@@ -71,7 +73,7 @@ export async function PUT(
       try {
         const { ObjectId } = require('mongodb')
         result = await collection.updateOne(
-          { _id: new ObjectId(params.id) },
+          { _id: new ObjectId(id) },
           { $set: updatedAsset }
         )
       } catch (e) {
@@ -101,21 +103,22 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
     // Try to delete by id field first, then by _id if that fails
-    let result = await collection.deleteOne({ id: params.id })
+    let result = await collection.deleteOne({ id })
     
     if (result.deletedCount === 0) {
       // If not found by id, try by _id (MongoDB ObjectId)
       try {
         const { ObjectId } = require('mongodb')
-        result = await collection.deleteOne({ _id: new ObjectId(params.id) })
+        result = await collection.deleteOne({ _id: new ObjectId(id) })
       } catch (e) {
         // If ObjectId conversion fails, asset is not found
       }

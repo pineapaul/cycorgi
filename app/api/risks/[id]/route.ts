@@ -3,14 +3,15 @@ import clientPromise from '../../../../lib/mongodb'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     
-    const risk = await collection.findOne({ riskId: params.id })
+    const risk = await collection.findOne({ riskId: id })
     
     if (!risk) {
       return NextResponse.json({
@@ -34,16 +35,17 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     
     const result = await collection.updateOne(
-      { riskId: params.id },
+      { riskId: id },
       { $set: body }
     )
     
@@ -56,7 +58,7 @@ export async function PUT(
     
     return NextResponse.json({
       success: true,
-      data: { ...body, riskId: params.id }
+      data: { ...body, riskId: id }
     })
   } catch (error) {
     console.error('Error updating risk:', error)
@@ -69,14 +71,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     
-    const result = await collection.deleteOne({ riskId: params.id })
+    const result = await collection.deleteOne({ riskId: id })
     
     if (result.deletedCount === 0) {
       return NextResponse.json({
