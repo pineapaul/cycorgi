@@ -66,7 +66,39 @@ export default function RiskInformation() {
         const riskResult = await riskResponse.json()
         
         if (riskResult.success) {
-          setRiskDetails(riskResult.data)
+          // Transform the data to match the expected format
+          const risk = riskResult.data;
+          const transformedRisk = {
+            riskId: risk.riskId,
+            functionalUnit: risk.functionalUnit,
+            currentPhase: risk.currentPhase,
+            jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
+            dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
+            raisedBy: risk.riskOwner,
+            riskOwner: risk.riskOwner,
+            affectedSites: 'All Sites',
+            informationAssets: risk.informationAsset,
+            threat: risk.threat,
+            vulnerability: risk.vulnerability,
+            riskStatement: risk.riskStatement,
+            impactCIA: risk.impact ? `C:${risk.impact.confidentiality} I:${risk.impact.integrity} A:${risk.impact.availability}` : 'Not specified',
+            currentControls: risk.currentControls,
+            currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
+            consequence: risk.consequenceRating,
+            likelihood: risk.likelihoodRating,
+            currentRiskRating: risk.riskRating,
+            riskAction: 'Requires treatment',
+            reasonForAcceptance: risk.reasonForAcceptance || '',
+            dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
+            dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
+            residualConsequence: risk.residualConsequence || '',
+            residualLikelihood: risk.residualLikelihood || '',
+            residualRiskRating: risk.residualRiskRating || '',
+            residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
+            dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
+            treatmentCount: 4,
+          };
+          setRiskDetails(transformedRisk)
         } else {
           setError(riskResult.error || 'Failed to fetch risk details')
           setLoading(false)
@@ -282,6 +314,14 @@ export default function RiskInformation() {
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Impact (CIA)</span>
                   <p className="text-sm text-gray-900 mt-1">{riskDetails.impactCIA}</p>
                 </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
+                </div>
               </div>
             </div>
 
@@ -327,10 +367,6 @@ export default function RiskInformation() {
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>
                   <p className="text-sm text-gray-900 mt-1">{riskDetails.functionalUnit}</p>
                 </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
-                </div>
               </div>
             </div>
 
@@ -358,10 +394,6 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Date Risk Raised</span>
                   <p className="text-sm text-gray-900 mt-1">{riskDetails.dateRiskRaised}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
                 </div>
               </div>
             </div>
