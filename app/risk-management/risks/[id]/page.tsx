@@ -7,7 +7,6 @@ import Icon from '../../../components/Icon'
 interface Risk {
   riskId: string
   functionalUnit: string
-  status: string
   jiraTicket: string
   dateRiskRaised: string
   raisedBy: string
@@ -62,8 +61,42 @@ export default function RiskInformationPage() {
       const result = await response.json()
       
       if (result.success) {
-        setRisk(result.data)
-        setEditedRisk(result.data)
+        // Map the API data to our expected format
+        const mappedRisk: Risk = {
+          riskId: result.data.riskId || '',
+          functionalUnit: result.data.functionalUnit || '',
+          jiraTicket: result.data.jiraTicket || `RISK-${id.split('-')[1] || id}`,
+          dateRiskRaised: result.data.dateRiskRaised || result.data.createdAt ? new Date(result.data.createdAt).toISOString().split('T')[0] : '',
+          raisedBy: result.data.raisedBy || result.data.riskOwner || '',
+          riskOwner: result.data.riskOwner || '',
+          affectedSites: result.data.affectedSites || 'All Sites',
+          informationAssets: result.data.informationAssets || result.data.informationAsset || '',
+          threat: result.data.threat || '',
+          vulnerability: result.data.vulnerability || '',
+          riskStatement: result.data.riskStatement || '',
+          impactCIA: result.data.impactCIA || (result.data.impact ? `C:${result.data.impact.confidentiality || 'N/A'} I:${result.data.impact.integrity || 'N/A'} A:${result.data.impact.availability || 'N/A'}` : ''),
+          currentControls: result.data.currentControls || '',
+          currentControlsReference: result.data.currentControlsReference || `CTRL-${id.split('-')[1] || id}`,
+          consequence: result.data.consequence || result.data.consequenceRating || '',
+          likelihood: result.data.likelihood || result.data.likelihoodRating || '',
+          currentRiskRating: result.data.currentRiskRating || result.data.riskRating || '',
+          riskAction: result.data.riskAction || 'Requires treatment',
+          reasonForAcceptance: result.data.reasonForAcceptance || '',
+          dateOfSSCApproval: result.data.dateOfSSCApproval ? new Date(result.data.dateOfSSCApproval).toISOString().split('T')[0] : '',
+          riskTreatments: result.data.riskTreatments || '',
+          dateRiskTreatmentsApproved: result.data.dateRiskTreatmentsApproved ? new Date(result.data.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
+          riskTreatmentAssignedTo: result.data.riskTreatmentAssignedTo || '',
+          applicableControlsAfterRiskTreatments: result.data.applicableControlsAfterRiskTreatments || '',
+          residualConsequence: result.data.residualConsequence || '',
+          residualLikelihood: result.data.residualLikelihood || '',
+          residualRiskRating: result.data.residualRiskRating || '',
+          residualRiskAcceptedByOwner: result.data.residualRiskAcceptedByOwner || '',
+          dateResidualRiskAccepted: result.data.dateResidualRiskAccepted ? new Date(result.data.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
+          dateRiskTreatmentCompleted: result.data.dateRiskTreatmentCompleted ? new Date(result.data.dateRiskTreatmentCompleted).toISOString().split('T')[0] : '',
+          currentPhase: result.data.currentPhase || 'Identification',
+        }
+        setRisk(mappedRisk)
+        setEditedRisk(mappedRisk)
       } else {
         setError(result.error || 'Risk not found')
       }
@@ -89,12 +122,48 @@ export default function RiskInformationPage() {
 
     try {
       setSaving(true)
+      
+      // Map the edited data back to the database format
+      const updateData = {
+        riskId: editedRisk.riskId,
+        functionalUnit: editedRisk.functionalUnit,
+        currentPhase: editedRisk.currentPhase,
+        jiraTicket: editedRisk.jiraTicket,
+        dateRiskRaised: editedRisk.dateRiskRaised,
+        raisedBy: editedRisk.raisedBy,
+        riskOwner: editedRisk.riskOwner,
+        affectedSites: editedRisk.affectedSites,
+        informationAssets: editedRisk.informationAssets,
+        threat: editedRisk.threat,
+        vulnerability: editedRisk.vulnerability,
+        riskStatement: editedRisk.riskStatement,
+        impactCIA: editedRisk.impactCIA,
+        currentControls: editedRisk.currentControls,
+        currentControlsReference: editedRisk.currentControlsReference,
+        consequence: editedRisk.consequence,
+        likelihood: editedRisk.likelihood,
+        currentRiskRating: editedRisk.currentRiskRating,
+        riskAction: editedRisk.riskAction,
+        reasonForAcceptance: editedRisk.reasonForAcceptance,
+        dateOfSSCApproval: editedRisk.dateOfSSCApproval,
+        riskTreatments: editedRisk.riskTreatments,
+        dateRiskTreatmentsApproved: editedRisk.dateRiskTreatmentsApproved,
+        riskTreatmentAssignedTo: editedRisk.riskTreatmentAssignedTo,
+        applicableControlsAfterRiskTreatments: editedRisk.applicableControlsAfterRiskTreatments,
+        residualConsequence: editedRisk.residualConsequence,
+        residualLikelihood: editedRisk.residualLikelihood,
+        residualRiskRating: editedRisk.residualRiskRating,
+        residualRiskAcceptedByOwner: editedRisk.residualRiskAcceptedByOwner,
+        dateResidualRiskAccepted: editedRisk.dateResidualRiskAccepted,
+        dateRiskTreatmentCompleted: editedRisk.dateRiskTreatmentCompleted,
+      }
+
       const response = await fetch(`/api/risks/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedRisk),
+        body: JSON.stringify(updateData),
       })
 
       const result = await response.json()
@@ -328,21 +397,22 @@ export default function RiskInformationPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Phase</label>
                 {isEditing ? (
                   <select
-                    value={editedRisk?.status || ''}
-                    onChange={(e) => handleFieldChange('status', e.target.value)}
+                    value={editedRisk?.currentPhase || ''}
+                    onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="Open">Open</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Closed">Closed</option>
-                    <option value="On Hold">On Hold</option>
+                    <option value="Identification">Identification</option>
+                    <option value="Analysis">Analysis</option>
+                    <option value="Evaluation">Evaluation</option>
+                    <option value="Treatment">Treatment</option>
+                    <option value="Monitoring">Monitoring</option>
                   </select>
                 ) : (
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(risk.status)}`}>
-                    {risk.status}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(risk.currentPhase)}`}>
+                    {risk.currentPhase}
                   </span>
                 )}
               </div>
