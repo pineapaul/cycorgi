@@ -318,10 +318,6 @@ export default function RiskInformation() {
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
                   <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
                 </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
-                </div>
               </div>
             </div>
 
@@ -342,6 +338,10 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
                   <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
+                  <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
                 </div>
               </div>
             </div>
