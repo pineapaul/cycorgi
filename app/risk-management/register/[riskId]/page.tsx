@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../../components/DataTable'
 import Icon from '../../../components/Icon'
+import { useToast } from '../../../components/Toast'
 
 interface RiskDetails {
   riskId: string
@@ -51,21 +52,69 @@ interface Treatment {
 export default function RiskInformation() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
   const [riskDetails, setRiskDetails] = useState<RiskDetails | null>(null)
+
+  // Validation utilities
+  const validateRiskId = (riskId: string | string[] | undefined): string | null => {
+    if (!riskId) return null
+    
+    // Ensure it's a string
+    const id = Array.isArray(riskId) ? riskId[0] : riskId
+    
+    // Check if it's empty or whitespace
+    if (!id || id.trim() === '') return null
+    
+    // Validate format (RISK-XXX where XXX is numeric)
+    const riskIdPattern = /^RISK-\d+$/i
+    if (!riskIdPattern.test(id.trim())) return null
+    
+    return id.trim()
+  }
+
+  const isValidRiskId = (riskId: string | string[] | undefined): riskId is string => {
+    return validateRiskId(riskId) !== null
+  }
+
+  // Safe API URL construction
+  const buildApiUrl = (endpoint: string, riskId?: string | string[] | undefined): string | null => {
+    const validRiskId = validateRiskId(riskId || params.riskId)
+    if (!validRiskId) return null
+    return `${endpoint}/${validRiskId}`
+  }
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editedRisk, setEditedRisk] = useState<RiskDetails | null>(null)
+  const [originalRisk, setOriginalRisk] = useState<RiskDetails | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
+      // Validate risk ID before making API calls
+      const validRiskId = validateRiskId(params.riskId)
+      if (!validRiskId) {
+        setError('Invalid risk ID format. Expected format: RISK-XXX')
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
         
+        // Build safe API URLs
+        const riskApiUrl = buildApiUrl('/api/risks')
+        const treatmentsApiUrl = buildApiUrl('/api/treatments')
+        
+        if (!riskApiUrl || !treatmentsApiUrl) {
+          setError('Invalid risk ID format. Expected format: RISK-XXX')
+          setLoading(false)
+          return
+        }
+        
         // Fetch risk details
-        const riskResponse = await fetch(`/api/risks/${params.riskId}`)
+        const riskResponse = await fetch(riskApiUrl)
         const riskResult = await riskResponse.json()
         
         if (riskResult.success) {
@@ -76,7 +125,7 @@ export default function RiskInformation() {
             functionalUnit: risk.functionalUnit,
             currentPhase: risk.currentPhase,
             jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
-            dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
+            dateRiskRaised: risk.createdAt ? toDateInputValue(risk.createdAt) : '2024-01-15',
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
@@ -92,13 +141,13 @@ export default function RiskInformation() {
             currentRiskRating: risk.riskRating,
             riskAction: 'Requires treatment',
             reasonForAcceptance: risk.reasonForAcceptance || '',
-            dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
-            dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
+            dateOfSSCApproval: risk.dateOfSSCApproval ? toDateInputValue(risk.dateOfSSCApproval) : '',
+            dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? toDateInputValue(risk.dateRiskTreatmentsApproved) : '',
             residualConsequence: risk.residualConsequence || '',
             residualLikelihood: risk.residualLikelihood || '',
             residualRiskRating: risk.residualRiskRating || '',
             residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
-            dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
+            dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? toDateInputValue(risk.dateResidualRiskAccepted) : '',
             treatmentCount: 4,
           };
           setRiskDetails(transformedRisk)
@@ -109,7 +158,7 @@ export default function RiskInformation() {
         }
         
         // Fetch treatments for this risk
-        const treatmentsResponse = await fetch(`/api/treatments/${params.riskId}`)
+        const treatmentsResponse = await fetch(treatmentsApiUrl)
         const treatmentsResult = await treatmentsResponse.json()
         
         if (treatmentsResult.success) {
@@ -124,8 +173,13 @@ export default function RiskInformation() {
       }
     }
 
-    if (params.riskId) {
+    const validRiskId = validateRiskId(params.riskId)
+    if (validRiskId) {
       fetchData()
+    } else if (params.riskId) {
+      // Only set error if params.riskId exists but is invalid
+      setError('Invalid risk ID format. Expected format: RISK-XXX')
+      setLoading(false)
     }
   }, [params.riskId])
 
@@ -193,14 +247,62 @@ export default function RiskInformation() {
     }
   }
 
+  // Robust date parsing utility
+  const parseDate = (dateString: string | null | undefined): Date | null => {
+    if (!dateString || dateString === 'Not specified' || dateString === '') {
+      return null
+    }
+    
+    try {
+      // Try parsing as ISO string first
+      const date = new Date(dateString)
+      if (!isNaN(date.getTime())) {
+        return date
+      }
+      
+      // Try parsing common date formats
+      const formats = [
+        /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+        /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
+        /^\d{2}-\d{2}-\d{4}$/, // MM-DD-YYYY
+        /^\d{4}\/\d{2}\/\d{2}$/, // YYYY/MM/DD
+      ]
+      
+      for (const format of formats) {
+        if (format.test(dateString)) {
+          const parsed = new Date(dateString)
+          if (!isNaN(parsed.getTime())) {
+            return parsed
+          }
+        }
+      }
+      
+      return null
+    } catch (error) {
+      return null
+    }
+  }
+
+  // Convert date to YYYY-MM-DD format for HTML date inputs
+  const toDateInputValue = (dateString: string | null | undefined): string => {
+    const date = parseDate(dateString)
+    if (!date) return ''
+    
+    try {
+      return date.toISOString().split('T')[0]
+    } catch (error) {
+      return ''
+    }
+  }
+
   // Format date to dd MMM yyyy format
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString || dateString === 'Not specified') return 'Not specified'
     
+    const date = parseDate(dateString)
+    if (!date) return 'Invalid date'
+    
     try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return 'Invalid date'
-      
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -215,10 +317,10 @@ export default function RiskInformation() {
   const getRelativeTime = (dateString: string | null | undefined): string => {
     if (!dateString || dateString === 'Not specified') return ''
     
+    const date = parseDate(dateString)
+    if (!date) return ''
+    
     try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return ''
-      
       const now = new Date()
       const diffTime = Math.abs(now.getTime() - date.getTime())
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -244,27 +346,53 @@ export default function RiskInformation() {
   const handleCopyLink = () => {
     const url = window.location.href
     navigator.clipboard.writeText(url).then(() => {
-      // You could add a toast notification here
-      alert('Link copied to clipboard!')
+      showToast({
+        type: 'success',
+        title: 'Link Copied',
+        message: 'Risk page link has been copied to your clipboard.',
+        duration: 3000
+      })
+    }).catch(err => {
+      console.error('Failed to copy link: ', err)
+      showToast({
+        type: 'error',
+        title: 'Copy Failed',
+        message: 'Failed to copy link to clipboard.',
+        duration: 4000
+      })
     })
   }
 
   const handleEdit = () => {
     setIsEditing(true)
+    setOriginalRisk(riskDetails) // Store the original values when entering edit mode
     setEditedRisk(riskDetails)
   }
 
   const handleCancel = () => {
     setIsEditing(false)
-    setEditedRisk(riskDetails)
+    setEditedRisk(originalRisk) // Reset to the original values when canceling
+    setOriginalRisk(null) // Clear the original values
   }
 
   const handleSave = async () => {
     if (!editedRisk) return
 
+    // Build safe API URL
+    const riskApiUrl = buildApiUrl('/api/risks')
+    if (!riskApiUrl) {
+      showToast({
+        type: 'error',
+        title: 'Invalid Risk ID',
+        message: 'The risk ID format is invalid. Expected format: RISK-XXX',
+        duration: 5000
+      })
+      return
+    }
+
     try {
       setSaving(true)
-      const response = await fetch(`/api/risks/${params.riskId}`, {
+      const response = await fetch(riskApiUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -277,25 +405,59 @@ export default function RiskInformation() {
       if (result.success) {
         setRiskDetails(editedRisk)
         setIsEditing(false)
-        // You could add a success notification here
-        alert('Risk updated successfully!')
+        setOriginalRisk(null) // Clear the original values after successful save
+        showToast({
+          type: 'success',
+          title: 'Risk Updated Successfully',
+          message: 'The risk information has been saved successfully.',
+          duration: 4000
+        })
       } else {
-        alert('Failed to update risk: ' + (result.error || 'Unknown error'))
+        showToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: result.error || 'An unknown error occurred while updating the risk.',
+          duration: 6000
+        })
       }
     } catch (error) {
       console.error('Error updating risk:', error)
-      alert('Failed to update risk')
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update risk. Please try again.',
+        duration: 6000
+      })
     } finally {
       setSaving(false)
     }
   }
 
-  const handleFieldChange = (field: keyof RiskDetails, value: string) => {
+  // Type-safe field change handler that accepts appropriate value types for each field
+  const handleFieldChange = <K extends keyof RiskDetails>(
+    field: K, 
+    value: RiskDetails[K]
+  ) => {
     if (!editedRisk) return
     setEditedRisk({
       ...editedRisk,
       [field]: value
     })
+  }
+
+  // Specialized handlers for different input types
+  const handleStringFieldChange = (field: keyof RiskDetails, value: string) => {
+    handleFieldChange(field, value as RiskDetails[keyof RiskDetails])
+  }
+
+  const handleNumberFieldChange = (field: keyof RiskDetails, value: number) => {
+    handleFieldChange(field, value as RiskDetails[keyof RiskDetails])
+  }
+
+  const handleDateFieldChange = (field: keyof RiskDetails, value: string) => {
+    // Ensure date is in proper format for storage
+    const formattedDate = value ? value : ''
+    handleFieldChange(field, formattedDate as RiskDetails[keyof RiskDetails])
   }
 
   if (loading) {
@@ -316,7 +478,7 @@ export default function RiskInformation() {
           <Icon name="exclamation-triangle" size={48} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Risk Not Found</h2>
           <p className="text-gray-600 mb-4">
-            {error || 'The risk with ID "' + params.riskId + '" could not be found.'}
+            {error || 'The risk with ID "' + validateRiskId(params.riskId) + '" could not be found.'}
           </p>
           <button
             onClick={() => router.push('/risk-management/register')}
@@ -712,8 +874,8 @@ export default function RiskInformation() {
                   {isEditing ? (
                     <input
                       type="date"
-                      value={editedRisk?.dateRiskRaised ? editedRisk.dateRiskRaised.split('T')[0] : ''}
-                      onChange={(e) => handleFieldChange('dateRiskRaised', e.target.value)}
+                      value={toDateInputValue(editedRisk?.dateRiskRaised)}
+                      onChange={(e) => handleDateFieldChange('dateRiskRaised', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
@@ -828,8 +990,8 @@ export default function RiskInformation() {
                 {isEditing ? (
                   <input
                     type="date"
-                    value={editedRisk?.dateOfSSCApproval ? editedRisk.dateOfSSCApproval.split('T')[0] : ''}
-                    onChange={(e) => handleFieldChange('dateOfSSCApproval', e.target.value)}
+                    value={toDateInputValue(editedRisk?.dateOfSSCApproval)}
+                    onChange={(e) => handleDateFieldChange('dateOfSSCApproval', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -846,8 +1008,8 @@ export default function RiskInformation() {
                 {isEditing ? (
                   <input
                     type="date"
-                    value={editedRisk?.dateRiskTreatmentsApproved ? editedRisk.dateRiskTreatmentsApproved.split('T')[0] : ''}
-                    onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
+                    value={toDateInputValue(editedRisk?.dateRiskTreatmentsApproved)}
+                    onChange={(e) => handleDateFieldChange('dateRiskTreatmentsApproved', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -862,10 +1024,10 @@ export default function RiskInformation() {
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Residual Risk Accepted</span>
                 {isEditing ? (
-                  <input
+                                                        <input
                     type="date"
-                    value={editedRisk?.dateResidualRiskAccepted ? editedRisk.dateResidualRiskAccepted.split('T')[0] : ''}
-                    onChange={(e) => handleFieldChange('dateResidualRiskAccepted', e.target.value)}
+                    value={toDateInputValue(editedRisk?.dateResidualRiskAccepted)}
+                    onChange={(e) => handleDateFieldChange('dateResidualRiskAccepted', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (

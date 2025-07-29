@@ -51,7 +51,11 @@ import {
   faAnglesLeft,
   faAnglesRight,
   faHourglassHalf,
-  faFilePdf
+  faFilePdf,
+  faExclamationCircle,
+  faTriangleExclamation,
+  faCircleInfo,
+  faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -114,6 +118,10 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'chevron-double-right': faAnglesRight,
     'hourglass-half': faHourglassHalf,
     'file-pdf': faFilePdf,
+    'exclamation-circle': faExclamationCircle,
+    'exclamation-triangle': faTriangleExclamation,
+    'information-circle': faCircleInfo,
+    'x-mark': faXmark,
   }
 
   const icon = icons[name]
@@ -185,6 +193,10 @@ function getFallbackEmoji(name: string): string {
     'chevron-double-right': '⏩',
     'hourglass-half': '⏳',
     'file-pdf': '📄',
+    'exclamation-circle': '❌',
+    'exclamation-triangle': '⚠️',
+    'information-circle': 'ℹ️',
+    'x-mark': '✕',
   }
   return emojiMap[name] || '📄'
 } 
