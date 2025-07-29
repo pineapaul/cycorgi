@@ -3,14 +3,15 @@ import clientPromise from '../../../../lib/mongodb'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
+    const { riskId } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('treatments')
     
-    const treatments = await collection.find({ riskId: params.riskId }).toArray()
+    const treatments = await collection.find({ riskId }).toArray()
     
     return NextResponse.json({
       success: true,
