@@ -38,7 +38,7 @@ const getCurrentPhaseForFilter = (phase: string): string => {
 // Get columns for each phase
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
-    { key: 'riskId', label: 'Risk ID', sortable: true },
+    { key: 'riskId', label: 'Risk ID', sortable: true, width: '140px' },
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
     { key: 'currentPhase', label: 'Current Phase', sortable: true },
@@ -375,10 +375,11 @@ export default function RiskRegister() {
         return (
           <Link
             href={`/risk-management/register/${row.riskId}`}
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
+            className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-200 font-mono text-xs font-medium shadow-sm hover:shadow-md group whitespace-nowrap"
             onClick={(e) => e.stopPropagation()}
           >
-            {value}
+            <span className="font-mono tracking-wide">{value}</span>
+            <Icon name="arrow-right" size={10} className="ml-1.5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
           </Link>
         )
       }
@@ -439,20 +440,7 @@ export default function RiskRegister() {
           </span>
         )
       }
-      if (col.key === 'riskId') {
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              // Navigate to risk information page
-              window.location.href = `/risk-management/register/${value}`
-            }}
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
-          >
-            {value}
-          </button>
-        )
-      }
+
       if (col.key === 'treatmentCount') {
         if (value === 0) {
           return <span className="text-gray-400">0</span>
