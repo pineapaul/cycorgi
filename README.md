@@ -1,6 +1,6 @@
 # Cycorgi - Cybersecurity Risk Management Platform
 
-A comprehensive cybersecurity risk management and compliance platform built with Next.js, designed to help organisations manage information assets, conduct risk assessments, and maintain regulatory compliance.
+A comprehensive cybersecurity risk management platform built with Next.js, designed to help organisations manage information assets, conduct risk assessments, and maintain regulatory compliance.
 
 ## Overview
 
@@ -9,16 +9,13 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
 ## Features
 
 ### 🛡️ Risk Management
-- **Risk Register**: Comprehensive risk tracking across all management phases
-  - **Full View**: Complete overview of all risks regardless of status
-  - **Identification**: Risk discovery and initial assessment
-  - **Analysis**: Detailed risk analysis and control evaluation
-  - **Evaluation**: Risk assessment and treatment decisions
-  - **Treatment**: Risk mitigation planning and implementation
-  - **Monitoring**: Ongoing risk monitoring and review
-- **Risk Assessment**: Comprehensive risk evaluation and tracking
-- **Risk Metrics**: Real-time dashboard with key performance indicators
-- **Risk Reporting**: Export and generate detailed risk reports
+- **Risk Register**: Complete risk tracking across all management phases
+  - **Register**: Full overview of all risks
+  - **Phase-based Filtering**: View risks by identification, analysis, evaluation, treatment, or monitoring phases
+- **Risk Information Pages**: Detailed risk profiles with comprehensive information
+- **Risk Treatments**: Track multiple treatments per risk with extension management
+- **PDF Export**: Generate professional risk reports with complete details
+- **Real-time Updates**: Live dashboard with key performance indicators
 
 ### 📊 Information Asset Management
 - **Asset Inventory**: Complete information asset registry
@@ -43,12 +40,13 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
 - **Database**: MongoDB 6.18.0
+- **PDF Generation**: Playwright for server-side PDF export
 - **Icons**: FontAwesome
 - **Development**: ESLint, Turbopack
 
 ## Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - MongoDB instance (local or cloud)
 - npm, yarn, pnpm, or bun package manager
 
@@ -63,10 +61,6 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
-   # or
-   pnpm install
    ```
 
 3. **Configure environment variables**
@@ -81,7 +75,7 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
    npm run seed
    ```
    
-   This populates the database with sample information assets for testing.
+   This populates the database with sample data for testing.
 
 ## Development
 
@@ -138,7 +132,7 @@ Each asset includes:
 Each risk includes comprehensive tracking across all management phases:
 - **Risk ID**: Unique risk identifier
 - **Functional Unit**: Department or team responsible
-- **Status**: Current phase (Identified, Under Analysis, Evaluated, etc.)
+- **Current Phase**: Current management phase
 - **Jira Ticket**: Issue tracking reference
 - **Risk Statement**: Detailed risk description
 - **Information Assets**: Affected assets
@@ -149,23 +143,38 @@ Each risk includes comprehensive tracking across all management phases:
 - **Treatment Plans**: Mitigation strategies and timelines
 - **Approval Tracking**: Governance decision records
 
+### Risk Treatments Collection
+Each treatment includes:
+- **Risk ID**: Associated risk identifier
+- **Treatment Description**: Detailed treatment plan
+- **Jira Ticket**: Treatment tracking reference
+- **Owner**: Treatment owner
+- **Due Dates**: Original and extended due dates
+- **Extensions**: Multiple extension tracking with approval details
+- **Completion Status**: Treatment completion and approval status
+
 ## Recent Updates
 
 ### Risk Management Enhancements
 - **Comprehensive Risk Register**: Complete risk lifecycle management with phase-specific views
 - **Dynamic Data Filtering**: Risk data filtered by status for each management phase
 - **Enhanced UI**: Professional styling with custom icons for each risk phase
-- **Full View Tab**: Complete overview of all risks regardless of status
+- **PDF Export**: Generate professional risk reports with complete details and treatments
+- **Type-safe Field Handling**: Robust form handling with proper TypeScript types
+- **Toast Notifications**: Modern user feedback system replacing native alerts
 
 ### Architecture Improvements
 - **Restructured Navigation**: Moved governance and risk management to top-level directories
 - **Enhanced Component Design**: Consistent button styling and professional UI elements
-- **Improved Data Management**: Single database table with comprehensive risk tracking
+- **Improved Data Management**: Comprehensive risk tracking with MongoDB integration
+- **Secure ID Generation**: Cryptographically secure UUID generation for system reliability
 
 ### User Experience
 - **Phase-Specific Views**: Tailored data tables for each risk management phase
 - **Responsive Design**: Mobile-friendly interface with adaptive layouts
 - **Professional Styling**: Consistent colour palette and modern UI elements
+- **Loading States**: Visual feedback during data operations
+- **Error Handling**: Comprehensive error handling with user-friendly messages
 
 ## Contributing
 
