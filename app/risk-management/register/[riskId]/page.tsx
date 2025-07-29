@@ -433,6 +433,15 @@ export default function RiskInformation() {
     }
   }
 
+  // Type utilities for safe field change handling
+  type StringFields = {
+    [K in keyof RiskDetails]: RiskDetails[K] extends string ? K : never
+  }[keyof RiskDetails]
+
+  type NumberFields = {
+    [K in keyof RiskDetails]: RiskDetails[K] extends number ? K : never
+  }[keyof RiskDetails]
+
   // Type-safe field change handler that accepts appropriate value types for each field
   const handleFieldChange = <K extends keyof RiskDetails>(
     field: K, 
@@ -445,19 +454,21 @@ export default function RiskInformation() {
     })
   }
 
-  // Specialized handlers for different input types
-  const handleStringFieldChange = (field: keyof RiskDetails, value: string) => {
-    handleFieldChange(field, value as RiskDetails[keyof RiskDetails])
+  // Type-safe string field change handler
+  const handleStringFieldChange = (field: StringFields, value: string) => {
+    handleFieldChange(field, value)
   }
 
-  const handleNumberFieldChange = (field: keyof RiskDetails, value: number) => {
-    handleFieldChange(field, value as RiskDetails[keyof RiskDetails])
+  // Type-safe number field change handler
+  const handleNumberFieldChange = (field: NumberFields, value: number) => {
+    handleFieldChange(field, value)
   }
 
-  const handleDateFieldChange = (field: keyof RiskDetails, value: string) => {
+  // Type-safe date field change handler (dates are stored as strings)
+  const handleDateFieldChange = (field: StringFields, value: string) => {
     // Ensure date is in proper format for storage
     const formattedDate = value ? value : ''
-    handleFieldChange(field, formattedDate as RiskDetails[keyof RiskDetails])
+    handleFieldChange(field, formattedDate)
   }
 
   if (loading) {
