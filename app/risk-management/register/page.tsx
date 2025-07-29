@@ -65,8 +65,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
     { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
     { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
-    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
-    { key: 'treatmentCount', label: 'Treatments', sortable: true },
+         { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
   ]
 
   switch (phase) {
@@ -271,8 +270,7 @@ export default function RiskRegister() {
               residualRiskRating: risk.residualRiskRating || '',
               residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
               dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
-              dateRiskTreatmentCompleted: '',
-              treatmentCount: 4,
+                             dateRiskTreatmentCompleted: '',
             }
             return transformed
           })
@@ -375,43 +373,53 @@ export default function RiskRegister() {
         return (
           <Link
             href={`/risk-management/register/${row.riskId}`}
-            className="inline-flex items-center px-2 py-1.5 bg-white border border-gray-200 rounded-md text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-200 font-mono text-xs font-medium shadow-sm hover:shadow-md group whitespace-nowrap"
+            className="risk-id-button"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="font-mono tracking-wide">{value}</span>
-            <Icon name="arrow-right" size={10} className="ml-1.5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+            <span className="tracking-wide">{value}</span>
+            <Icon name="arrow-right" size={10} className="arrow-icon" />
           </Link>
         )
       }
-      if (col.key === 'actions') {
-        return (
-          <div className="flex items-center space-x-2">
-            <Link
-              href={`/risk-management/register/${row.riskId}`}
-              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              title="View Risk Details"
-            >
-              <Icon name="eye" size={12} className="mr-1" />
-              View
-            </Link>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                const url = `${window.location.origin}/risk-management/register/${row.riskId}`
-                navigator.clipboard.writeText(url).then(() => {
-                  alert('Link copied to clipboard!')
-                })
-              }}
-              className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-              title="Copy Link"
-            >
-              <Icon name="link" size={12} className="mr-1" />
-              Copy
-            </button>
-          </div>
-        )
-      }
+             if (col.key === 'actions') {
+         return (
+           <div className="flex items-center space-x-2">
+                           <Link
+                href={`/risk-management/register/${row.riskId}`}
+                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                title="View Risk Details"
+              >
+                <Icon name="eye" size={12} />
+              </Link>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const url = `${window.location.origin}/risk-management/register/${row.riskId}`
+                  navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!')
+                  })
+                }}
+                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                title="Copy Link"
+              >
+                <Icon name="link" size={12} />
+              </button>
+             <button
+               onClick={(e) => {
+                 e.stopPropagation()
+                 // TODO: Implement workshop agenda functionality
+                 alert(`Risk ${row.riskId} added to workshop agenda!`)
+               }}
+               className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+               title="Add to Workshop Agenda"
+             >
+               <Icon name="calendar-plus" size={12} className="mr-1" />
+               Workshop
+             </button>
+           </div>
+         )
+       }
       if (col.key === 'currentPhase') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
@@ -441,23 +449,7 @@ export default function RiskRegister() {
         )
       }
 
-      if (col.key === 'treatmentCount') {
-        if (value === 0) {
-          return <span className="text-gray-400">0</span>
-        }
-        return (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              // Navigate to specific risk treatments page
-              window.location.href = `/risk-management/treatments/${row.riskId}`
-            }}
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
-          >
-            {value}
-          </button>
-        )
-      }
+      
       // Implement tooltip rendering for all content
       const cellValue = value ? String(value) : '-'
       return (

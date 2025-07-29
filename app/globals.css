@@ -74,3 +74,23 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   background: #f1f5f9 !important;
   border-radius: 4px !important;
 }
+
+/* Risk ID button styles */
+.risk-id-button {
+  @apply inline-flex items-center px-2 py-1.5 bg-white border border-gray-200 rounded-md text-gray-700 font-mono text-xs font-medium shadow-sm whitespace-nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.risk-id-button:hover {
+  @apply bg-gray-50 border-gray-300 text-gray-900 shadow-md;
+}
+
+.risk-id-button .arrow-icon {
+  @apply ml-1.5 text-gray-400 flex-shrink-0;
+  transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.risk-id-button:hover .arrow-icon {
+  @apply text-gray-600;
+  transform: translateX(2px);
+}
