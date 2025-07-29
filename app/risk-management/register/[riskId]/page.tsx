@@ -55,6 +55,9 @@ export default function RiskInformation() {
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedRisk, setEditedRisk] = useState<RiskDetails | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -238,6 +241,63 @@ export default function RiskInformation() {
     // TODO: Implement CSV export
   }
 
+  const handleCopyLink = () => {
+    const url = window.location.href
+    navigator.clipboard.writeText(url).then(() => {
+      // You could add a toast notification here
+      alert('Link copied to clipboard!')
+    })
+  }
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setEditedRisk(riskDetails)
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setEditedRisk(riskDetails)
+  }
+
+  const handleSave = async () => {
+    if (!editedRisk) return
+
+    try {
+      setSaving(true)
+      const response = await fetch(`/api/risks/${params.riskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editedRisk),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setRiskDetails(editedRisk)
+        setIsEditing(false)
+        // You could add a success notification here
+        alert('Risk updated successfully!')
+      } else {
+        alert('Failed to update risk: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error updating risk:', error)
+      alert('Failed to update risk')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleFieldChange = (field: keyof RiskDetails, value: string) => {
+    if (!editedRisk) return
+    setEditedRisk({
+      ...editedRisk,
+      [field]: value
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -279,39 +339,104 @@ export default function RiskInformation() {
       {/* Risk Information Container */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{riskDetails.riskId} - Risk Information</h1>
-          </div>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            <button
-              onClick={() => {
-                // TODO: Implement PDF export functionality
-                console.log('Export to PDF clicked')
-              }}
-              className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              style={{ 
-                backgroundColor: '#4C1D95',
-                '--tw-ring-color': '#4C1D95'
-              } as React.CSSProperties}
-            >
-              <Icon name="file-pdf" size={16} className="mr-2" />
-              Export PDF
-            </button>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/risk-management/register')}
-              className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+              title="Back to Register"
             >
-              <Icon name="arrow-left" size={16} className="mr-2" />
-              Back to Register
+              <Icon name="arrow-left" size={16} />
             </button>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
+                {isEditing ? 'Edit Risk' : `${riskDetails.riskId} - Risk Information`}
+              </h1>
+              <p className="text-gray-600" style={{ color: '#22223B' }}>
+                Risk Profile
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {!isEditing && (
+              <>
+                <button
+                  onClick={handleCopyLink}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Copy link to risk"
+                >
+                  <Icon name="link" size={16} className="mr-2" />
+                  Copy Link
+                </button>
+                <button
+                  onClick={handleEdit}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: '#4C1D95' }}
+                  title="Edit risk"
+                >
+                  <Icon name="pencil" size={16} className="mr-2" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement PDF export functionality
+                    console.log('Export to PDF clicked')
+                  }}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: '#4C1D95' }}
+                  title="Export to PDF"
+                >
+                  <Icon name="file-pdf" size={16} className="mr-2" />
+                  Export PDF
+                </button>
+              </>
+            )}
+            {isEditing && (
+              <>
+                <button
+                  onClick={handleCancel}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#4C1D95' }}
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="check" size={16} className="mr-2" />
+                      Save
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
         
         {/* Risk Statement - Prominent Display */}
         <div className="bg-gray-50 rounded-lg p-6 border-l-4 mb-8" style={{ borderLeftColor: '#4C1D95' }}>
           <label className="block text-sm font-semibold text-gray-700 mb-3">Risk Statement</label>
-          <p className="text-gray-900 leading-relaxed text-base">{riskDetails.riskStatement}</p>
+          {isEditing ? (
+            <textarea
+              value={editedRisk?.riskStatement || ''}
+              onChange={(e) => handleFieldChange('riskStatement', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              rows={4}
+              placeholder="Enter risk statement..."
+            />
+          ) : (
+            <p className="text-gray-900 leading-relaxed text-base">{riskDetails.riskStatement}</p>
+          )}
         </div>
 
         {/* Risk Assessment Section */}
@@ -329,48 +454,95 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Phase</span>
                   <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
-                      {riskDetails.currentPhase}
-                    </span>
+                    {isEditing ? (
+                      <select
+                        value={editedRisk?.currentPhase || ''}
+                        onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="identification">Identification</option>
+                        <option value="analysis">Analysis</option>
+                        <option value="evaluation">Evaluation</option>
+                        <option value="treatment">Treatment</option>
+                        <option value="monitoring">Monitoring</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
+                        {riskDetails.currentPhase}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <div className="relative group">
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Risk Rating</span>
                   <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium cursor-help ${getRiskLevelColor(riskDetails.currentRiskRating)}`}>
-                      {riskDetails.currentRiskRating}
-                    </span>
+                    {isEditing ? (
+                      <select
+                        value={editedRisk?.currentRiskRating || ''}
+                        onChange={(e) => handleFieldChange('currentRiskRating', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium cursor-help ${getRiskLevelColor(riskDetails.currentRiskRating)}`}>
+                        {riskDetails.currentRiskRating}
+                      </span>
+                    )}
                   </div>
-                  {/* Hover Tooltip */}
-                  <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                    <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span>Consequence:</span>
-                          <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.consequence)}`}>
-                            {riskDetails.consequence}
-                          </span>
+                  {!isEditing && (
+                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                      <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                        <div className="space-y-1">
+                          <div className="flex justify-between">
+                            <span>Consequence:</span>
+                            <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.consequence)}`}>
+                              {riskDetails.consequence}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Likelihood:</span>
+                            <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.likelihood)}`}>
+                              {riskDetails.likelihood}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Likelihood:</span>
-                          <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.likelihood)}`}>
-                            {riskDetails.likelihood}
-                          </span>
-                        </div>
+                        <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
                       </div>
-                      <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Impact (CIA)</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.impactCIA}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.impactCIA || ''}
+                      onChange={(e) => handleFieldChange('impactCIA', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="e.g., C:High I:Medium A:Low"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.impactCIA}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.riskAction || ''}
+                      onChange={(e) => handleFieldChange('riskAction', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="e.g., Requires treatment"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -381,21 +553,61 @@ export default function RiskInformation() {
               <div className="space-y-4">
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Threat</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.threat}</p>
+                  {isEditing ? (
+                    <textarea
+                      value={editedRisk?.threat || ''}
+                      onChange={(e) => handleFieldChange('threat', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter threat description..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.threat}</p>
+                  )}
                 </div>
 
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Vulnerability</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.vulnerability}</p>
+                  {isEditing ? (
+                    <textarea
+                      value={editedRisk?.vulnerability || ''}
+                      onChange={(e) => handleFieldChange('vulnerability', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter vulnerability description..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.vulnerability}</p>
+                  )}
                 </div>
 
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
+                  {isEditing ? (
+                    <textarea
+                      value={editedRisk?.currentControls || ''}
+                      onChange={(e) => handleFieldChange('currentControls', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter current controls..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.raisedBy || ''}
+                      onChange={(e) => handleFieldChange('raisedBy', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter who raised the risk"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.raisedBy}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -415,11 +627,31 @@ export default function RiskInformation() {
               <div className="space-y-3">
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Owner</span>
-                  <p className="text-sm text-gray-900 mt-1 font-medium">{riskDetails.riskOwner}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.riskOwner || ''}
+                      onChange={(e) => handleFieldChange('riskOwner', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter risk owner"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1 font-medium">{riskDetails.riskOwner}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.functionalUnit}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.functionalUnit || ''}
+                      onChange={(e) => handleFieldChange('functionalUnit', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter functional unit"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.functionalUnit}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -429,11 +661,31 @@ export default function RiskInformation() {
               <div className="space-y-3">
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Information Assets</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.informationAssets}</p>
+                  {isEditing ? (
+                    <textarea
+                      value={editedRisk?.informationAssets || ''}
+                      onChange={(e) => handleFieldChange('informationAssets', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter information assets..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.informationAssets}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Affected Sites</span>
-                  <p className="text-sm text-gray-900 mt-1">{riskDetails.affectedSites}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.affectedSites || ''}
+                      onChange={(e) => handleFieldChange('affectedSites', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter affected sites"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.affectedSites}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -443,16 +695,35 @@ export default function RiskInformation() {
               <div className="space-y-3">
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">JIRA Ticket</span>
-                  <p className="text-sm text-gray-900 mt-1 font-mono">{riskDetails.jiraTicket}</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedRisk?.jiraTicket || ''}
+                      onChange={(e) => handleFieldChange('jiraTicket', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                      placeholder="e.g., RISK-123"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1 font-mono">{riskDetails.jiraTicket}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Date Risk Raised</span>
-                  <div className="mt-1">
-                    <span className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskRaised)}</span>
-                    {getRelativeTime(riskDetails.dateRiskRaised) && (
-                      <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskRaised)}</p>
-                    )}
-                  </div>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={editedRisk?.dateRiskRaised ? editedRisk.dateRiskRaised.split('T')[0] : ''}
+                      onChange={(e) => handleFieldChange('dateRiskRaised', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  ) : (
+                    <div className="mt-1">
+                      <span className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskRaised)}</span>
+                      {getRelativeTime(riskDetails.dateRiskRaised) && (
+                        <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskRaised)}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -470,25 +741,74 @@ export default function RiskInformation() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Consequence</span>
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualConsequence)}`}>
-                  {riskDetails.residualConsequence}
-                </span>
+                {isEditing ? (
+                  <select
+                    value={editedRisk?.residualConsequence || ''}
+                    onChange={(e) => handleFieldChange('residualConsequence', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                ) : (
+                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualConsequence)}`}>
+                    {riskDetails.residualConsequence}
+                  </span>
+                )}
               </div>
               <div className="text-center">
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Likelihood</span>
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualLikelihood)}`}>
-                  {riskDetails.residualLikelihood}
-                </span>
+                {isEditing ? (
+                  <select
+                    value={editedRisk?.residualLikelihood || ''}
+                    onChange={(e) => handleFieldChange('residualLikelihood', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                ) : (
+                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualLikelihood)}`}>
+                    {riskDetails.residualLikelihood}
+                  </span>
+                )}
               </div>
               <div className="text-center">
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Risk Rating</span>
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getRiskLevelColor(riskDetails.residualRiskRating)}`}>
-                  {riskDetails.residualRiskRating}
-                </span>
+                {isEditing ? (
+                  <select
+                    value={editedRisk?.residualRiskRating || ''}
+                    onChange={(e) => handleFieldChange('residualRiskRating', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                ) : (
+                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getRiskLevelColor(riskDetails.residualRiskRating)}`}>
+                    {riskDetails.residualRiskRating}
+                  </span>
+                )}
               </div>
               <div className="text-center">
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Accepted By</span>
-                <p className="text-sm text-gray-900">{riskDetails.residualRiskAcceptedByOwner}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedRisk?.residualRiskAcceptedByOwner || ''}
+                    onChange={(e) => handleFieldChange('residualRiskAcceptedByOwner', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter name"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900">{riskDetails.residualRiskAcceptedByOwner}</p>
+                )}
               </div>
             </div>
           </div>
@@ -505,29 +825,72 @@ export default function RiskInformation() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date of SSC Approval</span>
-                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateOfSSCApproval)}</p>
-                {getRelativeTime(riskDetails.dateOfSSCApproval) && (
-                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateOfSSCApproval)}</p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editedRisk?.dateOfSSCApproval ? editedRisk.dateOfSSCApproval.split('T')[0] : ''}
+                    onChange={(e) => handleFieldChange('dateOfSSCApproval', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateOfSSCApproval)}</p>
+                    {getRelativeTime(riskDetails.dateOfSSCApproval) && (
+                      <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateOfSSCApproval)}</p>
+                    )}
+                  </>
                 )}
               </div>
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Risk Treatments Approved</span>
-                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskTreatmentsApproved)}</p>
-                {getRelativeTime(riskDetails.dateRiskTreatmentsApproved) && (
-                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskTreatmentsApproved)}</p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editedRisk?.dateRiskTreatmentsApproved ? editedRisk.dateRiskTreatmentsApproved.split('T')[0] : ''}
+                    onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateRiskTreatmentsApproved)}</p>
+                    {getRelativeTime(riskDetails.dateRiskTreatmentsApproved) && (
+                      <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateRiskTreatmentsApproved)}</p>
+                    )}
+                  </>
                 )}
               </div>
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Residual Risk Accepted</span>
-                <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateResidualRiskAccepted)}</p>
-                {getRelativeTime(riskDetails.dateResidualRiskAccepted) && (
-                  <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateResidualRiskAccepted)}</p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editedRisk?.dateResidualRiskAccepted ? editedRisk.dateResidualRiskAccepted.split('T')[0] : ''}
+                    onChange={(e) => handleFieldChange('dateResidualRiskAccepted', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">{formatDate(riskDetails.dateResidualRiskAccepted)}</p>
+                    {getRelativeTime(riskDetails.dateResidualRiskAccepted) && (
+                      <p className="text-xs text-gray-500 mt-1">{getRelativeTime(riskDetails.dateResidualRiskAccepted)}</p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
             <div>
               <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Reason for Acceptance</span>
-              <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
+              {isEditing ? (
+                <textarea
+                  value={editedRisk?.reasonForAcceptance || ''}
+                  onChange={(e) => handleFieldChange('reasonForAcceptance', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  rows={3}
+                  placeholder="Enter reason for acceptance..."
+                />
+              ) : (
+                <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
+              )}
             </div>
           </div>
         </div>
