@@ -50,7 +50,8 @@ import {
   faEarthOceania,
   faAnglesLeft,
   faAnglesRight,
-  faHourglassHalf
+  faHourglassHalf,
+  faFilePdf
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -112,6 +113,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'chevron-double-left': faAnglesLeft,
     'chevron-double-right': faAnglesRight,
     'hourglass-half': faHourglassHalf,
+    'file-pdf': faFilePdf,
   }
 
   const icon = icons[name]
@@ -182,6 +184,7 @@ function getFallbackEmoji(name: string): string {
     'chevron-double-left': '⏪',
     'chevron-double-right': '⏩',
     'hourglass-half': '⏳',
+    'file-pdf': '📄',
   }
   return emojiMap[name] || '📄'
 } 
