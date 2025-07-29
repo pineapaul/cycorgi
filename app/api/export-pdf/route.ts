@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chromium } from 'playwright'
 
 export async function POST(request: NextRequest) {
+  let browser
   try {
     const { html, filename = 'export.pdf' } = await request.json()
 
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Launch browser
-    const browser = await chromium.launch({
+    browser = await chromium.launch({
       headless: true,
     })
 
@@ -36,8 +37,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    await browser.close()
-
     // Return PDF as response
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -52,5 +51,13 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to generate PDF' },
       { status: 500 }
     )
+  } finally {
+    if (browser) {
+      try {
+        await browser.close()
+      } catch (closeError) {
+        console.error('Error closing browser:', closeError)
+      }
+    }
   }
 } 
