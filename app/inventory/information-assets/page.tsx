@@ -104,8 +104,8 @@ export default function InformationAssetsPage() {
               {cellValue}
               <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
             </div>
-          </div>
-        )
+        </div>
+      )
       }
     },
     {
@@ -202,8 +202,8 @@ export default function InformationAssetsPage() {
               {cellValue}
               <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
             </div>
-          </div>
-        )
+        </div>
+      )
       }
     },
     {
