@@ -384,39 +384,60 @@ export default function RiskRegister() {
              if (col.key === 'actions') {
          return (
            <div className="flex items-center space-x-2">
-                           <Link
-                href={`/risk-management/register/${row.riskId}`}
-                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-                title="View Risk Details"
-              >
-                <Icon name="eye" size={12} />
-              </Link>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const url = `${window.location.origin}/risk-management/register/${row.riskId}`
-                  navigator.clipboard.writeText(url).then(() => {
-                    alert('Link copied to clipboard!')
-                  })
-                }}
-                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-                title="Copy Link"
-              >
-                <Icon name="link" size={12} />
-              </button>
-             <button
-               onClick={(e) => {
-                 e.stopPropagation()
-                 // TODO: Implement workshop agenda functionality
-                 alert(`Risk ${row.riskId} added to workshop agenda!`)
-               }}
-               className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
-               title="Add to Workshop Agenda"
-             >
-               <Icon name="calendar-plus" size={12} className="mr-1" />
-               Workshop
-             </button>
+                                         <div className="relative group">
+                <Link
+                  href={`/risk-management/register/${row.riskId}`}
+                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Icon name="eye" size={12} />
+                </Link>
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                    View Risk Details
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                  </div>
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    const url = `${window.location.origin}/risk-management/register/${row.riskId}`
+                    navigator.clipboard.writeText(url).then(() => {
+                      alert('Link copied to clipboard!')
+                    })
+                  }}
+                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <Icon name="link" size={12} />
+                </button>
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                    Copy Link
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                  </div>
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // TODO: Implement workshop agenda functionality
+                    alert(`Risk ${row.riskId} added to workshop agenda!`)
+                  }}
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+                >
+                  <Icon name="calendar-plus" size={12} className="mr-1" />
+                  Workshop
+                </button>
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                    Add to Workshop Agenda
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                  </div>
+                </div>
+              </div>
            </div>
          )
        }
