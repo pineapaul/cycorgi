@@ -49,6 +49,59 @@ interface Treatment {
   closureApprovedBy: string
 }
 
+// Robust date parsing utility
+const parseDate = (dateString: string | null | undefined): Date | null => {
+  if (!dateString || typeof dateString !== 'string') return null
+  // Try ISO, yyyy-mm-dd, dd/mm/yyyy, dd MMM yyyy
+  const iso = Date.parse(dateString)
+  if (!isNaN(iso)) return new Date(iso)
+  // dd/mm/yyyy
+  const dmy = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (dmy) return new Date(`${dmy[3]}-${dmy[2]}-${dmy[1]}`)
+  // dd MMM yyyy
+  const dmyText = dateString.match(/^(\d{2}) ([A-Za-z]{3}) (\d{4})$/)
+  if (dmyText) return new Date(`${dmyText[3]}-${dmyText[2]}-${dmyText[1]}`)
+  return null
+}
+
+// Format date to dd MMM yyyy format
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString || dateString === 'Not specified') return 'Not specified'
+  const date = parseDate(dateString)
+  if (!date) return 'Invalid date'
+  try {
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  } catch (error) {
+    return 'Invalid date'
+  }
+}
+
+// Get relative time (e.g., "2 days ago", "1 week ago")
+const getRelativeTime = (dateString: string | null | undefined): string => {
+  if (!dateString || dateString === 'Not specified') return ''
+  
+  const date = parseDate(dateString)
+  if (!date) return ''
+  
+  try {
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 1) return '1 day ago'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
+    if (diffDays < 365) return `${Math.ceil(diffDays / 30)} months ago`
+    return `${Math.ceil(diffDays / 365)} years ago`
+  } catch (error) {
+    return ''
+  }
+}
+
 export default function RiskInformation() {
   const params = useParams()
   const router = useRouter()
@@ -248,42 +301,6 @@ export default function RiskInformation() {
     }
   }
 
-  // Robust date parsing utility
-  const parseDate = (dateString: string | null | undefined): Date | null => {
-    if (!dateString || dateString === 'Not specified' || dateString === '') {
-      return null
-    }
-    
-    try {
-      // Try parsing as ISO string first
-      const date = new Date(dateString)
-      if (!isNaN(date.getTime())) {
-        return date
-      }
-      
-      // Try parsing common date formats
-      const formats = [
-        /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
-        /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
-        /^\d{2}-\d{2}-\d{4}$/, // MM-DD-YYYY
-        /^\d{4}\/\d{2}\/\d{2}$/, // YYYY/MM/DD
-      ]
-      
-      for (const format of formats) {
-        if (format.test(dateString)) {
-          const parsed = new Date(dateString)
-          if (!isNaN(parsed.getTime())) {
-            return parsed
-          }
-        }
-      }
-      
-      return null
-    } catch (error) {
-      return null
-    }
-  }
-
   // Convert date to YYYY-MM-DD format for HTML date inputs
   const toDateInputValue = (dateString: string | null | undefined): string => {
     const date = parseDate(dateString)
@@ -291,46 +308,6 @@ export default function RiskInformation() {
     
     try {
       return date.toISOString().split('T')[0]
-    } catch (error) {
-      return ''
-    }
-  }
-
-  // Format date to dd MMM yyyy format
-  const formatDate = (dateString: string | null | undefined): string => {
-    if (!dateString || dateString === 'Not specified') return 'Not specified'
-    
-    const date = parseDate(dateString)
-    if (!date) return 'Invalid date'
-    
-    try {
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch (error) {
-      return 'Invalid date'
-    }
-  }
-
-  // Get relative time (e.g., "2 days ago", "1 week ago")
-  const getRelativeTime = (dateString: string | null | undefined): string => {
-    if (!dateString || dateString === 'Not specified') return ''
-    
-    const date = parseDate(dateString)
-    if (!date) return ''
-    
-    try {
-      const now = new Date()
-      const diffTime = Math.abs(now.getTime() - date.getTime())
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
-      if (diffDays === 1) return '1 day ago'
-      if (diffDays < 7) return `${diffDays} days ago`
-      if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
-      if (diffDays < 365) return `${Math.ceil(diffDays / 30)} months ago`
-      return `${Math.ceil(diffDays / 365)} years ago`
     } catch (error) {
       return ''
     }
