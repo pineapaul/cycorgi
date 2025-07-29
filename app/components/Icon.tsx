@@ -55,7 +55,8 @@ import {
   faExclamationCircle,
   faTriangleExclamation,
   faCircleInfo,
-  faXmark
+  faXmark,
+  faIdCard
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -122,6 +123,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'exclamation-triangle': faTriangleExclamation,
     'information-circle': faCircleInfo,
     'x-mark': faXmark,
+    'id-card': faIdCard,
   }
 
   const icon = icons[name]
@@ -197,6 +199,7 @@ function getFallbackEmoji(name: string): string {
     'exclamation-triangle': '⚠️',
     'information-circle': 'ℹ️',
     'x-mark': '✕',
+    'id-card': '🆔',
   }
   return emojiMap[name] || '📄'
 } 
