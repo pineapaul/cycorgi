@@ -44,9 +44,17 @@ export async function PUT(
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     
+    // Convert impactCIA string back to impact array for database storage
+    const updateData = { ...body }
+    if (updateData.impactCIA) {
+      // Convert comma-separated string back to array
+      updateData.impact = (updateData.impactCIA?.split(', ') || []).filter((item: string) => item.trim() !== '')
+      delete updateData.impactCIA // Remove the string version as it's not stored in DB
+    }
+    
     const result = await collection.updateOne(
       { riskId: id },
-      { $set: body }
+      { $set: updateData }
     )
     
     if (result.matchedCount === 0) {
@@ -58,7 +66,7 @@ export async function PUT(
     
     return NextResponse.json({
       success: true,
-      data: { ...body, riskId: id }
+      data: { ...updateData, riskId: id }
     })
   } catch (error) {
     console.error('Error updating risk:', error)

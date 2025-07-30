@@ -180,13 +180,13 @@ function generateRisks() {
     // Generate CIA impact based on risk type
     let impact;
     if (i <= 5) {
-      impact = { confidentiality: 'High', integrity: 'Medium', availability: 'Low' };
+      impact = ['Confidentiality', 'Integrity']; // High priority risks affect C and I
     } else if (i <= 10) {
-      impact = { confidentiality: 'Medium', integrity: 'Low', availability: 'Low' };
+      impact = ['Confidentiality']; // Medium priority risks affect C
     } else if (i <= 15) {
-      impact = { confidentiality: 'Medium', integrity: 'High', availability: 'Medium' };
+      impact = ['Integrity', 'Availability']; // High priority risks affect I and A
     } else {
-      impact = { confidentiality: 'Low', integrity: 'Medium', availability: 'High' };
+      impact = ['Availability']; // Medium priority risks affect A
     }
 
     // Distribute phases equally among 20 risks (4 risks per phase)
