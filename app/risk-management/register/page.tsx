@@ -36,6 +36,66 @@ const getCurrentPhaseForFilter = (phase: string): string => {
   }
 }
 
+// Custom renderer for CIA values
+const renderCIAValues = (value: string) => {
+  if (!value || value === 'Not specified') {
+    return (
+      <span className="text-gray-400 text-xs italic">Not specified</span>
+    )
+  }
+
+  const ciaValues = value.split(', ')
+  return (
+    <div className="flex gap-1.5 overflow-hidden">
+      {ciaValues.map((cia, index) => {
+        const getCIAConfig = (ciaType: string) => {
+          switch (ciaType) {
+            case 'Confidentiality':
+              return {
+                bg: 'bg-red-50',
+                text: 'text-red-700',
+                border: 'border-red-200',
+                label: 'C'
+              }
+            case 'Integrity':
+              return {
+                bg: 'bg-orange-50',
+                text: 'text-orange-700',
+                border: 'border-orange-200',
+                label: 'I'
+              }
+            case 'Availability':
+              return {
+                bg: 'bg-blue-50',
+                text: 'text-blue-700',
+                border: 'border-blue-200',
+                label: 'A'
+              }
+            default:
+              return {
+                bg: 'bg-gray-50',
+                text: 'text-gray-700',
+                border: 'border-gray-200',
+                label: cia.charAt(0)
+              }
+          }
+        }
+
+        const config = getCIAConfig(cia)
+        return (
+          <span
+            key={index}
+            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
+            title={cia}
+          >
+            {config.label}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 // Get columns for each phase
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
@@ -52,7 +112,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'threat', label: 'Threat', sortable: true },
     { key: 'vulnerability', label: 'Vulnerability', sortable: true },
     { key: 'riskStatement', label: 'Risk Statement', sortable: true },
-    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true },
+    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues },
     { key: 'currentControls', label: 'Current Controls', sortable: true },
     { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
     { key: 'consequence', label: 'Consequence', sortable: true },
@@ -253,7 +313,7 @@ export default function RiskRegister() {
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,
-              impactCIA: risk.impact ? `C:${risk.impact.confidentiality} I:${risk.impact.integrity} A:${risk.impact.availability}` : 'Not specified',
+              impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
               currentControls: risk.currentControls,
               currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
               consequence: risk.consequenceRating,
@@ -383,48 +443,52 @@ export default function RiskRegister() {
           </Link>
         )
       }
-             if (col.key === 'actions') {
-         return (
-           <div className="flex items-center space-x-2">
-                                         <Tooltip content="View Risk Details">
-                <Link
-                  href={`/risk-management/register/${row.riskId}`}
-                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Icon name="eye" size={12} />
-                </Link>
-              </Tooltip>
-              <Tooltip content="Copy Link">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    const url = `${window.location.origin}/risk-management/register/${row.riskId}`
-                    navigator.clipboard.writeText(url).then(() => {
-                      alert('Link copied to clipboard!')
-                    })
-                  }}
-                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-                >
-                  <Icon name="link" size={12} />
-                </button>
-              </Tooltip>
-              <Tooltip content="Add to Workshop Agenda">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // TODO: Implement workshop agenda functionality
-                    alert(`Risk ${row.riskId} added to workshop agenda!`)
-                  }}
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
-                >
-                  <Icon name="calendar-plus" size={12} className="mr-1" />
-                  Workshop
-                </button>
-              </Tooltip>
-           </div>
-         )
-       }
+      if (col.key === 'actions') {
+        return (
+          <div className="flex items-center space-x-2">
+            <Tooltip content="View Risk Details">
+              <Link
+                href={`/risk-management/register/${row.riskId}`}
+                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Icon name="eye" size={12} />
+              </Link>
+            </Tooltip>
+            <Tooltip content="Copy Link">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const url = `${window.location.origin}/risk-management/register/${row.riskId}`
+                  navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!')
+                  })
+                }}
+                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="link" size={12} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Add to Workshop Agenda">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // TODO: Implement workshop agenda functionality
+                  alert(`Risk ${row.riskId} added to workshop agenda!`)
+                }}
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+              >
+                <Icon name="calendar-plus" size={12} className="mr-1" />
+                Workshop
+              </button>
+            </Tooltip>
+          </div>
+        )
+      }
+      if (col.key === 'impactCIA') {
+        // Use the custom renderCIAValues function for the impactCIA column
+        return renderCIAValues(value)
+      }
       if (col.key === 'currentPhase') {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>

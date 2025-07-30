@@ -187,7 +187,7 @@ export default function RiskInformation() {
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
-            impactCIA: risk.impact ? `C:${risk.impact.confidentiality} I:${risk.impact.integrity} A:${risk.impact.availability}` : 'Not specified',
+            impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
             currentControls: risk.currentControls,
             currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
             consequence: risk.consequenceRating,
@@ -1048,15 +1048,144 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Impact (CIA)</span>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedRisk?.impactCIA || ''}
-                      onChange={(e) => handleFieldChange('impactCIA', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., C:High I:Medium A:Low"
-                    />
+                    <div className="space-y-3 mt-2">
+                      <p className="text-sm text-gray-600 mb-3">Select which CIA components are affected by this risk:</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-200 group">
+                          <input
+                            type="checkbox"
+                            id="edit-confidentiality-register"
+                            checked={editedRisk?.impactCIA?.includes('Confidentiality')}
+                            onChange={(e) => {
+                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const newCIA = e.target.checked 
+                                ? [...currentCIA, 'Confidentiality']
+                                : currentCIA.filter(item => item !== 'Confidentiality')
+                              handleFieldChange('impactCIA', newCIA.join(', '))
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                            editedRisk?.impactCIA?.includes('Confidentiality')
+                              ? 'bg-red-500 border-red-500'
+                              : 'border-gray-300 group-hover:border-red-400'
+                          }`}>
+                            {editedRisk?.impactCIA?.includes('Confidentiality') && (
+                              <Icon name="check" size={12} className="text-white" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Confidentiality</div>
+                            <div className="text-xs text-gray-500">Data privacy & access control</div>
+                          </div>
+                        </label>
+
+                        <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 group">
+                          <input
+                            type="checkbox"
+                            id="edit-integrity-register"
+                            checked={editedRisk?.impactCIA?.includes('Integrity')}
+                            onChange={(e) => {
+                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const newCIA = e.target.checked 
+                                ? [...currentCIA, 'Integrity']
+                                : currentCIA.filter(item => item !== 'Integrity')
+                              handleFieldChange('impactCIA', newCIA.join(', '))
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                            editedRisk?.impactCIA?.includes('Integrity')
+                              ? 'bg-orange-500 border-orange-500'
+                              : 'border-gray-300 group-hover:border-orange-400'
+                          }`}>
+                            {editedRisk?.impactCIA?.includes('Integrity') && (
+                              <Icon name="check" size={12} className="text-white" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Integrity</div>
+                            <div className="text-xs text-gray-500">Data accuracy & consistency</div>
+                          </div>
+                        </label>
+
+                        <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group">
+                          <input
+                            type="checkbox"
+                            id="edit-availability-register"
+                            checked={editedRisk?.impactCIA?.includes('Availability')}
+                            onChange={(e) => {
+                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const newCIA = e.target.checked 
+                                ? [...currentCIA, 'Availability']
+                                : currentCIA.filter(item => item !== 'Availability')
+                              handleFieldChange('impactCIA', newCIA.join(', '))
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                            editedRisk?.impactCIA?.includes('Availability')
+                              ? 'bg-blue-500 border-blue-500'
+                              : 'border-gray-300 group-hover:border-blue-400'
+                          }`}>
+                            {editedRisk?.impactCIA?.includes('Availability') && (
+                              <Icon name="check" size={12} className="text-white" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Availability</div>
+                            <div className="text-xs text-gray-500">System accessibility & uptime</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.impactCIA}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {riskDetails.impactCIA ? (
+                        riskDetails.impactCIA.split(', ').map((cia: string, index: number) => {
+                          const getCIAConfig = (ciaType: string) => {
+                            switch (ciaType) {
+                              case 'Confidentiality':
+                                return {
+                                  bg: 'bg-red-50',
+                                  text: 'text-red-700',
+                                  border: 'border-red-200'
+                                }
+                              case 'Integrity':
+                                return {
+                                  bg: 'bg-orange-50',
+                                  text: 'text-orange-700',
+                                  border: 'border-orange-200'
+                                }
+                              case 'Availability':
+                                return {
+                                  bg: 'bg-blue-50',
+                                  text: 'text-blue-700',
+                                  border: 'border-blue-200'
+                                }
+                              default:
+                                return {
+                                  bg: 'bg-gray-50',
+                                  text: 'text-gray-700',
+                                  border: 'border-gray-200'
+                                }
+                            }
+                          }
+                          
+                          const config = getCIAConfig(cia)
+                          return (
+                            <span
+                              key={index}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105`}
+                            >
+                              {cia}
+                            </span>
+                          )
+                        })
+                      ) : (
+                        <span className="text-sm text-gray-500 italic">Not specified</span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div>

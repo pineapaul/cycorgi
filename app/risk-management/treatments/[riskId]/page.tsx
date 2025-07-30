@@ -509,25 +509,53 @@ export default function RiskTreatments() {
                 {/* Impact CIA */}
                 <div>
                   <span className="text-xs text-gray-500">Impact (CIA)</span>
-                  <div className="mt-1 flex space-x-3">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-xs text-gray-500">C:</span>
-                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.confidentiality)}`}>
-                        {riskDetails.impact.confidentiality}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-xs text-gray-500">I:</span>
-                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.integrity)}`}>
-                        {riskDetails.impact.integrity}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-xs text-gray-500">A:</span>
-                      <span className={`inline-flex px-1 py-0.5 rounded text-xs font-medium ${getCIAImpactColor(riskDetails.impact.availability)}`}>
-                        {riskDetails.impact.availability}
-                      </span>
-                    </div>
+                                    <div className="mt-1">
+                    {riskDetails.impact && Array.isArray(riskDetails.impact) ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {riskDetails.impact.map((cia: string, index: number) => {
+                          const getCIAConfig = (ciaType: string) => {
+                            switch (ciaType) {
+                              case 'Confidentiality':
+                                return {
+                                  bg: 'bg-red-50',
+                                  text: 'text-red-700',
+                                  border: 'border-red-200'
+                                }
+                              case 'Integrity':
+                                return {
+                                  bg: 'bg-orange-50',
+                                  text: 'text-orange-700',
+                                  border: 'border-orange-200'
+                                }
+                              case 'Availability':
+                                return {
+                                  bg: 'bg-blue-50',
+                                  text: 'text-blue-700',
+                                  border: 'border-blue-200'
+                                }
+                              default:
+                                return {
+                                  bg: 'bg-gray-50',
+                                  text: 'text-gray-700',
+                                  border: 'border-gray-200'
+                                }
+                            }
+                          }
+
+                          const config = getCIAConfig(cia)
+                          return (
+                            <span
+                              key={index}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105`}
+                            >
+                              {cia}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500 italic">Not specified</span>
+                    )}
                   </div>
                 </div>
 

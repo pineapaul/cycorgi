@@ -21,11 +21,11 @@ interface RiskFormData {
   consequenceRating?: string
   likelihoodRating?: string
   riskRating?: string
-  impact?: {
-    confidentiality: string
-    integrity: string
-    availability: string
-  }
+  impact?: string[]
+}
+
+type RiskFormErrors = {
+  [K in keyof RiskFormData]?: string
 }
 
 export default function NewRisk() {
@@ -47,23 +47,20 @@ export default function NewRisk() {
     consequenceRating: '',
     likelihoodRating: '',
     riskRating: '',
-    impact: {
-      confidentiality: '',
-      integrity: '',
-      availability: ''
-    }
+    impact: []
   })
 
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Partial<RiskFormData>>({})
+  const [errors, setErrors] = useState<RiskFormErrors>({})
 
   const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement']
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<RiskFormData> = {}
+    const newErrors: RiskFormErrors = {}
 
     mandatoryFields.forEach(field => {
-      if (!formData[field as keyof RiskFormData]?.toString().trim()) {
+      const value = formData[field as keyof RiskFormData]
+      if (typeof value === 'string' && !value.trim()) {
         newErrors[field as keyof RiskFormData] = 'This field is required'
       }
     })
@@ -87,13 +84,12 @@ export default function NewRisk() {
     }
   }
 
-  const handleImpactChange = (field: keyof RiskFormData['impact'], value: string) => {
+  const handleImpactChange = (ciaValue: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      impact: {
-        ...prev.impact!,
-        [field]: value
-      }
+      impact: checked 
+        ? [...(prev.impact || []), ciaValue]
+        : (prev.impact || []).filter(item => item !== ciaValue)
     }))
   }
 
@@ -393,55 +389,76 @@ export default function NewRisk() {
               {/* Impact Assessment */}
               <div className="mt-6">
                 <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA)</h3>
+                <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label htmlFor="confidentiality" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confidentiality
-                    </label>
-                    <select
-                      id="confidentiality"
-                      value={formData.impact?.confidentiality}
-                      onChange={(e) => handleImpactChange('confidentiality', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    >
-                      <option value="">Select level</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="integrity" className="block text-sm font-medium text-gray-700 mb-2">
-                      Integrity
-                    </label>
-                    <select
-                      id="integrity"
-                      value={formData.impact?.integrity}
-                      onChange={(e) => handleImpactChange('integrity', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    >
-                      <option value="">Select level</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="availability" className="block text-sm font-medium text-gray-700 mb-2">
-                      Availability
-                    </label>
-                    <select
-                      id="availability"
-                      value={formData.impact?.availability}
-                      onChange={(e) => handleImpactChange('availability', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    >
-                      <option value="">Select level</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
+                                   <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-200 group">
+                   <input
+                     type="checkbox"
+                     id="confidentiality"
+                     checked={formData.impact?.includes('Confidentiality')}
+                     onChange={(e) => handleImpactChange('Confidentiality', e.target.checked)}
+                     className="sr-only"
+                   />
+                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                     formData.impact?.includes('Confidentiality')
+                       ? 'bg-red-500 border-red-500'
+                       : 'border-gray-300 group-hover:border-red-400'
+                   }`}>
+                     {formData.impact?.includes('Confidentiality') && (
+                       <Icon name="check" size={12} className="text-white" />
+                     )}
+                   </div>
+                   <div>
+                     <div className="font-medium text-gray-900">Confidentiality</div>
+                     <div className="text-xs text-gray-500">Data privacy & access control</div>
+                   </div>
+                 </label>
+
+                 <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 group">
+                   <input
+                     type="checkbox"
+                     id="integrity"
+                     checked={formData.impact?.includes('Integrity')}
+                     onChange={(e) => handleImpactChange('Integrity', e.target.checked)}
+                     className="sr-only"
+                   />
+                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                     formData.impact?.includes('Integrity')
+                       ? 'bg-orange-500 border-orange-500'
+                       : 'border-gray-300 group-hover:border-orange-400'
+                   }`}>
+                     {formData.impact?.includes('Integrity') && (
+                       <Icon name="check" size={12} className="text-white" />
+                     )}
+                   </div>
+                   <div>
+                     <div className="font-medium text-gray-900">Integrity</div>
+                     <div className="text-xs text-gray-500">Data accuracy & consistency</div>
+                   </div>
+                 </label>
+
+                 <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group">
+                   <input
+                     type="checkbox"
+                     id="availability"
+                     checked={formData.impact?.includes('Availability')}
+                     onChange={(e) => handleImpactChange('Availability', e.target.checked)}
+                     className="sr-only"
+                   />
+                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                     formData.impact?.includes('Availability')
+                       ? 'bg-blue-500 border-blue-500'
+                       : 'border-gray-300 group-hover:border-blue-400'
+                   }`}>
+                     {formData.impact?.includes('Availability') && (
+                       <Icon name="check" size={12} className="text-white" />
+                     )}
+                   </div>
+                   <div>
+                     <div className="font-medium text-gray-900">Availability</div>
+                     <div className="text-xs text-gray-500">System accessibility & uptime</div>
+                   </div>
+                 </label>
                 </div>
               </div>
             </div>
