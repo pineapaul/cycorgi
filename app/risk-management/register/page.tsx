@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
+import Tooltip from '../../components/Tooltip'
 
 // Risk management phases
 const RISK_PHASES = [
@@ -384,7 +385,7 @@ export default function RiskRegister() {
              if (col.key === 'actions') {
          return (
            <div className="flex items-center space-x-2">
-                                         <div className="relative group">
+                                         <Tooltip content="View Risk Details">
                 <Link
                   href={`/risk-management/register/${row.riskId}`}
                   className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
@@ -392,14 +393,8 @@ export default function RiskRegister() {
                 >
                   <Icon name="eye" size={12} />
                 </Link>
-                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                    View Risk Details
-                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative group">
+              </Tooltip>
+              <Tooltip content="Copy Link">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -412,14 +407,8 @@ export default function RiskRegister() {
                 >
                   <Icon name="link" size={12} />
                 </button>
-                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                    Copy Link
-                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="relative group">
+              </Tooltip>
+              <Tooltip content="Add to Workshop Agenda">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -431,13 +420,7 @@ export default function RiskRegister() {
                   <Icon name="calendar-plus" size={12} className="mr-1" />
                   Workshop
                 </button>
-                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                  <div className="text-white text-xs rounded-lg p-2 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                    Add to Workshop Agenda
-                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
-                  </div>
-                </div>
-              </div>
+              </Tooltip>
            </div>
          )
        }
