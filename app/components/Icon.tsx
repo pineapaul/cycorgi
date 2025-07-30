@@ -57,7 +57,8 @@ import {
   faCircleInfo,
   faXmark,
   faIdCard,
-  faCalendarPlus
+  faCalendarPlus,
+  faPlusCircle
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -126,6 +127,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'x-mark': faXmark,
     'id-card': faIdCard,
     'calendar-plus': faCalendarPlus,
+    'plus-circle': faPlusCircle,
   }
 
   const icon = icons[name]
@@ -203,6 +205,7 @@ function getFallbackEmoji(name: string): string {
     'x-mark': '✕',
     'id-card': '🆔',
     'calendar-plus': '📅➕',
+    'plus-circle': '➕',
   }
   return emojiMap[name] || '📄'
 } 

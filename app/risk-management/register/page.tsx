@@ -478,19 +478,20 @@ export default function RiskRegister() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Risk Management</h1>
         </div>
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-          <button 
-            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ 
-              backgroundColor: '#4C1D95',
-              '--tw-ring-color': '#4C1D95'
-            } as React.CSSProperties}
-          >
-            <Icon name="plus" size={16} className="mr-2" />
-            <span className="hidden sm:inline">New Risk</span>
-            <span className="sm:hidden">New</span>
-          </button>
-        </div>
+                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+           <Link
+             href="/risk-management/register/new"
+             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+             style={{ 
+               backgroundColor: '#4C1D95',
+               '--tw-ring-color': '#4C1D95'
+             } as React.CSSProperties}
+           >
+             <Icon name="plus" size={16} className="mr-2" />
+             <span className="hidden sm:inline">New Risk</span>
+             <span className="sm:hidden">New</span>
+           </Link>
+         </div>
       </div>
 
       {/* Tabs */}
