@@ -365,7 +365,8 @@ export default function RiskRegister() {
     ? risks.filter(risk => risk.currentPhase === getCurrentPhaseForFilter(selectedPhase))
     : risks // Show all risks when no phase is selected
 
-  const baseColumns = getColumnsForPhase(selectedPhase || 'full-view')
+  // Always show all columns regardless of phase selection
+  const baseColumns = getColumnsForPhase('full-view')
   
   const columns = baseColumns.map(col => ({
     ...col,
@@ -574,20 +575,20 @@ export default function RiskRegister() {
 
       {/* Risk Data Table */}
       {!loading && !error && (
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          title={`${selectedPhase ? RISK_PHASES.find(p => p.id === selectedPhase)?.name : 'Register'} Risks`}
-          searchPlaceholder="Search risks..."
-          onRowClick={handleRowClick}
-          selectable={true}
-          selectedRows={selectedRows}
-          onSelectionChange={setSelectedRows}
-          onExportCSV={handleExportCSV}
-          phaseButtons={RISK_PHASES}
-          selectedPhase={selectedPhase}
-          onPhaseSelect={handlePhaseSelect}
-        />
+                 <DataTable
+           columns={columns}
+           data={filteredData}
+           title={`${selectedPhase ? `${RISK_PHASES.find(p => p.id === selectedPhase)?.name} Phase` : 'All'} Risks`}
+           searchPlaceholder="Search risks..."
+           onRowClick={handleRowClick}
+           selectable={true}
+           selectedRows={selectedRows}
+           onSelectionChange={setSelectedRows}
+           onExportCSV={handleExportCSV}
+           phaseButtons={RISK_PHASES}
+           selectedPhase={selectedPhase}
+           onPhaseSelect={handlePhaseSelect}
+         />
       )}
     </div>
   )
