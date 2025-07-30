@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import DataTable, { Column } from '../../../components/DataTable'
+import Link from 'next/link'
 import Icon from '../../../components/Icon'
+import { getCIAConfig } from '../../../../lib/utils'
+import DataTable, { Column } from '../../../components/DataTable'
 import { useToast } from '../../../components/Toast'
 
 interface RiskDetails {
@@ -1143,35 +1145,6 @@ export default function RiskInformation() {
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {riskDetails.impactCIA ? (
                         riskDetails.impactCIA.split(', ').map((cia: string, index: number) => {
-                          const getCIAConfig = (ciaType: string) => {
-                            switch (ciaType) {
-                              case 'Confidentiality':
-                                return {
-                                  bg: 'bg-red-50',
-                                  text: 'text-red-700',
-                                  border: 'border-red-200'
-                                }
-                              case 'Integrity':
-                                return {
-                                  bg: 'bg-orange-50',
-                                  text: 'text-orange-700',
-                                  border: 'border-orange-200'
-                                }
-                              case 'Availability':
-                                return {
-                                  bg: 'bg-blue-50',
-                                  text: 'text-blue-700',
-                                  border: 'border-blue-200'
-                                }
-                              default:
-                                return {
-                                  bg: 'bg-gray-50',
-                                  text: 'text-gray-700',
-                                  border: 'border-gray-200'
-                                }
-                            }
-                          }
-                          
                           const config = getCIAConfig(cia)
                           return (
                             <span
