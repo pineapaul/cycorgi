@@ -110,7 +110,11 @@ export default function NewRisk() {
     e.preventDefault()
     
     if (!validateForm()) {
-      showToast('Please fill in all mandatory fields', 'error')
+      showToast({
+        title: 'Validation Error',
+        message: 'Please fill in all mandatory fields',
+        type: 'error'
+      })
       return
     }
 
@@ -135,14 +139,27 @@ export default function NewRisk() {
       const result = await response.json()
 
       if (result.success) {
-        showToast('Risk created successfully!', 'success')
-        router.push('/risk-management/register')
+        showToast({
+          title: 'Success',
+          message: 'Risk created successfully!',
+          type: 'success'
+        })
+        // Redirect to the newly created risk's info page
+        router.push(`/risk-management/register/${result.data._id}`)
       } else {
-        showToast(result.error || 'Failed to create risk', 'error')
+        showToast({
+          title: 'Error',
+          message: result.error || 'Failed to create risk',
+          type: 'error'
+        })
       }
     } catch (error) {
       console.error('Error creating risk:', error)
-      showToast('An error occurred while creating the risk', 'error')
+      showToast({
+        title: 'Error',
+        message: 'An error occurred while creating the risk',
+        type: 'error'
+      })
     } finally {
       setLoading(false)
     }

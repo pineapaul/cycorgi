@@ -251,8 +251,10 @@ export default function RiskRegister() {
         const result = await response.json()
         
         if (result.success) {
-          // Transform the data to match the expected format - simplified
-          const transformedRisks = result.data.map((risk: any) => {
+          // Filter out draft risks and transform the data
+          const transformedRisks = result.data
+            .filter((risk: any) => risk.currentPhase !== 'Draft')
+            .map((risk: any) => {
             // Create a new object with only the properties we need - simplified
             // Map phase values to display names
             const getPhaseDisplayName = (phase: string) => {
@@ -537,7 +539,7 @@ export default function RiskRegister() {
             href="/risk-management/treatments"
             className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           >
-            Treatments
+            Draft Risks
           </Link>
         </nav>
       </div>
