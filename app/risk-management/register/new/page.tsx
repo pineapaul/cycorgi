@@ -53,7 +53,7 @@ export default function NewRisk() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<RiskFormErrors>({})
 
-  const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement']
+  const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'impact']
 
   const validateForm = (): boolean => {
     const newErrors: RiskFormErrors = {}
@@ -64,6 +64,11 @@ export default function NewRisk() {
         newErrors[field as keyof RiskFormData] = 'This field is required'
       }
     })
+
+    // Special validation for impact field (array)
+    if (!formData.impact || formData.impact.length === 0) {
+      newErrors.impact = 'Please select at least one CIA component'
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -91,6 +96,14 @@ export default function NewRisk() {
         ? [...(prev.impact || []), ciaValue]
         : (prev.impact || []).filter(item => item !== ciaValue)
     }))
+    
+    // Clear error when CIA component is selected
+    if (errors.impact) {
+      setErrors(prev => ({
+        ...prev,
+        impact: undefined
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -388,10 +401,14 @@ export default function NewRisk() {
 
               {/* Impact Assessment */}
               <div className="mt-6">
-                <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA)</h3>
+                <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA) <span className="text-red-500">*</span></h3>
                 <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                   <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-200 group">
+                                   <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                     errors.impact 
+                       ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                       : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
+                   }`}>
                    <input
                      type="checkbox"
                      id="confidentiality"
@@ -414,7 +431,11 @@ export default function NewRisk() {
                    </div>
                  </label>
 
-                 <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-all duration-200 group">
+                 <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                   errors.impact 
+                     ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                     : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                 }`}>
                    <input
                      type="checkbox"
                      id="integrity"
@@ -437,7 +458,11 @@ export default function NewRisk() {
                    </div>
                  </label>
 
-                 <label className="relative flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group">
+                 <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                   errors.impact 
+                     ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                 }`}>
                    <input
                      type="checkbox"
                      id="availability"
@@ -460,6 +485,9 @@ export default function NewRisk() {
                    </div>
                  </label>
                 </div>
+                {errors.impact && (
+                  <p className="mt-2 text-sm text-red-600">{errors.impact}</p>
+                )}
               </div>
             </div>
 
