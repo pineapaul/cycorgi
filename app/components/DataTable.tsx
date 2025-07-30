@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Icon from './Icon'
+import Tooltip from './Tooltip'
 
 export interface Column {
   key: string
@@ -752,15 +753,11 @@ export default function DataTable({
                         {column.render 
                             ? column.render(cellValue, row)
                             : (
-                                <div className="relative group">
+                                <Tooltip content={cellValue ? String(cellValue) : '-'} theme="dark">
                                   <span className="truncate block max-w-full">
                                     {cellValue ? String(cellValue) : '-'}
                                   </span>
-                                  <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
-                                    {cellValue ? String(cellValue) : '-'}
-                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                                  </div>
-                                </div>
+                                </Tooltip>
                               )
                         }
                       </div>

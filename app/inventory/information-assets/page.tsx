@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
+import Tooltip from '../../components/Tooltip'
 
 interface InformationAsset {
   id: string
@@ -96,16 +97,13 @@ export default function InformationAssetsPage() {
       render: (value) => {
         const cellValue = value ? String(value) : '-'
         return (
-          <div className="relative group">
+          <Tooltip content={cellValue} theme="dark">
             <span className="truncate block max-w-full">
               {cellValue}
             </span>
-            <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
-              {cellValue}
-              <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-        </div>
-      )
+          </Tooltip>
+        )
+      }
       }
     },
     {
@@ -194,16 +192,13 @@ export default function InformationAssetsPage() {
       render: (value) => {
         const cellValue = value ? String(value) : '-'
         return (
-          <div className="relative group">
+          <Tooltip content={cellValue} theme="dark">
             <span className="truncate block max-w-full">
               {cellValue}
             </span>
-            <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
-              {cellValue}
-              <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-        </div>
-      )
+          </Tooltip>
+        )
+      }
       }
     },
     {
@@ -214,41 +209,44 @@ export default function InformationAssetsPage() {
       align: 'center',
       render: (value, row) => (
         <div className="flex items-center space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              window.location.href = `/inventory/information-assets/${row.id}`
-            }}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
-            title="View Profile"
-          >
-            <Icon name="eye" size={14} className="text-blue-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              const url = `${window.location.origin}/inventory/information-assets/${row.id}`
-              navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied to clipboard!')
-              })
-            }}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"
-            title="Copy Link"
-          >
-            <Icon name="link" size={14} className="text-green-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
-                handleDeleteAsset(row.id)
-              }
-            }}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
-            title="Delete Asset"
-          >
-            <Icon name="trash" size={14} className="text-red-600" />
-          </button>
+          <Tooltip content="View Profile">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                window.location.href = `/inventory/information-assets/${row.id}`
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
+            >
+              <Icon name="eye" size={14} className="text-blue-600" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Copy Link">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const url = `${window.location.origin}/inventory/information-assets/${row.id}`
+                navigator.clipboard.writeText(url).then(() => {
+                  alert('Link copied to clipboard!')
+                })
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"
+            >
+              <Icon name="link" size={14} className="text-green-600" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Delete Asset">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
+                  handleDeleteAsset(row.id)
+                }
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
+            >
+              <Icon name="trash" size={14} className="text-red-600" />
+            </button>
+          </Tooltip>
         </div>
       )
     }
