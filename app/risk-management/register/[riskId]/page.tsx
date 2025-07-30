@@ -1142,9 +1142,9 @@ export default function RiskInformation() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-1.5 mt-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {riskDetails.impactCIA ? (
-                        riskDetails.impactCIA.split(', ').map((cia: string, index: number) => {
+                        (riskDetails.impactCIA?.split(', ') || []).map((cia: string, index: number) => {
                           const config = getCIAConfig(cia)
                           return (
                             <span

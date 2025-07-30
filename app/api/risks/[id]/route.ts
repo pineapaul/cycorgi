@@ -48,7 +48,7 @@ export async function PUT(
     const updateData = { ...body }
     if (updateData.impactCIA) {
       // Convert comma-separated string back to array
-      updateData.impact = updateData.impactCIA.split(', ').filter((item: string) => item.trim() !== '')
+      updateData.impact = (updateData.impactCIA?.split(', ') || []).filter((item: string) => item.trim() !== '')
       delete updateData.impactCIA // Remove the string version as it's not stored in DB
     }
     

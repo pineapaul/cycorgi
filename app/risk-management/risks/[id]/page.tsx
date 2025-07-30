@@ -665,7 +665,7 @@ export default function RiskInformationPage() {
                 ) : (
                                                          <div className="flex flex-wrap gap-1.5">
                     {risk.impactCIA ? (
-                      risk.impactCIA.split(', ').map((cia: string, index: number) => {
+                      (risk.impactCIA?.split(', ') || []).map((cia: string, index: number) => {
                         const config = getCIAConfig(cia)
                         return (
                           <span

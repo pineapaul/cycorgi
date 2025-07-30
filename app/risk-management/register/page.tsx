@@ -43,7 +43,7 @@ const renderCIAValues = (value: string) => {
     )
   }
 
-  const ciaValues = value.split(', ')
+  const ciaValues = value?.split(', ') || []
   return (
     <div className="flex gap-1.5 overflow-hidden">
       {ciaValues.map((cia, index) => {
