@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clientPromise } from '../../../../../../lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { EXTENSION_STATUS } from '../../../../../../lib/constants'
 
 export async function POST(
   request: NextRequest,
@@ -59,7 +60,7 @@ export async function POST(
     const extension = {
       extendedDueDate: extendedDueDate,
       justification: justification.trim(),
-      approver: 'Pending Approval', // This would typically be set by an admin
+      approver: EXTENSION_STATUS.PENDING_APPROVAL, // This would typically be set by an admin
       dateApproved: null, // This will be set when approved
       createdAt: new Date().toISOString()
     }
