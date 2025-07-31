@@ -168,6 +168,16 @@ export default function EditTreatment() {
       return
     }
 
+    // Check if treatmentDetails exists before proceeding
+    if (!treatmentDetails || !treatmentDetails._id) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Treatment details not available. Please refresh the page and try again.'
+      })
+      return
+    }
+
     try {
       setSaving(true)
 

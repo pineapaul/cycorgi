@@ -130,7 +130,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'id-card': faIdCard,
     'calendar-plus': faCalendarPlus,
     'plus-circle': faPlusCircle,
-    'chart-bar': faChartBar,
+    'chart-bar': faChartSimple,
     'user-group': faUsers,
     'shield-exclamation': faShieldHalved,
   }
