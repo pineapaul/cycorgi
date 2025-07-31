@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { validateRiskId } from '../../../../../lib/utils'
+import { validateRiskId, getCIAConfig } from '../../../../../lib/utils'
 import DataTable from '../../../../components/DataTable'
 import { TREATMENT_STATUS } from '../../../../../lib/constants'
 
@@ -44,7 +44,7 @@ interface Risk {
   functionalUnit: string
   threat: string
   vulnerability: string
-  impact: string
+  impact: string | string[]
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -73,6 +73,34 @@ export default function TreatmentInformation() {
   
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
+
+  // Custom renderer for CIA values
+  const renderCIAValues = (value: string | string[]) => {
+    if (!value || value === 'Not specified') {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    // Handle both string and array formats
+    const ciaValues = Array.isArray(value) ? value : value?.split(', ') || []
+    return (
+      <div className="flex gap-1.5 overflow-hidden">
+        {ciaValues.map((cia, index) => {
+          const config = getCIAConfig(cia)
+          return (
+            <span
+              key={index}
+              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
+              title={cia}
+            >
+              {config.label}
+            </span>
+          )
+        })}
+      </div>
+    )
+  }
 
   const fetchData = async () => {
     try {
@@ -513,7 +541,9 @@ export default function TreatmentInformation() {
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
-                      <p className="text-sm text-gray-900 mt-1">{risk.impact}</p>
+                      <div className="mt-1">
+                        {renderCIAValues(risk.impact)}
+                      </div>
                     </div>
                   </div>
                 </div>
