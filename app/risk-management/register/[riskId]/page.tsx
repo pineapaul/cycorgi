@@ -922,15 +922,7 @@ export default function RiskInformation() {
                     </>
                   )}
                 </button>
-                <Link
-                  href={`/risk-management/treatments/${validateRiskId(params.riskId)}/new`}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-                  style={{ backgroundColor: '#4C1D95' }}
-                  title="Add new treatment"
-                >
-                  <Icon name="plus" size={16} className="mr-2" />
-                  Add Treatment
-                </Link>
+
               </>
             )}
             {isEditing && (
@@ -1590,6 +1582,7 @@ export default function RiskInformation() {
             data={treatments}
             columns={[
               { key: 'riskTreatment', label: 'Risk Treatment', sortable: true },
+              { key: 'actions', label: 'Actions', sortable: false },
               { key: 'treatmentJiraTicket', label: 'Treatment Jira Ticket', sortable: true },
               { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true },
               { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true },
@@ -1598,7 +1591,6 @@ export default function RiskInformation() {
               { key: 'completionDate', label: 'Completion Date', sortable: true },
               { key: 'closureApproval', label: 'Closure Approval', sortable: true },
               { key: 'closureApprovedBy', label: 'Closure Approved by', sortable: true },
-              { key: 'actions', label: 'Actions', sortable: false },
             ].map(col => ({
               ...col,
               render: (value: any, row: any) => {

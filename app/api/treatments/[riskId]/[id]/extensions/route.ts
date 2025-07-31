@@ -1,0 +1,95 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { clientPromise } from '../../../../../../lib/mongodb'
+import { ObjectId } from 'mongodb'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { riskId: string; id: string } }
+) {
+  try {
+    const { extendedDueDate, justification } = await request.json()
+
+    // Validate required fields
+    if (!extendedDueDate || !justification) {
+      return NextResponse.json(
+        { error: 'Extended due date and justification are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate date format
+    const date = new Date(extendedDueDate)
+    if (isNaN(date.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date format' },
+        { status: 400 }
+      )
+    }
+
+    // Check if date is in the future
+    if (date <= new Date()) {
+      return NextResponse.json(
+        { error: 'Extended due date must be in the future' },
+        { status: 400 }
+      )
+    }
+
+    const client = await clientPromise
+    const db = client.db('cycorgi')
+
+    // Find the treatment
+    const treatment = await db.collection('treatments').findOne({
+      _id: new ObjectId(params.id),
+      riskId: params.riskId
+    })
+
+    if (!treatment) {
+      return NextResponse.json(
+        { error: 'Treatment not found' },
+        { status: 404 }
+      )
+    }
+
+    // Create the extension object
+    const extension = {
+      extendedDueDate: extendedDueDate,
+      justification: justification.trim(),
+      approver: 'Pending Approval', // This would typically be set by an admin
+      dateApproved: null, // This will be set when approved
+      createdAt: new Date().toISOString()
+    }
+
+    // Add the extension to the treatment
+    const result = await db.collection('treatments').updateOne(
+      { _id: new ObjectId(params.id) },
+      {
+        $push: { extensions: extension },
+        $inc: { numberOfExtensions: 1 },
+        $set: { 
+          extendedDueDate: extendedDueDate,
+          updatedAt: new Date().toISOString()
+        }
+      }
+    )
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: 'Treatment not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Extension request submitted successfully',
+      extension
+    })
+
+  } catch (error) {
+    console.error('Extension request error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+} 

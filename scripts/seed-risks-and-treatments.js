@@ -300,10 +300,22 @@ function generateTreatments() {
           const approvalDate = new Date(currentDueDate);
           approvalDate.setDate(approvalDate.getDate() - 5);
           
+          const justifications = [
+            'Additional time required for comprehensive testing',
+            'Resource constraints due to concurrent projects',
+            'Complex integration requirements identified',
+            'Stakeholder review process taking longer than expected',
+            'Technical challenges discovered during implementation',
+            'Security review process requires additional time',
+            'Third-party vendor delays affecting timeline',
+            'Scope expansion due to new requirements'
+          ];
+          
           extensions.push({
             extendedDueDate: extensionDate.toISOString().split('T')[0],
             approver,
-            dateApproved: approvalDate.toISOString().split('T')[0]
+            dateApproved: approvalDate.toISOString().split('T')[0],
+            justification: justifications[Math.floor(Math.random() * justifications.length)]
           });
           
           currentDueDate = extensionDate;
