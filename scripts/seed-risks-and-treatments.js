@@ -1,4 +1,11 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient } = require('mongodb')
+
+// Constants for status values
+const TREATMENT_STATUS = {
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected'
+};
 const path = require('path');
 const fs = require('fs');
 
@@ -300,10 +307,22 @@ function generateTreatments() {
           const approvalDate = new Date(currentDueDate);
           approvalDate.setDate(approvalDate.getDate() - 5);
           
+          const justifications = [
+            'Additional time required for comprehensive testing',
+            'Resource constraints due to concurrent projects',
+            'Complex integration requirements identified',
+            'Stakeholder review process taking longer than expected',
+            'Technical challenges discovered during implementation',
+            'Security review process requires additional time',
+            'Third-party vendor delays affecting timeline',
+            'Scope expansion due to new requirements'
+          ];
+          
           extensions.push({
             extendedDueDate: extensionDate.toISOString().split('T')[0],
             approver,
-            dateApproved: approvalDate.toISOString().split('T')[0]
+            dateApproved: approvalDate.toISOString().split('T')[0],
+            justification: justifications[Math.floor(Math.random() * justifications.length)]
           });
           
           currentDueDate = extensionDate;
@@ -325,7 +344,7 @@ function generateTreatments() {
         extendedDueDate: extensions.length > 0 ? extensions[extensions.length - 1].extendedDueDate : null,
         numberOfExtensions,
         completionDate: completionDate ? completionDate.toISOString().split('T')[0] : null,
-        closureApproval: isCompleted ? 'Approved' : 'Pending',
+        closureApproval: isCompleted ? TREATMENT_STATUS.APPROVED : TREATMENT_STATUS.PENDING,
         closureApprovedBy: isCompleted ? approver : null,
         extensions,
         createdAt: new Date(),
@@ -389,7 +408,7 @@ async function seedDatabase() {
     
     console.log('\n🎯 Treatment statistics:');
     console.log(`   - Average extensions per treatment: ${(treatments.reduce((sum, t) => sum + t.numberOfExtensions, 0) / treatments.length).toFixed(1)}`);
-    console.log(`   - Completion rate: ${((treatments.filter(t => t.closureApproval === 'Approved').length / treatments.length) * 100).toFixed(1)}%`);
+    console.log(`   - Completion rate: ${((treatments.filter(t => t.closureApproval === TREATMENT_STATUS.APPROVED).length / treatments.length) * 100).toFixed(1)}%`);
     
   } catch (error) {
     console.error('❌ Error seeding database:', error);

@@ -6,6 +6,15 @@ import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
 import { validateRiskId } from '../../../../../lib/utils'
+import DataTable from '../../../../components/DataTable'
+import { TREATMENT_STATUS } from '../../../../../lib/constants'
+
+interface Extension {
+  extendedDueDate: string
+  approver: string
+  dateApproved: string
+  justification?: string
+}
 
 interface Treatment {
   _id: string
@@ -20,6 +29,7 @@ interface Treatment {
   closureApproval: string
   closureApprovedBy?: string
   notes?: string
+  extensions: Extension[]
   createdAt: string
   updatedAt: string
 }
@@ -28,14 +38,16 @@ interface Risk {
   _id: string
   riskId: string
   riskTitle: string
-  riskDescription: string
+  riskStatement: string
   currentPhase: string
   informationAsset: string
+  functionalUnit: string
   threat: string
   vulnerability: string
   impact: string
-  likelihood: string
-  riskScore: number
+  consequenceRating: string
+  likelihoodRating: string
+  riskRating: string
   riskOwner: string
   raisedBy: string
   createdAt: string
@@ -50,78 +62,244 @@ export default function TreatmentInformation() {
   const [risk, setRisk] = useState<Risk | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showExtensionForm, setShowExtensionForm] = useState(false)
+  const [extensionFormData, setExtensionFormData] = useState({
+    extendedDueDate: '',
+    justification: ''
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
+  const [previousActiveElement, setPreviousActiveElement] = useState<HTMLElement | null>(null)
   
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null) // Clear any previous errors
-        // riskId is already validated above
-        const treatmentId = params.id as string
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null) // Clear any previous errors
+      // riskId is already validated above
+      const treatmentId = params.id as string
 
-        if (!riskId) {
-          throw new Error('Invalid risk ID format. Expected format: RISK-XXX')
-        }
-
-        // Fetch treatment details
-        const treatmentResponse = await fetch(`/api/treatments/${riskId}/${treatmentId}`)
-        if (!treatmentResponse.ok) {
-          const errorData = await treatmentResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || `HTTP ${treatmentResponse.status}: Failed to fetch treatment details`)
-        }
-        const treatmentData = await treatmentResponse.json()
-
-        // Fetch risk details
-        const riskResponse = await fetch(`/api/risks/${riskId}`)
-        if (!riskResponse.ok) {
-          const errorData = await riskResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || `HTTP ${riskResponse.status}: Failed to fetch risk details`)
-        }
-        const riskData = await riskResponse.json()
-
-        setTreatment(treatmentData)
-        setRisk(riskData)
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An error occurred'
-        setError(errorMessage)
-        console.error('Treatment fetch error:', err)
-      } finally {
-        setLoading(false)
+      if (!riskId) {
+        throw new Error('Invalid risk ID format. Expected format: RISK-XXX')
       }
-    }
 
+      // Fetch treatment details
+      const treatmentResponse = await fetch(`/api/treatments/${riskId}/${treatmentId}`)
+      if (!treatmentResponse.ok) {
+        const errorData = await treatmentResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${treatmentResponse.status}: Failed to fetch treatment details`)
+      }
+      const treatmentData = await treatmentResponse.json()
+
+      // Fetch risk details
+      const riskResponse = await fetch(`/api/risks/${riskId}`)
+      if (!riskResponse.ok) {
+        const errorData = await riskResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${riskResponse.status}: Failed to fetch risk details`)
+      }
+      const riskResponseData = await riskResponse.json()
+
+      setTreatment(treatmentData)
+      setRisk(riskResponseData.data) // Extract data property from risk API response
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      setError(errorMessage)
+      console.error('Treatment fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
   }, [params.riskId, params.id])
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '-'
+    
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = date.toLocaleDateString('en-US', { month: 'short' })
+    const year = date.getFullYear()
+    
+    return `${day} ${month} ${year}`
   }
 
   const getClosureStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved':
+      case TREATMENT_STATUS.APPROVED.toLowerCase():
         return 'bg-green-100 text-green-800 border-green-200'
-      case 'pending':
+      case TREATMENT_STATUS.PENDING.toLowerCase():
         return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'rejected':
+      case TREATMENT_STATUS.REJECTED.toLowerCase():
         return 'bg-red-100 text-red-800 border-red-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
-  const getRiskScoreColor = (score: number) => {
-    if (score >= 15) return 'bg-red-100 text-red-800 border-red-200'
-    if (score >= 8) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    return 'bg-green-100 text-green-800 border-green-200'
+  const getRiskLevelColor = (level: string | undefined | null) => {
+    if (!level || typeof level !== 'string') return 'bg-gray-100 text-gray-800'
+    
+    switch (level.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'low':
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const handleExtensionFormChange = (field: string, value: string) => {
+    setExtensionFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleExtensionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!extensionFormData.extendedDueDate || !extensionFormData.justification.trim()) {
+      showToast({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Please fill in all required fields.'
+      })
+      return
+    }
+
+    // Validate that the extended due date is today or in the future
+    const selectedDate = new Date(extensionFormData.extendedDueDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time to start of day for fair comparison
+    
+    if (selectedDate < today) {
+      showToast({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Extended due date must be today or a future date.'
+      })
+      return
+    }
+
+    setSubmitting(true)
+    
+    try {
+      const response = await fetch(`/api/treatments/${riskId}/${params.id}/extensions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          extendedDueDate: extensionFormData.extendedDueDate,
+          justification: extensionFormData.justification.trim()
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to submit extension request')
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Extension Request Submitted',
+        message: 'Your extension request has been submitted successfully.'
+      })
+
+      // Reset form and close modal
+      setExtensionFormData({ extendedDueDate: '', justification: '' })
+      setShowExtensionForm(false)
+      
+      // Refetch data to show the new extension
+      await fetchData()
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      showToast({
+        type: 'error',
+        title: 'Submission Failed',
+        message: errorMessage
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const closeExtensionForm = () => {
+    setShowExtensionForm(false)
+    setExtensionFormData({ extendedDueDate: '', justification: '' })
+    // Restore focus to the previous active element
+    if (previousActiveElement) {
+      previousActiveElement.focus()
+    }
+  }
+
+  // Focus management for modal
+  useEffect(() => {
+    if (showExtensionForm) {
+      // Store the currently focused element
+      setPreviousActiveElement(document.activeElement as HTMLElement)
+      
+      // Focus the first focusable element in the modal
+      const firstFocusableElement = modalRef?.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement
+      
+      if (firstFocusableElement) {
+        firstFocusableElement.focus()
+      }
+    }
+  }, [showExtensionForm, modalRef])
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showExtensionForm) {
+        closeExtensionForm()
+      }
+    }
+
+    if (showExtensionForm) {
+      document.addEventListener('keydown', handleEscapeKey)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+      document.body.style.overflow = 'unset'
+    }
+  }, [showExtensionForm])
+
+  // Handle tab key to trap focus within modal
+  const handleTabKey = (event: React.KeyboardEvent) => {
+    if (!modalRef) return
+
+    const focusableElements = modalRef.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0] as HTMLElement
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+    if (event.shiftKey) {
+      if (document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
   }
 
   // Loading State
@@ -176,237 +354,338 @@ export default function TreatmentInformation() {
             >
               <Icon name="arrow-left" size={16} />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-                {treatment.treatmentJiraTicket} - Treatment Details
-              </h1>
-              <p className="text-gray-600" style={{ color: '#22223B' }}>
-                Risk: {risk.riskId} - {risk.riskTitle}
-              </p>
-            </div>
+                         <div>
+               <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
+                 {treatment.treatmentJiraTicket} - Treatment Details
+               </h1>
+             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => {
-                const url = window.location.href
-                navigator.clipboard.writeText(url).then(() => {
-                  showToast({
-                    type: 'success',
-                    title: 'Link Copied',
-                    message: 'Treatment page link has been copied to clipboard.'
-                  })
-                })
-              }}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              title="Copy link to treatment page"
-            >
-              <Icon name="link" size={16} className="mr-2" />
-              Copy Link
-            </button>
-            <button
-              onClick={() => router.push(`/risk-management/treatments/${riskId}/${params.id}/edit`)}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-              style={{ backgroundColor: '#4C1D95' }}
-              title="Edit treatment details"
-            >
-                             <Icon name="pencil" size={16} className="mr-2" />
-              Edit Treatment
-            </button>
+                     <div className="flex items-center space-x-2">
+             <button
+               onClick={() => {
+                 const url = window.location.href
+                 navigator.clipboard.writeText(url).then(() => {
+                   showToast({
+                     type: 'success',
+                     title: 'Link Copied',
+                     message: 'Treatment page link has been copied to clipboard.'
+                   })
+                 })
+               }}
+               className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+               title="Copy link to treatment page"
+             >
+               <Icon name="link" size={16} className="mr-2" />
+               Copy Link
+             </button>
+                           <button
+                onClick={() => setShowExtensionForm(true)}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                title="Request an extension for this treatment"
+              >
+                <Icon name="calendar-plus" size={16} className="mr-2" />
+                Request Extension
+              </button>
+             <button
+               onClick={() => router.push(`/risk-management/treatments/${riskId}/${params.id}/edit`)}
+               className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+               style={{ backgroundColor: '#4C1D95' }}
+               title="Edit treatment details"
+             >
+                              <Icon name="pencil" size={16} className="mr-2" />
+               Edit Treatment
+             </button>
 
           </div>
         </div>
         
-        {/* Treatment Statement - Prominent Display */}
-        <div className="bg-gray-50 rounded-lg p-6 border-l-4 mb-8" style={{ borderLeftColor: '#4C1D95' }}>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Treatment Description</label>
-          <p className="text-gray-900 leading-relaxed text-base">{treatment.riskTreatment || 'No description provided'}</p>
-        </div>
+                 {/* Treatment Statement - Prominent Display */}
+         <div className="bg-gray-50 rounded-lg p-4 border-l-4 mb-4" style={{ borderLeftColor: '#4C1D95' }}>
+           <label className="block text-sm font-semibold text-gray-700 mb-2">Treatment Description</label>
+           <p className="text-gray-900 leading-relaxed text-sm">{treatment.riskTreatment || 'No description provided'}</p>
+         </div>
 
-        {/* Treatment Details Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Treatment Details</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Treatment Information */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Treatment Information</h4>
+                                                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Treatment Details and Risk Context */}
               <div className="space-y-4">
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Treatment Owner</span>
-                  <p className="text-sm text-gray-900 mt-1 font-medium">{treatment.riskTreatmentOwner || 'Not assigned'}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Due Date</span>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.dateRiskTreatmentDue)}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
-                  <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getClosureStatusColor(treatment.closureApproval)}`}>
-                      {treatment.closureApproval}
-                    </span>
+               {/* Treatment Details Section */}
+               <div>
+                 <div className="flex items-center mb-3">
+                   <div className="w-1 h-4 bg-purple-600 rounded-full mr-3"></div>
+                   <h3 className="text-base font-semibold text-gray-900">Treatment Details</h3>
+                 </div>
+                 
+                 <div className="bg-gray-50 rounded-lg p-3">
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Treatment Owner</span>
+                       <p className="text-sm text-gray-900 mt-1 font-medium">{treatment.riskTreatmentOwner || 'Not assigned'}</p>
+                     </div>
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Due Date</span>
+                       <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.dateRiskTreatmentDue)}</p>
+                     </div>
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                       <div className="mt-1">
+                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getClosureStatusColor(treatment.closureApproval)}`}>
+                           {treatment.closureApproval}
+                         </span>
+                       </div>
+                     </div>
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Extensions</span>
+                       <p className="text-sm text-gray-900 mt-1">{treatment.numberOfExtensions}</p>
+                     </div>
+                     {treatment.extendedDueDate && (
+                       <div>
+                         <span className="text-xs text-gray-500 uppercase tracking-wide">Extended Due Date</span>
+                         <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.extendedDueDate)}</p>
+                       </div>
+                     )}
+                     {treatment.completionDate && (
+                       <div>
+                         <span className="text-xs text-gray-500 uppercase tracking-wide">Completion Date</span>
+                         <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.completionDate)}</p>
+                       </div>
+                     )}
+                     {treatment.closureApprovedBy && (
+                       <div>
+                         <span className="text-xs text-gray-500 uppercase tracking-wide">Approved By</span>
+                         <p className="text-sm text-gray-900 mt-1">{treatment.closureApprovedBy}</p>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* Risk Context Section */}
+               <div>
+                 <div className="flex items-center mb-3">
+                   <div className="w-1 h-4 bg-purple-600 rounded-full mr-3"></div>
+                   <h3 className="text-base font-semibold text-gray-900">Risk Context</h3>
+                 </div>
+                 
+                 <div className="bg-gray-50 rounded-lg p-3 border-l-4" style={{ borderLeftColor: '#4C1D95' }}>
+                   {/* Risk Statement */}
+                   <div className="mb-2">
+                     <h4 className="text-sm font-semibold text-gray-700 mb-1">Risk Statement</h4>
+                     <p className="text-gray-900 leading-relaxed text-sm">{risk.riskStatement}</p>
+                   </div>
+                   
+                   {/* Risk Information Grid */}
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Current Risk Rating</span>
+                      <div className="mt-1 relative group">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium cursor-help ${getRiskLevelColor(risk.riskRating)}`}>
+                          {risk.riskRating || 'Not specified'}
+                        </span>
+                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                          <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span>Consequence:</span>
+                                <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getRiskLevelColor(risk.consequenceRating)}`}>
+                                  {risk.consequenceRating}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Likelihood:</span>
+                                <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getRiskLevelColor(risk.likelihoodRating)}`}>
+                                  {risk.likelihoodRating}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
+                      <p className="text-sm text-gray-900 mt-1">{risk.informationAsset}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>
+                      <p className="text-sm text-gray-900 mt-1">{risk.functionalUnit}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
+                      <p className="text-sm text-gray-900 mt-1">{risk.impact}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Timeline Information */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Timeline</h4>
-              <div className="space-y-4">
-                {treatment.extendedDueDate && (
-                  <div>
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">Extended Due Date</span>
-                    <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.extendedDueDate)}</p>
-                  </div>
-                )}
+              {/* Notes Section */}
+              {treatment.notes && (
                 <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Number of Extensions</span>
-                  <p className="text-sm text-gray-900 mt-1">{treatment.numberOfExtensions}</p>
-                </div>
-                {treatment.completionDate && (
-                  <div>
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">Completion Date</span>
-                    <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.completionDate)}</p>
+                  <div className="flex items-center mb-3">
+                    <div className="w-1 h-4 bg-purple-600 rounded-full mr-3"></div>
+                    <h3 className="text-base font-semibold text-gray-900">Treatment Notes</h3>
                   </div>
-                )}
-                {treatment.closureApprovedBy && (
-                  <div>
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">Approved By</span>
-                    <p className="text-sm text-gray-900 mt-1">{treatment.closureApprovedBy}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Risk Context Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Risk Context</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Risk Information */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Risk Information</h4>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
-                  <Link
-                    href={`/risk-management/register/${risk.riskId}`}
-                    className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors mt-1"
-                  >
-                    <Icon name="link" size={12} className="mr-1" />
-                    {risk.riskId}
-                  </Link>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Score</span>
-                  <div className="mt-1">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getRiskScoreColor(risk.riskScore)}`}>
-                      {risk.riskScore}
-                    </span>
+                  
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-900">{treatment.notes}</p>
                   </div>
                 </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Phase</span>
-                  <div className="mt-1">
-                    <span className="inline-flex px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {risk.currentPhase}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              )}
+             </div>
 
-            {/* Risk Assessment */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Risk Assessment</h4>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
-                  <p className="text-sm text-gray-900 mt-1">{risk.impact}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Likelihood</span>
-                  <p className="text-sm text-gray-900 mt-1">{risk.likelihood}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                  <p className="text-sm text-gray-900 mt-1">{risk.informationAsset}</p>
-                </div>
-              </div>
-            </div>
+                           {/* Right Column - Due Date Extensions */}
+              <div>
+               <div className="flex items-center mb-3">
+                 <div className="w-1 h-4 bg-purple-600 rounded-full mr-3"></div>
+                 <h3 className="text-base font-semibold text-gray-900">Due Date Extensions</h3>
+               </div>
+               
+               {treatment.extensions && treatment.extensions.length > 0 ? (
+                 <DataTable
+                   columns={[
+                     {
+                       key: 'extendedDueDate',
+                       label: 'Extended Due Date',
+                       sortable: true,
+                       render: (value) => formatDate(value)
+                     },
+                     {
+                       key: 'justification',
+                       label: 'Justification',
+                       sortable: true,
+                       render: (value) => value || 'Not specified'
+                     },
+                     {
+                       key: 'approver',
+                       label: 'Approved By',
+                       sortable: true
+                     },
+                     {
+                       key: 'dateApproved',
+                       label: 'Approved Date',
+                       sortable: true,
+                       render: (value) => formatDate(value)
+                     }
+                   ]}
+                   data={treatment.extensions}
+                   title="Due Date Extensions"
+                 />
+               ) : (
+                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                   <div className="text-center">
+                     <Icon name="calendar" size={24} className="text-gray-400 mx-auto mb-2" />
+                     <p className="text-sm text-gray-500">No extensions requested yet</p>
+                     <p className="text-xs text-gray-400 mt-1">Use the "Request Extension" button to add one</p>
+                   </div>
+                 </div>
+               )}
+             </div>
+                       </div>
+       </div>
 
-            {/* Ownership */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Ownership</h4>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Owner</span>
-                  <p className="text-sm text-gray-900 mt-1 font-medium">{risk.riskOwner || 'Not assigned'}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
-                  <p className="text-sm text-gray-900 mt-1">{risk.raisedBy}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+               {/* Extension Request Form Modal */}
+        {showExtensionForm && (
+          <div 
+            className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                closeExtensionForm()
+              }
+            }}
+          >
+           <div 
+             ref={setModalRef}
+             className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+             onKeyDown={handleTabKey}
+           >
+             {/* Header */}
+             <div className="flex items-center justify-between p-6 border-b border-gray-200">
+               <h2 id="modal-title" className="text-lg font-semibold text-gray-900">Request Extension</h2>
+               <button
+                 onClick={closeExtensionForm}
+                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors"
+                 title="Close"
+                 aria-label="Close extension request form"
+               >
+                 <Icon name="close" size={16} className="text-gray-500" />
+               </button>
+             </div>
 
-        {/* Threat & Vulnerability Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Threat & Vulnerability</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Threat</h4>
-              <p className="text-sm text-gray-900">{risk.threat}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Vulnerability</h4>
-              <p className="text-sm text-gray-900">{risk.vulnerability}</p>
-            </div>
-          </div>
-        </div>
+             {/* Form */}
+             <form onSubmit={handleExtensionSubmit} className="p-6 space-y-4">
+               <div>
+                 <label htmlFor="extendedDueDate" className="block text-sm font-medium text-gray-700 mb-2">
+                   Extended Due Date <span className="text-red-500">*</span>
+                 </label>
+                 <input
+                   type="date"
+                   id="extendedDueDate"
+                   name="extendedDueDate"
+                   value={extensionFormData.extendedDueDate}
+                   onChange={(e) => handleExtensionFormChange('extendedDueDate', e.target.value)}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                   required
+                   min={new Date().toISOString().split('T')[0]}
+                   aria-describedby="date-help"
+                 />
+                 <p id="date-help" className="text-xs text-gray-500 mt-1">
+                   Must be today or a future date
+                 </p>
+               </div>
 
-        {/* Risk Description Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Risk Description</h3>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-900">{risk.riskDescription}</p>
-          </div>
-        </div>
+               <div>
+                 <label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-2">
+                   Justification <span className="text-red-500">*</span>
+                 </label>
+                 <textarea
+                   id="justification"
+                   name="justification"
+                   value={extensionFormData.justification}
+                   onChange={(e) => handleExtensionFormChange('justification', e.target.value)}
+                   rows={4}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                   placeholder="Please provide a detailed justification for the extension request..."
+                   required
+                   aria-describedby="justification-help"
+                 />
+               </div>
 
-        {/* Notes Section */}
-        {treatment.notes && (
-          <div className="mb-8">
-            <div className="flex items-center mb-6">
-              <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-              <h3 className="text-lg font-semibold text-gray-900">Treatment Notes</h3>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-900">{treatment.notes}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-} 
+               {/* Form Actions */}
+               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                 <button
+                   type="button"
+                   onClick={closeExtensionForm}
+                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                   disabled={submitting}
+                   aria-label="Cancel extension request"
+                 >
+                   Cancel
+                 </button>
+                 <button
+                   type="submit"
+                   className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                   style={{ backgroundColor: '#4C1D95' }}
+                   disabled={submitting}
+                   aria-label={submitting ? "Submitting extension request" : "Submit extension request"}
+                 >
+                   {submitting ? (
+                     <div className="flex items-center">
+                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                       Submitting...
+                     </div>
+                   ) : (
+                     'Submit Request'
+                   )}
+                 </button>
+               </div>
+             </form>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ } 

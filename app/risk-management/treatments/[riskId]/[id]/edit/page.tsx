@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from '../../../../../components/Icon'
 import { useToast } from '../../../../../components/Toast'
 import { validateRiskId } from '../../../../../../lib/utils'
+import { TREATMENT_STATUS } from '../../../../../../lib/constants'
 
 interface TreatmentFormData {
   riskId: string
@@ -41,7 +42,7 @@ export default function EditTreatment() {
     extendedDueDate: '',
     numberOfExtensions: 0,
     completionDate: '',
-    closureApproval: 'Pending',
+    closureApproval: TREATMENT_STATUS.PENDING,
     closureApprovedBy: '',
     notes: ''
   })
@@ -78,7 +79,7 @@ export default function EditTreatment() {
           extendedDueDate: treatmentData.extendedDueDate ? new Date(treatmentData.extendedDueDate).toISOString().split('T')[0] : '',
           numberOfExtensions: treatmentData.numberOfExtensions || 0,
           completionDate: treatmentData.completionDate ? new Date(treatmentData.completionDate).toISOString().split('T')[0] : '',
-          closureApproval: treatmentData.closureApproval || 'Pending',
+          closureApproval: treatmentData.closureApproval || TREATMENT_STATUS.PENDING,
           closureApprovedBy: treatmentData.closureApprovedBy || '',
           notes: treatmentData.notes || ''
         })
@@ -453,9 +454,9 @@ export default function EditTreatment() {
                     onChange={(e) => handleInputChange('closureApproval', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                   >
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
+                    <option value={TREATMENT_STATUS.PENDING}>{TREATMENT_STATUS.PENDING}</option>
+                    <option value={TREATMENT_STATUS.APPROVED}>{TREATMENT_STATUS.APPROVED}</option>
+                    <option value={TREATMENT_STATUS.REJECTED}>{TREATMENT_STATUS.REJECTED}</option>
                   </select>
                 </div>
 
