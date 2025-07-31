@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../components/Icon'
-import { getCIAConfig } from '../../../../lib/utils'
+import { getCIAConfig, extractRiskNumber } from '../../../../lib/utils'
 
 interface Risk {
   riskId: string
@@ -66,7 +66,7 @@ export default function RiskInformationPage() {
         const mappedRisk: Risk = {
           riskId: result.data.riskId || '',
           functionalUnit: result.data.functionalUnit || '',
-          jiraTicket: result.data.jiraTicket || `RISK-${id.split('-')[1] || id}`,
+          jiraTicket: result.data.jiraTicket || `RISK-${extractRiskNumber(id)}`,
           dateRiskRaised: result.data.dateRiskRaised || result.data.createdAt ? new Date(result.data.createdAt).toISOString().split('T')[0] : '',
           raisedBy: result.data.raisedBy || result.data.riskOwner || '',
           riskOwner: result.data.riskOwner || '',
@@ -77,7 +77,7 @@ export default function RiskInformationPage() {
           riskStatement: result.data.riskStatement || '',
           impactCIA: result.data.impactCIA || (result.data.impact ? (Array.isArray(result.data.impact) ? result.data.impact.join(', ') : 'Not specified') : ''),
           currentControls: result.data.currentControls || '',
-          currentControlsReference: result.data.currentControlsReference || `CTRL-${id.split('-')[1] || id}`,
+          currentControlsReference: result.data.currentControlsReference || `CTRL-${extractRiskNumber(id)}`,
           consequence: result.data.consequence || result.data.consequenceRating || '',
           likelihood: result.data.likelihood || result.data.likelihoodRating || '',
           currentRiskRating: result.data.currentRiskRating || result.data.riskRating || '',
