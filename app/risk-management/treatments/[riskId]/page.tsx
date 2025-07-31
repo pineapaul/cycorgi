@@ -306,7 +306,7 @@ export default function RiskTreatments() {
     // TODO: Implement CSV export
   }
 
-  const getStatusColor = (status: string) => {
+  const getClosureStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
         return 'bg-green-100 text-green-800'
@@ -374,7 +374,7 @@ export default function RiskTreatments() {
       }
       if (col.key === 'closureApproval') {
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getClosureStatusColor(value)}`}>
             {value}
           </span>
         )
