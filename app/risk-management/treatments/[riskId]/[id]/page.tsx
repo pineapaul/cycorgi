@@ -91,7 +91,7 @@ export default function TreatmentInformation() {
     }
 
     fetchData()
-  }, [params.riskId, params.id]) // Removed showToast from dependencies
+  }, [params.riskId, params.id])
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
@@ -102,7 +102,7 @@ export default function TreatmentInformation() {
     })
   }
 
-  const getStatusColor = (status: string) => {
+  const getClosureStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
         return 'bg-green-100 text-green-800'
@@ -242,7 +242,7 @@ export default function TreatmentInformation() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Closure Approval
                     </label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(treatment.closureApproval)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getClosureStatusColor(treatment.closureApproval)}`}>
                       {treatment.closureApproval}
                     </span>
                   </div>
