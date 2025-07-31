@@ -157,7 +157,7 @@ export default function AddTreatment() {
           message: 'Treatment created successfully!',
           type: 'success'
         })
-        router.push(`/risk-management/treatments/${riskId}`)
+        router.push(`/risk-management/register/${riskId}`)
       } else {
         showToast({
           title: 'Error',
@@ -178,7 +178,7 @@ export default function AddTreatment() {
   }
 
   const handleCancel = () => {
-    router.push(`/risk-management/treatments/${riskId}`)
+    router.push(`/risk-management/register/${riskId}`)
   }
 
   return (
@@ -189,11 +189,11 @@ export default function AddTreatment() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Link
-                href={`/risk-management/treatments/${riskId}`}
+                href={`/risk-management/register/${riskId}`}
                 className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <Icon name="arrow-left" size={16} className="mr-2" />
-                Back to Treatments
+                Back to Risk
               </Link>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Add New Treatment</h1>
