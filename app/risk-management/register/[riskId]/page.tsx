@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../components/Icon'
+import Tooltip from '../../../components/Tooltip'
 import { getCIAConfig } from '../../../../lib/utils'
 import DataTable, { Column } from '../../../components/DataTable'
 import { useToast } from '../../../components/Toast'
@@ -1597,6 +1598,7 @@ export default function RiskInformation() {
               { key: 'completionDate', label: 'Completion Date', sortable: true },
               { key: 'closureApproval', label: 'Closure Approval', sortable: true },
               { key: 'closureApprovedBy', label: 'Closure Approved by', sortable: true },
+              { key: 'actions', label: 'Actions', sortable: false },
             ].map(col => ({
               ...col,
               render: (value: any, row: any) => {
@@ -1624,6 +1626,61 @@ export default function RiskInformation() {
                 if (col.key === 'dateRiskTreatmentDue' || col.key === 'extendedDueDate' || col.key === 'completionDate') {
                   if (!value) return <span className="text-gray-400">-</span>
                   return <span className="text-sm font-medium">{formatDate(value)}</span>
+                }
+                                 if (col.key === 'actions') {
+                   return (
+                     <div className="flex items-center space-x-2">
+                       <Tooltip content="View Treatment Details">
+                         <Link
+                           href={`/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentJiraTicket}`}
+                           className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                         >
+                           <Icon name="eye" size={12} />
+                         </Link>
+                       </Tooltip>
+                                             <Tooltip content="Copy Treatment Link">
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation()
+                             const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentJiraTicket}`
+                             navigator.clipboard.writeText(url).then(() => {
+                               showToast({
+                                 title: 'Success',
+                                 message: 'Treatment link copied to clipboard!',
+                                 type: 'success'
+                               })
+                             }).catch(() => {
+                               showToast({
+                                 title: 'Error',
+                                 message: 'Failed to copy link to clipboard',
+                                 type: 'error'
+                               })
+                             })
+                           }}
+                           className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                         >
+                           <Icon name="link" size={12} />
+                         </button>
+                       </Tooltip>
+                                             <Tooltip content="Add to Workshop Agenda">
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation()
+                             // TODO: Implement workshop agenda functionality
+                             showToast({
+                               title: 'Success',
+                               message: `Treatment ${row.treatmentJiraTicket} added to workshop agenda!`,
+                               type: 'success'
+                             })
+                           }}
+                           className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+                         >
+                           <Icon name="calendar-plus" size={12} className="mr-1" />
+                           Workshop
+                         </button>
+                       </Tooltip>
+                    </div>
+                  )
                 }
                 // Implement tooltip rendering for all content
                 const cellValue = value ? String(value) : '-'
