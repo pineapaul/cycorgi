@@ -112,7 +112,6 @@ export default function TreatmentInformation() {
                 <span
                   key={index}
                   className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
-                  title={cia}
                 >
                   {cia.charAt(0).toUpperCase()}
                 </span>
@@ -123,7 +122,6 @@ export default function TreatmentInformation() {
               <span
                 key={index}
                 className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
-                title={cia}
               >
                 {config.label}
               </span>
@@ -135,7 +133,6 @@ export default function TreatmentInformation() {
               <span
                 key={index}
                 className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
-                title={cia}
               >
                 {cia.charAt(0).toUpperCase()}
               </span>
@@ -585,8 +582,23 @@ export default function TreatmentInformation() {
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
-                      <div className="mt-1">
+                      <div className="mt-1 relative group cursor-help">
                         {renderCIAValues(risk.impact)}
+                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
+                          <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span>Impact Values:</span>
+                                <span className="ml-2">
+                                  {Array.isArray(risk.impact) 
+                                    ? risk.impact.join(', ') 
+                                    : (typeof risk.impact === 'string' ? risk.impact : 'Not specified')}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
