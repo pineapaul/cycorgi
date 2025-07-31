@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clientPromise } from '../../../../../../lib/mongodb'
-import { ObjectId } from 'mongodb'
 import { EXTENSION_STATUS } from '../../../../../../lib/constants'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { riskId: string; id: string } }
+  { params }: { params: Promise<{ riskId: string; treatmentId: string }> }
 ) {
   try {
     const { extendedDueDate, justification } = await request.json()
+    const { riskId, treatmentId } = await params
 
     // Validate required fields
     if (!extendedDueDate || !justification) {
@@ -43,10 +43,10 @@ export async function POST(
     const client = await clientPromise
     const db = client.db('cycorgi')
 
-    // Find the treatment
+    // Find the treatment by treatmentJiraTicket and riskId
     const treatment = await db.collection('treatments').findOne({
-      _id: new ObjectId(params.id),
-      riskId: params.riskId
+      treatmentJiraTicket: treatmentId,
+      riskId: riskId
     })
 
     if (!treatment) {
@@ -67,7 +67,10 @@ export async function POST(
 
     // Add the extension to the treatment
     const result = await db.collection('treatments').updateOne(
-      { _id: new ObjectId(params.id) },
+      { 
+        treatmentJiraTicket: treatmentId,
+        riskId: riskId
+      },
       {
         $push: { extensions: extension },
         $inc: { numberOfExtensions: 1 },
