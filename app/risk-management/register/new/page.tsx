@@ -70,6 +70,14 @@ export default function NewRisk() {
       newErrors.impact = 'Please select at least one CIA component'
     }
 
+    // Validate Risk ID format
+    if (formData.riskId.trim()) {
+      const riskIdPattern = /^RISK-\d+$/i
+      if (!riskIdPattern.test(formData.riskId.trim())) {
+        newErrors.riskId = 'Risk ID must be in format RISK-XXX (where XXX is numeric)'
+      }
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -86,6 +94,17 @@ export default function NewRisk() {
         ...prev,
         [field]: undefined
       }))
+    }
+
+    // Real-time validation for Risk ID
+    if (field === 'riskId' && value.trim()) {
+      const riskIdPattern = /^RISK-\d+$/i
+      if (!riskIdPattern.test(value.trim())) {
+        setErrors(prev => ({
+          ...prev,
+          riskId: 'Risk ID must be in format RISK-XXX (where XXX is numeric)'
+        }))
+      }
     }
   }
 
@@ -144,8 +163,8 @@ export default function NewRisk() {
           message: 'Risk created successfully!',
           type: 'success'
         })
-        // Redirect to the newly created risk's info page
-        router.push(`/risk-management/register/${result.data._id}`)
+        // Redirect to the newly created risk's info page using the risk ID
+        router.push(`/risk-management/register/${formData.riskId}`)
       } else {
         showToast({
           title: 'Error',
