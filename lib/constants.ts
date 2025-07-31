@@ -38,6 +38,12 @@ export const LIKELIHOOD_RATINGS = {
   LOW: 'Low'
 } as const
 
+// Data parsing constants
+export const CIA_DELIMITERS = {
+  PRIMARY: ', ',
+  ALTERNATIVES: /[,;|]/ // Regex for comma, semicolon, or pipe
+} as const
+
 // Type definitions for better type safety
 export type TreatmentStatus = typeof TREATMENT_STATUS[keyof typeof TREATMENT_STATUS]
 export type ExtensionStatus = typeof EXTENSION_STATUS[keyof typeof EXTENSION_STATUS]

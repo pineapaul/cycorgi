@@ -7,6 +7,7 @@ import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 import Tooltip from '../../components/Tooltip'
 import { getCIAConfig } from '../../../lib/utils'
+import { CIA_DELIMITERS } from '../../../lib/constants'
 
 // Risk management phases
 const RISK_PHASES = [
@@ -43,20 +44,58 @@ const renderCIAValues = (value: string) => {
     )
   }
 
-  const ciaValues = value?.split(', ') || []
+  // Use robust parsing with multiple delimiters
+  const ciaValues = value
+    .split(CIA_DELIMITERS.ALTERNATIVES)
+    .map(item => item.trim())
+    .filter(item => item.length > 0)
+
+  if (ciaValues.length === 0) {
+    return (
+      <span className="text-gray-400 text-xs italic">Not specified</span>
+    )
+  }
+
   return (
     <div className="flex gap-1.5 overflow-hidden">
       {ciaValues.map((cia, index) => {
-        const config = getCIAConfig(cia)
-        return (
-          <span
-            key={index}
-            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
-            title={cia}
-          >
-            {config.label}
-          </span>
-        )
+        try {
+          const config = getCIAConfig(cia)
+          if (!config) {
+            // Fallback for unknown CIA values
+            return (
+              <span
+                key={index}
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
+                title={cia}
+              >
+                {cia.charAt(0).toUpperCase()}
+              </span>
+            )
+          }
+          
+          return (
+            <span
+              key={index}
+              className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
+              title={cia}
+            >
+              {config.label}
+            </span>
+          )
+        } catch (error) {
+          // Fallback for any errors in CIA config
+          console.warn(`Error rendering CIA value "${cia}":`, error)
+          return (
+            <span
+              key={index}
+              className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
+              title={cia}
+            >
+              {cia.charAt(0).toUpperCase()}
+            </span>
+          )
+        }
       })}
     </div>
   )

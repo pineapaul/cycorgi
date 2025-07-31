@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { validateRiskId } from '../../../../../lib/utils'
+import { validateRiskId, getCIAConfig } from '../../../../../lib/utils'
 import DataTable from '../../../../components/DataTable'
-import { TREATMENT_STATUS } from '../../../../../lib/constants'
+import { TREATMENT_STATUS, CIA_DELIMITERS } from '../../../../../lib/constants'
 
 interface Extension {
   extendedDueDate: string
@@ -44,7 +44,7 @@ interface Risk {
   functionalUnit: string
   threat: string
   vulnerability: string
-  impact: string
+  impact: string | string[]
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -73,6 +73,78 @@ export default function TreatmentInformation() {
   
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
+
+  // Custom renderer for CIA values
+  const renderCIAValues = (value: string | string[]) => {
+    if (!value || value === 'Not specified') {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    // Handle both string and array formats with robust parsing
+    let ciaValues: string[] = []
+    
+    if (Array.isArray(value)) {
+      ciaValues = value.filter(item => item && typeof item === 'string')
+    } else if (typeof value === 'string') {
+      // Use multiple delimiters for more robust parsing
+      ciaValues = value
+        .split(CIA_DELIMITERS.ALTERNATIVES) // Split by comma, semicolon, or pipe
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+    }
+
+    if (ciaValues.length === 0) {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    return (
+      <div className="flex gap-1.5 overflow-hidden">
+        {ciaValues.map((cia, index) => {
+          try {
+            const config = getCIAConfig(cia)
+            if (!config) {
+              // Fallback for unknown CIA values
+              return (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
+                  title={cia}
+                >
+                  {cia.charAt(0).toUpperCase()}
+                </span>
+              )
+            }
+            
+            return (
+              <span
+                key={index}
+                className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
+                title={cia}
+              >
+                {config.label}
+              </span>
+            )
+          } catch (error) {
+            // Fallback for any errors in CIA config
+            console.warn(`Error rendering CIA value "${cia}":`, error)
+            return (
+              <span
+                key={index}
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
+                title={cia}
+              >
+                {cia.charAt(0).toUpperCase()}
+              </span>
+            )
+          }
+        })}
+      </div>
+    )
+  }
 
   const fetchData = async () => {
     try {
@@ -513,7 +585,9 @@ export default function TreatmentInformation() {
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
-                      <p className="text-sm text-gray-900 mt-1">{risk.impact}</p>
+                      <div className="mt-1">
+                        {renderCIAValues(risk.impact)}
+                      </div>
                     </div>
                   </div>
                 </div>
