@@ -70,6 +70,8 @@ export default function TreatmentInformation() {
   const [submitting, setSubmitting] = useState(false)
   const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
   const [previousActiveElement, setPreviousActiveElement] = useState<HTMLElement | null>(null)
+  const [hoveredCIA, setHoveredCIA] = useState<string | null>(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
@@ -101,6 +103,19 @@ export default function TreatmentInformation() {
       )
     }
 
+    const handleMouseEnter = (cia: string, event: React.MouseEvent) => {
+      const rect = event.currentTarget.getBoundingClientRect()
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      })
+      setHoveredCIA(cia)
+    }
+
+    const handleMouseLeave = () => {
+      setHoveredCIA(null)
+    }
+
     return (
       <div className="flex gap-1.5 overflow-hidden">
         {ciaValues.map((cia, index) => {
@@ -109,36 +124,71 @@ export default function TreatmentInformation() {
             if (!config) {
               // Fallback for unknown CIA values
               return (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
-                >
-                  {cia.charAt(0).toUpperCase()}
-                </span>
+                <div key={index} className="relative">
+                  <span 
+                    className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0 cursor-help"
+                    onMouseEnter={(e) => handleMouseEnter(cia, e)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    {cia.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               )
             }
             
             return (
-              <span
-                key={index}
-                className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
-              >
-                {config.label}
-              </span>
+              <div key={index} className="relative">
+                <span 
+                  className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0 cursor-help`}
+                  onMouseEnter={(e) => handleMouseEnter(cia, e)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {config.label}
+                </span>
+              </div>
             )
           } catch (error) {
             // Fallback for any errors in CIA config
             console.warn(`Error rendering CIA value "${cia}":`, error)
             return (
-              <span
-                key={index}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
-              >
-                {cia.charAt(0).toUpperCase()}
-              </span>
+              <div key={index} className="relative">
+                <span 
+                  className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 transition-all duration-200 hover:scale-105 flex-shrink-0 cursor-help"
+                  onMouseEnter={(e) => handleMouseEnter(cia, e)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {cia.charAt(0).toUpperCase()}
+                </span>
+              </div>
             )
           }
         })}
+      </div>
+    )
+  }
+
+  // Custom tooltip component
+  const CustomTooltip = () => {
+    if (!hoveredCIA) return null
+
+    return (
+      <div 
+        className="fixed z-50 pointer-events-none"
+        style={{
+          left: tooltipPosition.x,
+          top: tooltipPosition.y,
+          transform: 'translateX(-50%) translateY(-100%)'
+        }}
+      >
+        <div className="text-white text-xs rounded-lg p-3 shadow-lg whitespace-nowrap" style={{ backgroundColor: '#4C1D95' }}>
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <span>Impact Value:</span>
+              <span className="ml-2">{hoveredCIA}</span>
+            </div>
+          </div>
+          <div className="absolute top-full left-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent transform -translate-x-1/2" style={{ borderTopColor: '#4C1D95' }}></div>
+        </div>
       </div>
     )
   }
@@ -580,27 +630,12 @@ export default function TreatmentInformation() {
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>
                       <p className="text-sm text-gray-900 mt-1">{risk.functionalUnit}</p>
                     </div>
-                    <div>
-                      <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
-                      <div className="mt-1 relative group cursor-help">
-                        {renderCIAValues(risk.impact)}
-                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                          <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                            <div className="space-y-1">
-                              <div className="flex justify-between">
-                                <span>Impact Values:</span>
-                                <span className="ml-2">
-                                  {Array.isArray(risk.impact) 
-                                    ? risk.impact.join(', ') 
-                                    : (typeof risk.impact === 'string' ? risk.impact : 'Not specified')}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                                         <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Impact</span>
+                       <div className="mt-1">
+                         {renderCIAValues(risk.impact)}
+                       </div>
+                     </div>
                   </div>
                 </div>
               </div>
@@ -772,6 +807,9 @@ export default function TreatmentInformation() {
            </div>
          </div>
        )}
+
+       {/* Custom Tooltip */}
+       <CustomTooltip />
      </div>
    )
  } 
