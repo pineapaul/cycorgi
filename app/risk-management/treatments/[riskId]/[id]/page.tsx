@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
@@ -54,6 +54,37 @@ interface Risk {
   updatedAt: string
 }
 
+// Custom tooltip component - moved outside main component for better performance
+interface CustomTooltipProps {
+  hoveredCIA: string | null
+  tooltipPosition: { x: number; y: number }
+}
+
+const CustomTooltip = ({ hoveredCIA, tooltipPosition }: CustomTooltipProps) => {
+  if (!hoveredCIA) return null
+
+  return (
+    <div 
+      className="fixed z-50 pointer-events-none"
+      style={{
+        left: tooltipPosition.x,
+        top: tooltipPosition.y,
+        transform: 'translateX(-50%) translateY(-100%)'
+      }}
+    >
+      <div className="text-white text-xs rounded-lg p-3 shadow-lg whitespace-nowrap" style={{ backgroundColor: '#4C1D95' }}>
+        <div className="space-y-1">
+          <div className="flex justify-between">
+            <span>Impact Value:</span>
+            <span className="ml-2">{hoveredCIA}</span>
+          </div>
+        </div>
+        <div className="absolute top-full left-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent transform -translate-x-1/2" style={{ borderTopColor: '#4C1D95' }}></div>
+      </div>
+    </div>
+  )
+}
+
 export default function TreatmentInformation() {
   const params = useParams()
   const router = useRouter()
@@ -76,8 +107,22 @@ export default function TreatmentInformation() {
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
 
-  // Custom renderer for CIA values
-  const renderCIAValues = (value: string | string[]) => {
+  // Memoized mouse event handlers for better performance
+  const handleMouseEnter = useCallback((cia: string, event: React.MouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    setTooltipPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    })
+    setHoveredCIA(cia)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredCIA(null)
+  }, [])
+
+  // Custom renderer for CIA values with memoization
+  const renderCIAValues = useCallback((value: string | string[]) => {
     if (!value || value === 'Not specified') {
       return (
         <span className="text-gray-400 text-xs italic">Not specified</span>
@@ -101,19 +146,6 @@ export default function TreatmentInformation() {
       return (
         <span className="text-gray-400 text-xs italic">Not specified</span>
       )
-    }
-
-    const handleMouseEnter = (cia: string, event: React.MouseEvent) => {
-      const rect = event.currentTarget.getBoundingClientRect()
-      setTooltipPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      })
-      setHoveredCIA(cia)
-    }
-
-    const handleMouseLeave = () => {
-      setHoveredCIA(null)
     }
 
     return (
@@ -165,33 +197,7 @@ export default function TreatmentInformation() {
         })}
       </div>
     )
-  }
-
-  // Custom tooltip component
-  const CustomTooltip = () => {
-    if (!hoveredCIA) return null
-
-    return (
-      <div 
-        className="fixed z-50 pointer-events-none"
-        style={{
-          left: tooltipPosition.x,
-          top: tooltipPosition.y,
-          transform: 'translateX(-50%) translateY(-100%)'
-        }}
-      >
-        <div className="text-white text-xs rounded-lg p-3 shadow-lg whitespace-nowrap" style={{ backgroundColor: '#4C1D95' }}>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span>Impact Value:</span>
-              <span className="ml-2">{hoveredCIA}</span>
-            </div>
-          </div>
-          <div className="absolute top-full left-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent transform -translate-x-1/2" style={{ borderTopColor: '#4C1D95' }}></div>
-        </div>
-      </div>
-    )
-  }
+  }, [handleMouseEnter, handleMouseLeave])
 
   const fetchData = async () => {
     try {
@@ -808,8 +814,8 @@ export default function TreatmentInformation() {
          </div>
        )}
 
-       {/* Custom Tooltip */}
-       <CustomTooltip />
+               {/* Custom Tooltip */}
+        <CustomTooltip hoveredCIA={hoveredCIA} tooltipPosition={tooltipPosition} />
      </div>
    )
  } 
