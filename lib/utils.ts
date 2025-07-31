@@ -60,3 +60,30 @@ export function validateRiskId(riskId: string | string[] | undefined): string | 
   
   return id.trim()
 } 
+
+/**
+ * Safely extracts the numeric part from a risk ID
+ * Handles cases where the risk ID might not follow the expected RISK-XXX format
+ * @param riskId - The risk ID to extract from
+ * @returns The numeric part if found, otherwise the original risk ID
+ */
+export function extractRiskNumber(riskId: string): string {
+  if (!riskId || typeof riskId !== 'string') {
+    return riskId || ''
+  }
+  
+  // Try to match RISK-XXX format
+  const match = riskId.match(/^RISK-(\d+)$/i)
+  if (match) {
+    return match[1]
+  }
+  
+  // If no match, try to extract any numeric part after a hyphen
+  const parts = riskId.split('-')
+  if (parts.length >= 2 && parts[1]) {
+    return parts[1]
+  }
+  
+  // If no hyphen or no second part, return the original
+  return riskId
+} 

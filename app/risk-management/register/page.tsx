@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 import Tooltip from '../../components/Tooltip'
-import { getCIAConfig } from '../../../lib/utils'
+import { getCIAConfig, extractRiskNumber } from '../../../lib/utils'
 import { CIA_DELIMITERS } from '../../../lib/constants'
 
 // Risk management phases
@@ -311,7 +311,7 @@ export default function RiskRegister() {
               riskId: risk.riskId,
               functionalUnit: risk.functionalUnit,
               currentPhase: getPhaseDisplayName(risk.currentPhase),
-              jiraTicket: `RISK-${risk.riskId.split('-')[1]}`,
+                              jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
               dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner, // Add this for the riskOwner column
@@ -322,7 +322,7 @@ export default function RiskRegister() {
               riskStatement: risk.riskStatement,
               impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
               currentControls: risk.currentControls,
-              currentControlsReference: `CTRL-${risk.riskId.split('-')[1]}`,
+                              currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
               consequence: risk.consequenceRating,
               likelihood: risk.likelihoodRating,
               currentRiskRating: risk.riskRating,
