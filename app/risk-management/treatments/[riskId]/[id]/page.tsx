@@ -67,6 +67,8 @@ export default function TreatmentInformation() {
     justification: ''
   })
   const [submitting, setSubmitting] = useState(false)
+  const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
+  const [previousActiveElement, setPreviousActiveElement] = useState<HTMLElement | null>(null)
   
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
@@ -233,6 +235,70 @@ export default function TreatmentInformation() {
   const closeExtensionForm = () => {
     setShowExtensionForm(false)
     setExtensionFormData({ extendedDueDate: '', justification: '' })
+    // Restore focus to the previous active element
+    if (previousActiveElement) {
+      previousActiveElement.focus()
+    }
+  }
+
+  // Focus management for modal
+  useEffect(() => {
+    if (showExtensionForm) {
+      // Store the currently focused element
+      setPreviousActiveElement(document.activeElement as HTMLElement)
+      
+      // Focus the first focusable element in the modal
+      const firstFocusableElement = modalRef?.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement
+      
+      if (firstFocusableElement) {
+        firstFocusableElement.focus()
+      }
+    }
+  }, [showExtensionForm, modalRef])
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showExtensionForm) {
+        closeExtensionForm()
+      }
+    }
+
+    if (showExtensionForm) {
+      document.addEventListener('keydown', handleEscapeKey)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+      document.body.style.overflow = 'unset'
+    }
+  }, [showExtensionForm])
+
+  // Handle tab key to trap focus within modal
+  const handleTabKey = (event: React.KeyboardEvent) => {
+    if (!modalRef) return
+
+    const focusableElements = modalRef.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0] as HTMLElement
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+    if (event.shiftKey) {
+      if (document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
   }
 
   // Loading State
@@ -519,15 +585,30 @@ export default function TreatmentInformation() {
 
                {/* Extension Request Form Modal */}
         {showExtensionForm && (
-          <div className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div 
+            className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                closeExtensionForm()
+              }
+            }}
+          >
+           <div 
+             ref={setModalRef}
+             className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+             onKeyDown={handleTabKey}
+           >
              {/* Header */}
              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-               <h2 className="text-lg font-semibold text-gray-900">Request Extension</h2>
+               <h2 id="modal-title" className="text-lg font-semibold text-gray-900">Request Extension</h2>
                <button
                  onClick={closeExtensionForm}
                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors"
                  title="Close"
+                 aria-label="Close extension request form"
                >
                  <Icon name="close" size={16} className="text-gray-500" />
                </button>
@@ -542,13 +623,15 @@ export default function TreatmentInformation() {
                  <input
                    type="date"
                    id="extendedDueDate"
+                   name="extendedDueDate"
                    value={extensionFormData.extendedDueDate}
                    onChange={(e) => handleExtensionFormChange('extendedDueDate', e.target.value)}
                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                    required
                    min={new Date().toISOString().split('T')[0]}
+                   aria-describedby="date-help"
                  />
-                 <p className="text-xs text-gray-500 mt-1">
+                 <p id="date-help" className="text-xs text-gray-500 mt-1">
                    Must be today or a future date
                  </p>
                </div>
@@ -559,12 +642,14 @@ export default function TreatmentInformation() {
                  </label>
                  <textarea
                    id="justification"
+                   name="justification"
                    value={extensionFormData.justification}
                    onChange={(e) => handleExtensionFormChange('justification', e.target.value)}
                    rows={4}
                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                    placeholder="Please provide a detailed justification for the extension request..."
                    required
+                   aria-describedby="justification-help"
                  />
                </div>
 
@@ -575,6 +660,7 @@ export default function TreatmentInformation() {
                    onClick={closeExtensionForm}
                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                    disabled={submitting}
+                   aria-label="Cancel extension request"
                  >
                    Cancel
                  </button>
@@ -583,6 +669,7 @@ export default function TreatmentInformation() {
                    className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                    style={{ backgroundColor: '#4C1D95' }}
                    disabled={submitting}
+                   aria-label={submitting ? "Submitting extension request" : "Submit extension request"}
                  >
                    {submitting ? (
                      <div className="flex items-center">
