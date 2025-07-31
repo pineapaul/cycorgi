@@ -43,4 +43,20 @@ export function getCIAConfig(ciaType: string): CIAConfig {
         label: ciaType.charAt(0)
       }
   }
+}
+
+export function validateRiskId(riskId: string | string[] | undefined): string | null {
+  if (!riskId) return null
+  
+  // Ensure it's a string
+  const id = Array.isArray(riskId) ? riskId[0] : riskId
+  
+  // Check if it's empty or whitespace
+  if (!id || id.trim() === '') return null
+  
+  // Validate format (RISK-XXX where XXX is numeric)
+  const riskIdPattern = /^RISK-\d+$/i
+  if (!riskIdPattern.test(id.trim())) return null
+  
+  return id.trim()
 } 

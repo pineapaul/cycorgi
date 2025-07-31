@@ -59,7 +59,7 @@ export default function DraftRisks() {
               functionalUnit: risk.functionalUnit || 'Not specified',
               raisedBy: risk.raisedBy,
               riskOwner: risk.riskOwner || 'Not assigned',
-              informationAssets: risk.informationAssets,
+              informationAssets: risk.informationAsset,
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,
