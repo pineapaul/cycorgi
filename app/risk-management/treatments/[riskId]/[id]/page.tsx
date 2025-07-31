@@ -71,45 +71,45 @@ export default function TreatmentInformation() {
   // Get validated riskId from params
   const riskId = validateRiskId(params.riskId as string)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null) // Clear any previous errors
-        // riskId is already validated above
-        const treatmentId = params.id as string
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null) // Clear any previous errors
+      // riskId is already validated above
+      const treatmentId = params.id as string
 
-        if (!riskId) {
-          throw new Error('Invalid risk ID format. Expected format: RISK-XXX')
-        }
-
-        // Fetch treatment details
-        const treatmentResponse = await fetch(`/api/treatments/${riskId}/${treatmentId}`)
-        if (!treatmentResponse.ok) {
-          const errorData = await treatmentResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || `HTTP ${treatmentResponse.status}: Failed to fetch treatment details`)
-        }
-        const treatmentData = await treatmentResponse.json()
-
-        // Fetch risk details
-        const riskResponse = await fetch(`/api/risks/${riskId}`)
-        if (!riskResponse.ok) {
-          const errorData = await riskResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || `HTTP ${riskResponse.status}: Failed to fetch risk details`)
-        }
-        const riskResponseData = await riskResponse.json()
-
-        setTreatment(treatmentData)
-        setRisk(riskResponseData.data) // Extract data property from risk API response
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An error occurred'
-        setError(errorMessage)
-        console.error('Treatment fetch error:', err)
-      } finally {
-        setLoading(false)
+      if (!riskId) {
+        throw new Error('Invalid risk ID format. Expected format: RISK-XXX')
       }
-    }
 
+      // Fetch treatment details
+      const treatmentResponse = await fetch(`/api/treatments/${riskId}/${treatmentId}`)
+      if (!treatmentResponse.ok) {
+        const errorData = await treatmentResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${treatmentResponse.status}: Failed to fetch treatment details`)
+      }
+      const treatmentData = await treatmentResponse.json()
+
+      // Fetch risk details
+      const riskResponse = await fetch(`/api/risks/${riskId}`)
+      if (!riskResponse.ok) {
+        const errorData = await riskResponse.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${riskResponse.status}: Failed to fetch risk details`)
+      }
+      const riskResponseData = await riskResponse.json()
+
+      setTreatment(treatmentData)
+      setRisk(riskResponseData.data) // Extract data property from risk API response
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      setError(errorMessage)
+      console.error('Treatment fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
   }, [params.riskId, params.id])
 
@@ -172,6 +172,20 @@ export default function TreatmentInformation() {
       return
     }
 
+    // Validate that the extended due date is today or in the future
+    const selectedDate = new Date(extensionFormData.extendedDueDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time to start of day for fair comparison
+    
+    if (selectedDate < today) {
+      showToast({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Extended due date must be today or a future date.'
+      })
+      return
+    }
+
     setSubmitting(true)
     
     try {
@@ -201,8 +215,8 @@ export default function TreatmentInformation() {
       setExtensionFormData({ extendedDueDate: '', justification: '' })
       setShowExtensionForm(false)
       
-      // Refresh the page to show the new extension
-      window.location.reload()
+      // Refetch data to show the new extension
+      await fetchData()
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
@@ -535,7 +549,7 @@ export default function TreatmentInformation() {
                    min={new Date().toISOString().split('T')[0]}
                  />
                  <p className="text-xs text-gray-500 mt-1">
-                   Must be after today's date
+                   Must be today or a future date
                  </p>
                </div>
 

@@ -26,10 +26,15 @@ export async function POST(
       )
     }
 
-    // Check if date is in the future
-    if (date <= new Date()) {
+    // Check if date is today or in the future (accounting for timezone)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time to start of day for fair comparison
+    const selectedDate = new Date(date)
+    selectedDate.setHours(0, 0, 0, 0) // Reset time to start of day for fair comparison
+    
+    if (selectedDate < today) {
       return NextResponse.json(
-        { error: 'Extended due date must be in the future' },
+        { error: 'Extended due date must be today or a future date' },
         { status: 400 }
       )
     }
