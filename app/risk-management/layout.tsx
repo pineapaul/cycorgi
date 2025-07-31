@@ -15,7 +15,7 @@ export default function RiskManagementLayout({ children }: { children: React.Rea
       href: '/risk-management/register'
     },
     {
-      name: 'Treatments',
+      name: 'Draft Risks',
       href: '/risk-management/treatments'
     }
   ]

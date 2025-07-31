@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Icon from '../../../../components/Icon'
-import { useToast } from '../../../../components/Toast'
+import Icon from '../../../../../components/Icon'
+import { useToast } from '../../../../../components/Toast'
+import { validateRiskId } from '../../../../../../lib/utils'
 
 interface TreatmentFormData {
   riskId: string
@@ -24,14 +25,15 @@ type TreatmentFormErrors = {
   [K in keyof TreatmentFormData]?: string
 }
 
-export default function AddTreatment() {
+export default function EditTreatment() {
   const params = useParams()
   const router = useRouter()
   const { showToast } = useToast()
-  const riskId = params.riskId as string
+  const riskId = validateRiskId(params.riskId as string)
+  const treatmentId = params.id as string
   
   const [formData, setFormData] = useState<TreatmentFormData>({
-    riskId: riskId,
+    riskId: riskId || '',
     treatmentJiraTicket: '',
     riskTreatment: '',
     riskTreatmentOwner: '',
@@ -44,31 +46,65 @@ export default function AddTreatment() {
     notes: ''
   })
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<TreatmentFormErrors>({})
   const [riskDetails, setRiskDetails] = useState<any>(null)
+  const [treatmentDetails, setTreatmentDetails] = useState<any>(null)
 
   const mandatoryFields = ['treatmentJiraTicket', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
 
-  // Fetch risk details to display context
+  // Fetch treatment and risk details
   useEffect(() => {
-    const fetchRiskDetails = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/risks/${riskId}`)
-        const result = await response.json()
+        setLoading(true)
         
-        if (result.success) {
-          setRiskDetails(result.data)
+        // Fetch treatment details
+        const treatmentResponse = await fetch(`/api/treatments/${riskId}/${treatmentId}`)
+        if (!treatmentResponse.ok) {
+          throw new Error('Failed to fetch treatment details')
+        }
+        const treatmentData = await treatmentResponse.json()
+        setTreatmentDetails(treatmentData)
+
+        // Populate form with existing data
+        setFormData({
+          riskId: treatmentData.riskId || riskId || '',
+          treatmentJiraTicket: treatmentData.treatmentJiraTicket || '',
+          riskTreatment: treatmentData.riskTreatment || '',
+          riskTreatmentOwner: treatmentData.riskTreatmentOwner || '',
+          dateRiskTreatmentDue: treatmentData.dateRiskTreatmentDue ? new Date(treatmentData.dateRiskTreatmentDue).toISOString().split('T')[0] : '',
+          extendedDueDate: treatmentData.extendedDueDate ? new Date(treatmentData.extendedDueDate).toISOString().split('T')[0] : '',
+          numberOfExtensions: treatmentData.numberOfExtensions || 0,
+          completionDate: treatmentData.completionDate ? new Date(treatmentData.completionDate).toISOString().split('T')[0] : '',
+          closureApproval: treatmentData.closureApproval || 'Pending',
+          closureApprovedBy: treatmentData.closureApprovedBy || '',
+          notes: treatmentData.notes || ''
+        })
+
+        // Fetch risk details
+        const riskResponse = await fetch(`/api/risks/${riskId}`)
+        if (riskResponse.ok) {
+          const riskData = await riskResponse.json()
+          setRiskDetails(riskData)
         }
       } catch (error) {
-        console.error('Error fetching risk details:', error)
+        console.error('Error fetching data:', error)
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load treatment details'
+        })
+      } finally {
+        setLoading(false)
       }
     }
 
-    if (riskId) {
-      fetchRiskDetails()
+    if (riskId && treatmentId) {
+      fetchData()
     }
-  }, [riskId])
+  }, [riskId, treatmentId, showToast])
 
   const validateForm = (): boolean => {
     const newErrors: TreatmentFormErrors = {}
@@ -110,7 +146,7 @@ export default function AddTreatment() {
       ...prev,
       [field]: value
     }))
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
@@ -125,60 +161,96 @@ export default function AddTreatment() {
     
     if (!validateForm()) {
       showToast({
+        type: 'error',
         title: 'Validation Error',
-        message: 'Please fill in all mandatory fields correctly',
-        type: 'error'
+        message: 'Please fix the errors in the form'
       })
       return
     }
 
-    setLoading(true)
+    // Check if treatmentDetails exists before proceeding
+    if (!treatmentDetails || !treatmentDetails._id) {
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Treatment details not available. Please refresh the page and try again.'
+      })
+      return
+    }
 
     try {
-      const treatmentData = {
-        ...formData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
+      setSaving(true)
 
-      const response = await fetch('/api/treatments', {
-        method: 'POST',
+      const response = await fetch(`/api/treatments/treatment/${treatmentDetails._id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(treatmentData),
+        body: JSON.stringify(formData)
       })
 
       const result = await response.json()
 
       if (result.success) {
         showToast({
+          type: 'success',
           title: 'Success',
-          message: 'Treatment created successfully!',
-          type: 'success'
+          message: 'Treatment updated successfully'
         })
-        router.push(`/risk-management/register/${riskId}`)
+        
+        // Navigate back to treatment details page
+        router.push(`/risk-management/treatments/${riskId}/${treatmentId}`)
       } else {
-        showToast({
-          title: 'Error',
-          message: result.error || 'Failed to create treatment',
-          type: 'error'
-        })
+        throw new Error(result.error || 'Failed to update treatment')
       }
     } catch (error) {
-      console.error('Error creating treatment:', error)
+      console.error('Error updating treatment:', error)
       showToast({
+        type: 'error',
         title: 'Error',
-        message: 'An error occurred while creating the treatment',
-        type: 'error'
+        message: error instanceof Error ? error.message : 'Failed to update treatment'
       })
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
   const handleCancel = () => {
-    router.push(`/risk-management/register/${riskId}`)
+    router.push(`/risk-management/treatments/${riskId}/${treatmentId}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading treatment details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!treatmentDetails) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Icon name="exclamation-triangle" size={48} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Treatment Not Found</h2>
+          <p className="text-gray-600 mb-4">The treatment could not be found.</p>
+          <button
+            onClick={() => router.push(`/risk-management/register/${riskId}`)}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ 
+              backgroundColor: '#4C1D95',
+              '--tw-ring-color': '#4C1D95'
+            } as React.CSSProperties}
+          >
+            <Icon name="arrow-left" size={16} className="mr-2" />
+            Back to Risk
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -189,16 +261,16 @@ export default function AddTreatment() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Link
-                href={`/risk-management/register/${riskId}`}
+                href={`/risk-management/treatments/${riskId}/${treatmentId}`}
                 className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <Icon name="arrow-left" size={16} className="mr-2" />
-                Back to Risk
+                Back to Treatment
               </Link>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Add New Treatment</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Edit Treatment</h1>
           </div>
-          <p className="mt-2 text-gray-600">Create a new treatment for risk {riskId}</p>
+          <p className="mt-2 text-gray-600">Update treatment details for {treatmentDetails.treatmentJiraTicket}</p>
         </div>
 
         {/* Risk Context */}
@@ -210,20 +282,20 @@ export default function AddTreatment() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Risk Statement:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskStatement}</p>
+                <span className="font-medium text-gray-700">Risk ID:</span>
+                <p className="text-gray-600 mt-1">{riskDetails.riskId}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Risk Title:</span>
+                <p className="text-gray-600 mt-1">{riskDetails.riskTitle}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Information Asset:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.informationAsset}</p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Risk Rating:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskRating}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Risk Owner:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskOwner}</p>
+                <span className="font-medium text-gray-700">Risk Score:</span>
+                <p className="text-gray-600 mt-1">{riskDetails.riskScore}</p>
               </div>
             </div>
           </div>
@@ -430,16 +502,16 @@ export default function AddTreatment() {
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={saving}
                 className="px-6 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? (
+                {saving ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating...
+                    Updating...
                   </div>
                 ) : (
-                  'Create Treatment'
+                  'Update Treatment'
                 )}
               </button>
             </div>

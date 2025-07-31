@@ -492,16 +492,7 @@ export default function RiskInformationPage() {
             )}
           </div>
 
-          {/* Risk Treatments Link */}
-          <div className="mt-4">
-            <Link
-              href={`/risk-management/treatments/${risk.riskId}`}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-            >
-              <Icon name="bandage" size={16} className="mr-2" />
-              View Risk Treatments
-            </Link>
-          </div>
+
 
           {/* Risk Assessment */}
           <div className="space-y-6">

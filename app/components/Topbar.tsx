@@ -28,7 +28,7 @@ export default function Topbar() {
     if (pathname.includes('/risk-management')) {
       return [
         { name: 'Register', href: '/risk-management/register', active: pathname.includes('/register') },
-        { name: 'Treatments', href: '/risk-management/treatments', active: pathname.includes('/treatments') }
+        { name: 'Draft Risks', href: '/risk-management/treatments', active: pathname.includes('/treatments') }
       ]
     }
     
