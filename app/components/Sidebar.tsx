@@ -375,6 +375,15 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
+
+      {/* Copyright */}
+      <div className="p-2 md:p-4 border-t flex-shrink-0" style={{ borderColor: '#A2AADB' }}>
+        <div className="text-center">
+          <div className="text-xs" style={{ color: '#C0C9EE' }}>
+            © 2025 Cycorgi. All rights reserved.
+          </div>
+        </div>
+      </div>
     </aside>
   )
 }
