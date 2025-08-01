@@ -13,7 +13,11 @@ interface Workshop {
   date: string
   status: 'Pending Agenda' | 'Planned' | 'Scheduled' | 'Finalising Meeting Minutes' | 'Completed'
   facilitator: string
-  participants: string[]
+  facilitatorPosition?: string
+  participants: Array<string | {
+    name: string
+    position?: string
+  }>
   risks: string[]
   outcomes: string
   securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
@@ -210,7 +214,7 @@ export default function WorkshopDetails() {
             </button>
                          <div>
                <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-                 {workshop.securitySteeringCommittee} SSC
+                 Risk Workshop - {workshop.id}
                </h1>
                <p className="text-gray-600" style={{ color: '#22223B' }}>
                  {formatDate(workshop.date)} Meeting Minutes
@@ -255,22 +259,49 @@ export default function WorkshopDetails() {
                  <div className="space-y-2">
                    <div className="text-sm">
                      <span className="font-medium text-gray-900">Facilitator:</span>
-                     <span className="text-gray-700 ml-1">{workshop.facilitator}</span>
+                     <span className="text-gray-700 ml-1">
+                       {workshop.facilitator}
+                       {workshop.facilitatorPosition && (
+                         <span className="text-gray-500 ml-1">({workshop.facilitatorPosition})</span>
+                       )}
+                     </span>
                    </div>
-                   <div className="text-sm">
-                     <span className="font-medium text-gray-900">Participants:</span>
-                     {workshop.participants.length > 0 ? (
-                       <div className="mt-1 space-y-1">
-                         {workshop.participants.map((participant, index) => (
-                           <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
-                             {participant}
-                           </div>
-                         ))}
-                       </div>
-                     ) : (
-                       <span className="text-gray-500 italic ml-1">No participants listed</span>
-                     )}
-                   </div>
+                                       <div className="text-sm">
+                      <span className="font-medium text-gray-900">Participants:</span>
+                      {workshop.participants.length > 0 ? (
+                        <div className="mt-1 space-y-1">
+                          {workshop.participants.map((participant, index) => {
+                            // Handle both old string format and new object format
+                            if (typeof participant === 'string') {
+                              // Old format: "Name, Position" or just "Name"
+                              const parts = participant.split(', ')
+                              const name = parts[0]
+                              const position = parts[1]
+                              return (
+                                <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                                  {name}
+                                  {position && (
+                                    <span className="text-gray-500 ml-1">({position})</span>
+                                  )}
+                                </div>
+                              )
+                            } else {
+                              // New format: { name: string, position?: string }
+                              return (
+                                <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                                  {participant.name}
+                                  {participant.position && (
+                                    <span className="text-gray-500 ml-1">({participant.position})</span>
+                                  )}
+                                </div>
+                              )
+                            }
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 italic ml-1">No participants listed</span>
+                      )}
+                    </div>
                  </div>
                </div>
               
