@@ -9,6 +9,7 @@ import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
+import CommentSidebar from '@/app/components/CommentSidebar'
 
 interface RiskDetails {
   riskId: string
@@ -150,6 +151,30 @@ export default function RiskInformation() {
   const [originalRisk, setOriginalRisk] = useState<RiskDetails | null>(null)
   const [saving, setSaving] = useState(false)
   const [exportingPDF, setExportingPDF] = useState(false)
+  const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false)
+  const [floatingButtonPosition, setFloatingButtonPosition] = useState({ x: 0, y: 100 })
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Set initial position of floating button to middle of page
+  useEffect(() => {
+    const setInitialButtonPosition = () => {
+      const windowHeight = window.innerHeight
+      const buttonHeight = 56 // w-14 h-14 = 56px
+      const middleY = (windowHeight / 2) - (buttonHeight / 2)
+      setFloatingButtonPosition(prev => ({ ...prev, y: Math.max(20, middleY) }))
+    }
+
+    // Set position after component mounts
+    setInitialButtonPosition()
+
+    // Update position on window resize
+    const handleResize = () => {
+      setInitialButtonPosition()
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -898,6 +923,7 @@ export default function RiskInformation() {
                   <Icon name="link" size={16} className="mr-2" />
                   Copy Link
                 </button>
+
                 <button
                   onClick={handleEdit}
                   className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
@@ -1699,6 +1725,67 @@ export default function RiskInformation() {
           />
         )}
       </div>
+
+      {/* Floating Draggable Comments Button */}
+      {!isEditing && (
+        <div
+          className="fixed z-50 cursor-move select-none"
+          style={{
+            right: '20px',
+            top: `${floatingButtonPosition.y}px`,
+            transform: isDragging ? 'scale(1.1)' : 'scale(1)',
+            transition: isDragging ? 'none' : 'transform 0.2s ease-in-out'
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            
+            const startY = e.clientY
+            const startTop = floatingButtonPosition.y
+            let hasMoved = false
+            const moveThreshold = 5 // pixels
+            
+            const handleMouseMove = (e: MouseEvent) => {
+              const deltaY = Math.abs(e.clientY - startY)
+              
+              // Only start dragging if mouse has moved beyond threshold
+              if (deltaY > moveThreshold && !hasMoved) {
+                hasMoved = true
+                setIsDragging(true)
+              }
+              
+              if (hasMoved) {
+                const newY = Math.max(20, Math.min(window.innerHeight - 100, startTop + (e.clientY - startY)))
+                setFloatingButtonPosition(prev => ({ ...prev, y: newY }))
+              }
+            }
+            
+            const handleMouseUp = () => {
+              setIsDragging(false)
+              document.removeEventListener('mousemove', handleMouseMove)
+              document.removeEventListener('mouseup', handleMouseUp)
+            }
+            
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+          }}
+        >
+          <button
+            onClick={() => setIsCommentSidebarOpen(true)}
+            className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            style={{ backgroundColor: '#4C1D95' }}
+            title="Open comments"
+          >
+            <Icon name="comments" size={24} className="text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Comment Sidebar */}
+      <CommentSidebar
+        isOpen={isCommentSidebarOpen}
+        onClose={() => setIsCommentSidebarOpen(false)}
+        riskId={validateRiskId(params.riskId) || ''}
+      />
     </div>
   )
 } 

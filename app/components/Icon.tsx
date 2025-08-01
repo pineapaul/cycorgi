@@ -60,7 +60,10 @@ import {
   faCalendarPlus,
   faPlusCircle,
   faUsers,
-  faShieldHalved
+  faShieldHalved,
+  faMessage,
+  faPaperPlane,
+  faComments
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -127,12 +130,16 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'exclamation-triangle': faTriangleExclamation,
     'information-circle': faCircleInfo,
     'x-mark': faXmark,
+    x: faXmark,
     'id-card': faIdCard,
     'calendar-plus': faCalendarPlus,
     'plus-circle': faPlusCircle,
     'chart-bar': faChartSimple,
     'user-group': faUsers,
     'shield-exclamation': faShieldHalved,
+    'message-circle': faMessage,
+    send: faPaperPlane,
+    comments: faComments,
   }
 
   const icon = icons[name]
@@ -208,12 +215,16 @@ function getFallbackEmoji(name: string): string {
     'exclamation-triangle': '⚠️',
     'information-circle': 'ℹ️',
     'x-mark': '✕',
+    x: '✕',
     'id-card': '🆔',
     'calendar-plus': '📅➕',
     'plus-circle': '➕',
     'chart-bar': '📊',
     'user-group': '👥',
     'shield-exclamation': '🛡️',
+    'message-circle': '💬',
+    send: '📤',
+    comments: '💬',
   }
   return emojiMap[name] || '📄'
 } 
