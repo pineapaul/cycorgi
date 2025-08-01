@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
+import { useToast } from '@/app/components/Toast'
 
 interface Workshop {
   _id: string
@@ -26,6 +27,7 @@ interface Workshop {
 export default function WorkshopDetails() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
   const [workshop, setWorkshop] = useState<Workshop | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,10 +100,54 @@ export default function WorkshopDetails() {
     return `${day} ${month} ${year} at ${time}`
   }
 
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/risk-management/workshops/${workshop?.id}`
+    
+    try {
+      // Check if clipboard API is available
+      if (!navigator.clipboard) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = url
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        showToast({
+          type: 'success',
+          title: 'Link copied!',
+          message: 'Workshop link has been copied to clipboard'
+        })
+        return
+      }
+
+      await navigator.clipboard.writeText(url)
+      showToast({
+        type: 'success',
+        title: 'Link copied!',
+        message: 'Workshop link has been copied to clipboard'
+      })
+    } catch (error) {
+      console.error('Failed to copy link:', error)
+      showToast({
+        type: 'error',
+        title: 'Copy failed',
+        message: 'Unable to copy link to clipboard. Please try again.'
+      })
+    }
+  }
+
+  const handleEdit = () => {
+    router.push(`/risk-management/workshops/${workshop?.id}/edit`)
+  }
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
+          <p className="mt-4" style={{ color: '#22223B' }}>Loading workshop details...</p>
+        </div>
       </div>
     )
   }
@@ -109,7 +155,7 @@ export default function WorkshopDetails() {
   if (error || !workshop) {
     return (
       <div className="space-y-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex">
             <Icon name="alert-circle" className="w-5 h-5 text-red-400 mr-3" />
             <div>
@@ -120,7 +166,7 @@ export default function WorkshopDetails() {
         </div>
         <Link
           href="/risk-management/workshops"
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
         >
           <Icon name="arrow-left" className="w-4 h-4 mr-2" />
           Back to Workshops
@@ -131,169 +177,215 @@ export default function WorkshopDetails() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center space-x-3">
-            <Link
-              href="/risk-management/workshops"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+      {/* Workshop Information Container */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/risk-management/workshops')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
+              title="Back to Workshops"
             >
-              <Icon name="arrow-left" className="w-4 h-4 mr-1" />
-              Back to Workshops
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mt-2">Workshop {workshop.id}</h1>
-          <p className="text-gray-600 mt-1">Meeting Minutes & Details</p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => router.push(`/risk-management/workshops/${workshop.id}/edit`)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Icon name="edit" className="w-4 h-4 mr-2" />
-            Edit Workshop
-          </button>
-        </div>
-      </div>
-
-      {/* Workshop Overview */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Workshop Overview</h2>
-        </div>
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Icon name="arrow-left" size={16} />
+            </button>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Date</dt>
-              <dd className="mt-1 text-sm text-gray-900">{formatDate(workshop.date)}</dd>
+              <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
+                Workshop {workshop.id}
+              </h1>
+              <p className="text-gray-600" style={{ color: '#22223B' }}>
+                Meeting Minutes & Details
+              </p>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Status</dt>
-              <dd className="mt-1">
-                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(workshop.status)}`}>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              title="Copy link to workshop"
+            >
+              <Icon name="link" size={16} className="mr-2" />
+              Copy Link
+            </button>
+            <button
+              onClick={handleEdit}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+              style={{ backgroundColor: '#4C1D95' }}
+              title="Edit workshop"
+            >
+              <Icon name="pencil" size={16} className="mr-2" />
+              Edit
+            </button>
+          </div>
+        </div>
+
+        {/* Workshop Overview Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Workshop Overview</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Date</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {formatDate(workshop.date)}
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+              <div className="mt-1">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(workshop.status)}`}>
                   {workshop.status}
                 </span>
-              </dd>
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Security Steering Committee</dt>
-              <dd className="mt-1 text-sm text-gray-900">{workshop.securitySteeringCommittee}</dd>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Facilitator</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.facilitator}
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Facilitator</dt>
-              <dd className="mt-1 text-sm text-gray-900">{workshop.facilitator}</dd>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Security Steering Committee</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.securitySteeringCommittee}
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Participants</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {workshop.participants.length > 0 ? workshop.participants.join(', ') : '-'}
-              </dd>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Participants</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.participants.length > 0 ? workshop.participants.join(', ') : 'No participants listed'}
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Related Risks</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {workshop.risks.length > 0 ? workshop.risks.join(', ') : '-'}
-              </dd>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Meeting Minutes */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Meeting Minutes</h2>
-        </div>
-        <div className="px-6 py-4 space-y-6">
-          {/* Outcomes */}
-          <div>
-            <h3 className="text-md font-medium text-gray-900 mb-2">Outcomes</h3>
-            <div className="bg-gray-50 rounded-md p-4">
-              {workshop.outcomes ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{workshop.outcomes}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No outcomes recorded</p>
-              )}
-            </div>
-          </div>
-
-          {/* Actions Taken */}
-          <div>
-            <h3 className="text-md font-medium text-gray-900 mb-2">Actions Taken</h3>
-            <div className="bg-green-50 rounded-md p-4">
-              {workshop.actionsTaken ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{workshop.actionsTaken}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No actions taken recorded</p>
-              )}
-            </div>
-          </div>
-
-          {/* To Do */}
-          <div>
-            <h3 className="text-md font-medium text-gray-900 mb-2">To Do</h3>
-            <div className="bg-yellow-50 rounded-md p-4">
-              {workshop.toDo ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{workshop.toDo}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No to-do items recorded</p>
-              )}
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <h3 className="text-md font-medium text-gray-900 mb-2">Notes</h3>
-            <div className="bg-blue-50 rounded-md p-4">
-              {workshop.notes ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{workshop.notes}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No notes recorded</p>
-              )}
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Risks Discussed</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.risks.length > 0 ? workshop.risks.join(', ') : 'No risks listed'}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Metadata */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Metadata</h2>
+        {/* Meeting Minutes Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Meeting Minutes</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {/* Outcomes */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <Icon name="check-circle" size={16} className="mr-2 text-green-600" />
+                Outcomes
+              </h4>
+              <div className="bg-white rounded-md p-3 border border-gray-200">
+                {workshop.outcomes ? (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.outcomes}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No outcomes recorded</p>
+                )}
+              </div>
+            </div>
+
+            {/* Actions Taken */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <Icon name="check" size={16} className="mr-2 text-green-600" />
+                Actions Taken
+              </h4>
+              <div className="bg-white rounded-md p-3 border border-gray-200">
+                {workshop.actionsTaken ? (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.actionsTaken}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No actions taken recorded</p>
+                )}
+              </div>
+            </div>
+
+            {/* To Do */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <Icon name="clock" size={16} className="mr-2 text-yellow-600" />
+                To Do
+              </h4>
+              <div className="bg-white rounded-md p-3 border border-gray-200">
+                {workshop.toDo ? (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.toDo}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No to-do items recorded</p>
+                )}
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <Icon name="document-text" size={16} className="mr-2 text-blue-600" />
+                Notes
+              </h4>
+              <div className="bg-white rounded-md p-3 border border-gray-200">
+                {workshop.notes ? (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.notes}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No notes recorded</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="px-6 py-4">
+
+        {/* Metadata Section */}
+        <div>
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Metadata</h3>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Created</dt>
-              <dd className="mt-1 text-sm text-gray-900">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Created</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
                 {workshop.createdAt ? formatDateTime(workshop.createdAt) : '-'}
-              </dd>
+              </div>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-              <dd className="mt-1 text-sm text-gray-900">
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Last Updated</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
                 {workshop.updatedAt ? formatDateTime(workshop.updatedAt) : '-'}
-              </dd>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Actions Footer */}
       <div className="flex justify-between items-center pt-6">
         <Link
           href="/risk-management/workshops"
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
         >
           <Icon name="arrow-left" className="w-4 h-4 mr-2" />
           Back to Workshops
         </Link>
+        
         <div className="flex space-x-3">
           <button
-            onClick={() => router.push(`/risk-management/workshops/${workshop.id}/edit`)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            onClick={handleEdit}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+            style={{ backgroundColor: '#4C1D95' }}
           >
-            <Icon name="edit" className="w-4 h-4 mr-2" />
+            <Icon name="pencil" className="w-4 h-4 mr-2" />
             Edit Workshop
           </button>
         </div>

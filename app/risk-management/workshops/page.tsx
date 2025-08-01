@@ -73,9 +73,21 @@ export default function Workshops() {
   const columns: Column[] = [
     {
       key: 'id',
-      label: 'Workshop ID',
+      label: 'ID',
       sortable: true,
-      width: '120px'
+      width: '140px',
+      render: (value, row) => {
+        return (
+          <Link
+            href={`/risk-management/workshops/${row.id}`}
+            className="workshop-id-button"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="tracking-wide">{value || '-'}</span>
+            <Icon name="arrow-right" size={10} className="arrow-icon" />
+          </Link>
+        )
+      }
     },
     {
       key: 'date',
@@ -231,17 +243,22 @@ export default function Workshops() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Risk Workshops</h1>
-          <p className="text-gray-600 mt-1">Manage and track risk assessment workshops</p>
+          <p className="text-gray-600 mt-1">Manage and track risk workshops</p>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => router.push('/risk-management/workshops/new')}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Icon name="plus" className="w-4 h-4 mr-2" />
-            New Workshop
-          </button>
-        </div>
+                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+           <Link
+             href="/risk-management/workshops/new"
+             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+             style={{ 
+               backgroundColor: '#4C1D95',
+               '--tw-ring-color': '#4C1D95'
+             } as React.CSSProperties}
+           >
+             <Icon name="plus" size={16} className="mr-2" />
+             <span className="hidden sm:inline">New Workshop</span>
+             <span className="sm:hidden">New</span>
+           </Link>
+         </div>
       </div>
 
       {/* Tabs */}
