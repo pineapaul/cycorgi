@@ -7,6 +7,7 @@ import Icon from '../../../../../components/Icon'
 import { useToast } from '../../../../../components/Toast'
 import { validateRiskId } from '../../../../../../lib/utils'
 import { TREATMENT_STATUS } from '../../../../../../lib/constants'
+import { useBackNavigation } from '../../../../../hooks/useBackNavigation'
 
 interface TreatmentFormData {
   riskId: string
@@ -32,6 +33,9 @@ export default function EditTreatment() {
   const { showToast } = useToast()
   const riskId = validateRiskId(params.riskId as string)
   const treatmentId = params.id as string
+  const { goBack } = useBackNavigation({
+    fallbackRoute: `/risk-management/treatments/${riskId}/${treatmentId}`
+  })
   
   const [formData, setFormData] = useState<TreatmentFormData>({
     riskId: riskId || '',
@@ -239,7 +243,7 @@ export default function EditTreatment() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Treatment Not Found</h2>
           <p className="text-gray-600 mb-4">The treatment could not be found.</p>
           <button
-            onClick={() => router.push(`/risk-management/register/${riskId}`)}
+            onClick={goBack}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ 
               backgroundColor: '#4C1D95',
@@ -247,7 +251,7 @@ export default function EditTreatment() {
             } as React.CSSProperties}
           >
             <Icon name="arrow-left" size={16} className="mr-2" />
-            Back to Risk
+            Go Back
           </button>
         </div>
       </div>

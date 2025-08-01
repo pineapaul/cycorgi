@@ -408,7 +408,7 @@ export default function DataTable({
             </button>
             
             {showSortDropdown && (
-              <div ref={sortDropdownRef} className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={sortDropdownRef} className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Sort by Column</h3>
@@ -481,7 +481,7 @@ export default function DataTable({
             </button>
             
             {showFilterDropdown && (
-              <div ref={filterDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={filterDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Filter by Column</h3>
@@ -577,7 +577,7 @@ export default function DataTable({
             </button>
             
             {showColumnsDropdown && (
-              <div ref={columnsDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div ref={columnsDropdownRef} className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-900">Select Columns</h3>
@@ -645,7 +645,7 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Table with sticky horizontal scroll bar */}
+      {/* Table with sticky headers */}
       <div className="bg-white rounded-lg border border-gray-200 relative">
         {/* Table container with fixed height and scroll */}
         <div 
@@ -657,12 +657,12 @@ export default function DataTable({
           }}
         >
           <table className="min-w-full" style={{ minWidth: '1200px' }}>
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 {selectable && (
                   <th
                     scope="col"
-                    className="px-3 py-3 md:px-6 md:py-3 text-left"
+                    className="px-3 py-3 md:px-6 md:py-3 text-left bg-gray-50"
                     style={{ color: '#22223B', width: '40px' }}
                   >
                     <input
@@ -683,7 +683,7 @@ export default function DataTable({
                   <th
                     key={column.key}
                     scope="col"
-                    className={`px-3 py-3 md:px-6 md:py-3 text-xs font-medium uppercase tracking-wider ${
+                    className={`px-3 py-3 md:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
                       column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'
                     }`}

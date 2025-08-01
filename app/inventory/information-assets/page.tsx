@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
+import { useToast } from '@/app/components/Toast'
 
 interface InformationAsset {
   id: string
@@ -25,6 +26,7 @@ interface InformationAsset {
 
 export default function InformationAssetsPage() {
   const router = useRouter()
+  const { showToast } = useToast()
   const [assets, setAssets] = useState<InformationAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -226,7 +228,15 @@ export default function InformationAssetsPage() {
                 e.stopPropagation()
                 const url = `${window.location.origin}/inventory/information-assets/${row.id}`
                 navigator.clipboard.writeText(url).then(() => {
-                  alert('Link copied to clipboard!')
+                  showToast({
+                    type: 'success',
+                    title: 'Link copied to clipboard!'
+                  })
+                }).catch(() => {
+                  showToast({
+                    type: 'error',
+                    title: 'Failed to copy link to clipboard'
+                  })
                 })
               }}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"

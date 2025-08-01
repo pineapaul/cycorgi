@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
+import { useBackNavigation } from '@/app/hooks/useBackNavigation'
+import { useToast } from '@/app/components/Toast'
 
 interface InformationAsset {
   id: string
@@ -24,6 +26,10 @@ interface InformationAsset {
 export default function AssetProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
+  const { goBack } = useBackNavigation({
+    fallbackRoute: '/inventory/information-assets'
+  })
   const [asset, setAsset] = useState<InformationAsset | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -139,8 +145,15 @@ export default function AssetProfilePage() {
   const handleCopyLink = () => {
     const url = window.location.href
     navigator.clipboard.writeText(url).then(() => {
-      // You could add a toast notification here
-      alert('Link copied to clipboard!')
+      showToast({
+        type: 'success',
+        title: 'Link copied to clipboard!'
+      })
+    }).catch(() => {
+      showToast({
+        type: 'error',
+        title: 'Failed to copy link to clipboard'
+      })
     })
   }
 
@@ -172,11 +185,11 @@ export default function AssetProfilePage() {
         <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Asset</h3>
         <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error || 'Asset not found'}</p>
         <button
-          onClick={() => router.push('/inventory/information-assets')}
+          onClick={goBack}
           className="px-4 py-2 rounded-lg transition-colors"
           style={{ backgroundColor: '#898AC4', color: 'white' }}
         >
-          Back to Assets
+          Go Back
         </button>
       </div>
     )
@@ -188,9 +201,9 @@ export default function AssetProfilePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => router.push('/inventory/information-assets')}
+            onClick={goBack}
             className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-            title="Back to Assets"
+            title="Go back to previous page"
           >
             <Icon name="arrow-left" size={16} />
           </button>

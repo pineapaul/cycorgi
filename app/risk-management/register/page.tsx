@@ -8,6 +8,7 @@ import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
+import { useToast } from '@/app/components/Toast'
 
 // Risk management phases
 const RISK_PHASES = [
@@ -274,6 +275,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
 
 export default function RiskRegister() {
   const router = useRouter()
+  const { showToast } = useToast()
 
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
@@ -468,7 +470,15 @@ export default function RiskRegister() {
                   e.stopPropagation()
                   const url = `${window.location.origin}/risk-management/register/${row.riskId}`
                   navigator.clipboard.writeText(url).then(() => {
-                    alert('Link copied to clipboard!')
+                    showToast({
+                      type: 'success',
+                      title: 'Link copied to clipboard!'
+                    })
+                  }).catch(() => {
+                    showToast({
+                      type: 'error',
+                      title: 'Failed to copy link to clipboard'
+                    })
                   })
                 }}
                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
@@ -481,7 +491,10 @@ export default function RiskRegister() {
                 onClick={(e) => {
                   e.stopPropagation()
                   // TODO: Implement workshop agenda functionality
-                  alert(`Risk ${row.riskId} added to workshop agenda!`)
+                  showToast({
+                    type: 'success',
+                    title: `Risk ${row.riskId} added to workshop agenda!`
+                  })
                 }}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
               >
@@ -579,6 +592,12 @@ export default function RiskRegister() {
             className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
           >
             Draft Risks
+          </Link>
+          <Link
+            href="/risk-management/treatments"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          >
+            Treatments
           </Link>
           <Link
             href="/risk-management/workshops"

@@ -8,6 +8,7 @@ import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
+import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 
 interface RiskDetails {
   riskId: string
@@ -109,6 +110,9 @@ export default function RiskInformation() {
   const params = useParams()
   const router = useRouter()
   const { showToast } = useToast()
+  const { goBack } = useBackNavigation({
+    fallbackRoute: '/risk-management/register'
+  })
   const [riskDetails, setRiskDetails] = useState<RiskDetails | null>(null)
 
   // Validation utilities
@@ -844,7 +848,7 @@ export default function RiskInformation() {
             {error || 'The risk with ID "' + validateRiskId(params.riskId) + '" could not be found.'}
           </p>
           <button
-            onClick={() => router.push('/risk-management/register')}
+            onClick={goBack}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ 
               backgroundColor: '#4C1D95',
@@ -852,7 +856,7 @@ export default function RiskInformation() {
             } as React.CSSProperties}
           >
             <Icon name="arrow-left" size={16} className="mr-2" />
-            Back to Register
+            Go Back
           </button>
         </div>
       </div>
@@ -867,9 +871,9 @@ export default function RiskInformation() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => router.push('/risk-management/register')}
+              onClick={goBack}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-gray-200 bg-white border border-gray-300"
-              title="Back to Register"
+              title="Go back to previous page"
             >
               <Icon name="arrow-left" size={16} />
             </button>
