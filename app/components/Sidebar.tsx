@@ -9,7 +9,7 @@ import { useState } from 'react'
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
   // Program menu will be inserted here
-  { name: 'Compliance', href: '/dashboard/compliance', icon: 'compliance' },
+  { name: 'Compliance', href: '/compliance', icon: 'compliance' },
   { name: 'ISMS Operations', href: '/dashboard/isms-operations', icon: 'settings' },
   { name: 'Reports', href: '/dashboard/reports', icon: 'reports' },
   { name: 'Settings', href: '/dashboard/settings', icon: 'settings' },
@@ -39,9 +39,9 @@ const riskManagementItems = [
 ]
 
 const complianceItems = [
-  { name: 'Statement of Applicability', href: '/dashboard/compliance/soa' },
-  { name: 'Corrective Actions', href: '/dashboard/compliance/corrective-actions' },
-  { name: 'Improvements', href: '/dashboard/compliance/improvements' },
+  { name: 'Statement of Applicability', href: '/compliance/statement-of-applicability' },
+  { name: 'Corrective Actions', href: '/compliance/corrective-actions' },
+  { name: 'Improvements', href: '/compliance/improvements' },
 ]
 
 const ismsOperationsItems = [
