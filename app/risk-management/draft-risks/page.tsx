@@ -274,43 +274,34 @@ export default function DraftRisks() {
           </Link>
         )
       }
-      if (col.key === 'actions') {
-        return (
-          <div className="flex items-center space-x-2">
-            <Tooltip content="View Risk Details">
-              <Link
-                href={`/risk-management/register/${row.riskId}`}
-                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Icon name="eye" size={12} />
-              </Link>
-            </Tooltip>
-            <Tooltip content="Edit Risk">
-              <Link
-                href={`/risk-management/register/${row.riskId}/edit`}
-                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Icon name="edit" size={12} />
-              </Link>
-            </Tooltip>
-            <Tooltip content="Submit for Review">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // TODO: Implement submit for review functionality
-                  alert(`Risk ${row.riskId} submitted for review!`)
-                }}
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
-              >
-                <Icon name="check-circle" size={12} className="mr-1" />
-                Submit
-              </button>
-            </Tooltip>
-          </div>
-        )
-      }
+             if (col.key === 'actions') {
+         return (
+           <div className="flex items-center space-x-2">
+             <Tooltip content="View Risk Details">
+               <Link
+                 href={`/risk-management/register/${row.riskId}`}
+                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                 <Icon name="eye" size={12} />
+               </Link>
+             </Tooltip>
+             <Tooltip content="Submit for Review">
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation()
+                   // TODO: Implement submit for review functionality
+                   alert(`Risk ${row.riskId} submitted for review!`)
+                 }}
+                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+               >
+                 <Icon name="check-circle" size={12} className="mr-1" />
+                 Submit
+               </button>
+             </Tooltip>
+           </div>
+         )
+       }
       if (col.key === 'impactCIA') {
         // Use the custom renderCIAValues function for the impactCIA column
         return renderCIAValues(value)
@@ -404,18 +395,13 @@ export default function DraftRisks() {
 
       {/* Draft Status Info */}
       <div className="rounded-lg p-4" style={{ backgroundColor: '#E8ECF7', borderColor: '#E8ECF7' }}>
-        <div className="flex items-start space-x-3">
-          <div style={{ color: '#22223B' }}>
-            <Icon name="clock" size={20} className="mt-0.5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
-              Draft Risks
-            </h3>
-            <p className="text-sm mt-1" style={{ color: '#22223B' }}>
-              These risks are in draft status and require review before being added to the formal risk register.
-            </p>
-          </div>
+        <div>
+          <h3 className="text-sm font-medium" style={{ color: '#22223B' }}>
+            Draft Risks
+          </h3>
+          <p className="text-sm mt-1" style={{ color: '#22223B' }}>
+            These risks are in draft status and require review before being added to the formal risk register.
+          </p>
         </div>
       </div>
 
