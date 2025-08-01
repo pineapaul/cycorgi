@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 import Tooltip from '../../components/Tooltip'
@@ -19,9 +20,9 @@ interface Workshop {
 }
 
 export default function Workshops() {
+  const router = useRouter()
   const [workshops, setWorkshops] = useState<Workshop[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
   // Mock data for workshops - in a real app, this would come from an API
@@ -238,7 +239,7 @@ export default function Workshops() {
 
   const handleRowClick = (row: any) => {
     // Navigate to workshop details page
-    window.location.href = `/risk-management/workshops/${row.id}`
+    router.push(`/risk-management/workshops/${row.id}`)
   }
 
   const columnsWithRenderers = columns.map(col => ({
@@ -256,7 +257,7 @@ export default function Workshops() {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={() => window.location.href = '/risk-management/workshops/new'}
+            onClick={() => router.push('/risk-management/workshops/new')}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <Icon name="plus" className="w-4 h-4 mr-2" />
@@ -296,20 +297,8 @@ export default function Workshops() {
         </div>
       )}
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <Icon name="alert-circle" className="w-5 h-5 text-red-400 mr-2" />
-            <div className="text-sm text-red-700">
-              Error loading workshops: {error}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Workshops Data Table */}
-      {!loading && !error && (
+      {!loading && (
         <DataTable
           columns={columnsWithRenderers}
           data={transformedData}
