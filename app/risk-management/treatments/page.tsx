@@ -16,6 +16,51 @@ export default function Treatments() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Helper function to calculate time remaining
+  const calculateTimeRemaining = (dueDate: string | null, extendedDueDate: string | null, status: string | null) => {
+    // If status is approved, return empty string
+    if (status && status.toLowerCase() === 'approved') return ''
+    
+    if (!dueDate && !extendedDueDate) return 'No due date'
+    
+    const now = new Date()
+    let targetDate: Date | null = null
+    
+    // Determine which date to use (whichever is farther)
+    if (dueDate && extendedDueDate) {
+      const due = new Date(dueDate)
+      const extended = new Date(extendedDueDate)
+      targetDate = extended > due ? extended : due
+    } else if (dueDate) {
+      targetDate = new Date(dueDate)
+    } else if (extendedDueDate) {
+      targetDate = new Date(extendedDueDate)
+    }
+    
+    if (!targetDate || isNaN(targetDate.getTime())) return 'Invalid date'
+    
+    const timeDiff = targetDate.getTime() - now.getTime()
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
+    
+    if (daysDiff < 0) {
+      return `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) !== 1 ? 's' : ''}`
+    } else if (daysDiff === 0) {
+      return 'Due today'
+    } else if (daysDiff === 1) {
+      return 'Due tomorrow'
+    } else if (daysDiff < 7) {
+      return `Due in ${daysDiff} days`
+    } else if (daysDiff < 30) {
+      const weeks = Math.floor(daysDiff / 7)
+      const remainingDays = daysDiff % 7
+      return `Due in ${weeks} week${weeks !== 1 ? 's' : ''}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays !== 1 ? 's' : ''}` : ''}`
+    } else {
+      const months = Math.floor(daysDiff / 30)
+      const remainingDays = daysDiff % 30
+      return `Due in ${months} month${months !== 1 ? 's' : ''}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays !== 1 ? 's' : ''}` : ''}`
+    }
+  }
+
   // Fetch treatments from MongoDB
   useEffect(() => {
     const fetchTreatments = async () => {
@@ -64,6 +109,7 @@ export default function Treatments() {
                closureApprovedBy: treatment.closureApprovedBy || 'Not specified',
                createdAt: formatDate(treatment.createdAt),
                updatedAt: formatDate(treatment.updatedAt),
+                               timeRemaining: calculateTimeRemaining(treatment.dateRiskTreatmentDue, treatment.extendedDueDate, treatment.closureApproval),
              }
            })
           setTreatments(transformedTreatments)
@@ -113,6 +159,7 @@ export default function Treatments() {
     { key: 'treatmentType', label: 'Treatment', sortable: true },
     { key: 'treatmentOwner', label: 'Owner', sortable: true, width: '150px' },
     { key: 'treatmentStatus', label: 'Status', sortable: true, width: '100px' },
+    { key: 'timeRemaining', label: 'Time Remaining', sortable: true, width: '140px' },
     { key: 'targetCompletionDate', label: 'Due Date', sortable: true, width: '110px' },
     { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true, width: '130px' },
     { key: 'numberOfExtensions', label: 'Extensions', sortable: true, width: '100px' },
@@ -205,6 +252,30 @@ export default function Treatments() {
           </span>
         )
       }
+             if (col.key === 'timeRemaining') {
+         if (!value || value === '') {
+           return <span className="text-gray-400">-</span>
+         }
+         if (value === 'No due date' || value === 'Invalid date') {
+           return <span className="text-gray-400">{value}</span>
+         }
+         
+         // Determine color based on urgency
+         let colorClass = 'text-gray-600'
+         if (value.includes('Overdue')) {
+           colorClass = 'text-red-600 font-semibold'
+         } else if (value.includes('Due today') || value.includes('Due tomorrow')) {
+           colorClass = 'text-orange-600 font-semibold'
+         } else if (value.includes('Due in') && value.includes('days') && parseInt(value.match(/\d+/)?.[0] || '0') <= 7) {
+           colorClass = 'text-yellow-600'
+         }
+         
+         return (
+           <span className={`text-sm whitespace-nowrap ${colorClass}`}>
+             {value}
+           </span>
+         )
+       }
              if (col.key === 'treatmentType') {
          return (
            <div className="relative group">
