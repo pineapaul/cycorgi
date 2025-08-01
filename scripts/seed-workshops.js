@@ -1,6 +1,7 @@
 require('dotenv').config({ path: '.env.local' })
 const { MongoClient } = require('mongodb')
 
+// Validation constants (shared with API validation)
 const VALID_SECURITY_COMMITTEES = [
   'Core Systems Engineering',
   'Software Engineering', 

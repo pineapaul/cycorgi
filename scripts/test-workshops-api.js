@@ -1,6 +1,21 @@
 require('dotenv').config({ path: '.env.local' })
 const { MongoClient } = require('mongodb')
 
+// Validation constants (shared with API validation)
+const VALID_SECURITY_COMMITTEES = [
+  'Core Systems Engineering',
+  'Software Engineering', 
+  'IP Engineering'
+]
+
+const VALID_STATUSES = [
+  'Pending Agenda',
+  'Planned',
+  'Scheduled', 
+  'Finalising Meeting Minutes',
+  'Completed'
+]
+
 const testWorkshop = {
   id: 'WS-TEST-001',
   date: '2024-12-01',
@@ -139,4 +154,14 @@ async function testWorkshopsAPI() {
   }
 }
 
-testWorkshopsAPI() 
+// Wrap the function call in a try-catch block for better error handling
+async function main() {
+  try {
+    await testWorkshopsAPI()
+  } catch (error) {
+    console.error('❌ Fatal error running test script:', error)
+    process.exit(1)
+  }
+}
+
+main() 
