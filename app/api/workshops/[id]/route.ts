@@ -39,6 +39,38 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
+    
+    // Validation constants
+    const VALID_SECURITY_COMMITTEES = [
+      'Core Systems Engineering',
+      'Software Engineering', 
+      'IP Engineering'
+    ]
+    
+    const VALID_STATUSES = [
+      'Pending Agenda',
+      'Planned',
+      'Scheduled', 
+      'Finalising Meeting Minutes',
+      'Completed'
+    ]
+    
+    // Validate security steering committee if provided
+    if (body.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(body.securitySteeringCommittee)) {
+      return NextResponse.json({
+        success: false,
+        error: `Invalid securitySteeringCommittee: "${body.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`
+      }, { status: 400 })
+    }
+    
+    // Validate status if provided
+    if (body.status && !VALID_STATUSES.includes(body.status)) {
+      return NextResponse.json({
+        success: false,
+        error: `Invalid status: "${body.status}". Must be one of: ${VALID_STATUSES.join(', ')}`
+      }, { status: 400 })
+    }
+    
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
