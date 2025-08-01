@@ -6,91 +6,83 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig } from '@/lib/utils'
 
-// Custom renderer for CIA values
-const renderCIAValues = (value: string) => {
-  if (!value || value === 'Not specified') {
-    return (
-      <span className="text-gray-400 text-xs italic">Not specified</span>
-    )
-  }
-
-  const ciaValues = value?.split(', ') || []
-  return (
-    <div className="flex gap-1.5 overflow-hidden">
-      {ciaValues.map((cia, index) => {
-        const config = getCIAConfig(cia)
-        return (
-          <span
-            key={index}
-            className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${config.bg} ${config.text} ${config.border} transition-all duration-200 hover:scale-105 flex-shrink-0`}
-            title={cia}
-          >
-            {config.label}
-          </span>
-        )
-      })}
-    </div>
-  )
-}
-
-export default function DraftRisks() {
+export default function Treatments() {
   const router = useRouter()
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
-  const [draftRisks, setDraftRisks] = useState<any[]>([])
+  const [treatments, setTreatments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch draft risks from MongoDB
+  // Fetch treatments from MongoDB
   useEffect(() => {
-    const fetchDraftRisks = async () => {
+    const fetchTreatments = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/risks')
+        const response = await fetch('/api/treatments')
         const result = await response.json()
         
         if (result.success) {
-          // Filter for risks with 'Draft' status and transform the data
-          const draftRisksData = result.data
-            .filter((risk: any) => risk.currentPhase === 'Draft')
-            .map((risk: any) => ({
-              riskId: risk.riskId,
-              functionalUnit: risk.functionalUnit || 'Not specified',
-              raisedBy: risk.raisedBy,
-              riskOwner: risk.riskOwner || 'Not assigned',
-              informationAssets: risk.informationAsset,
-              threat: risk.threat,
-              vulnerability: risk.vulnerability,
-              riskStatement: risk.riskStatement,
-              impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
-              currentControls: risk.currentControls || 'Not specified',
-              currentControlsReference: risk.currentControlsReference || 'Not specified',
-              consequenceRating: risk.consequenceRating || 'Not rated',
-              likelihoodRating: risk.likelihoodRating || 'Not rated',
-              riskRating: risk.riskRating || 'Not rated',
-              createdAt: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : 'Not specified',
-              updatedAt: risk.updatedAt ? new Date(risk.updatedAt).toISOString().split('T')[0] : 'Not specified',
-            }))
-          setDraftRisks(draftRisksData)
+                     // Transform the treatments data for display
+           const transformedTreatments = result.data.map((treatment: any) => {
+             // Helper function to format dates
+             const formatDate = (dateString: string | null) => {
+               if (!dateString || dateString === 'Not specified') return 'Not specified'
+               try {
+                 const date = new Date(dateString)
+                 return date.toLocaleDateString('en-GB', {
+                   day: '2-digit',
+                   month: 'short',
+                   year: 'numeric'
+                 })
+               } catch {
+                 return 'Not specified'
+               }
+             }
+
+             return {
+               treatmentId: treatment.treatmentJiraTicket,
+               riskId: treatment.riskId,
+               riskStatement: treatment.riskStatement || 'Not specified',
+               informationAsset: treatment.informationAsset || 'Not specified',
+               treatmentType: treatment.riskTreatment || 'Not specified',
+               treatmentDescription: treatment.riskTreatment || 'Not specified',
+               treatmentOwner: treatment.riskTreatmentOwner || 'Not assigned',
+               treatmentStatus: treatment.closureApproval || 'Not specified',
+               priority: treatment.priority || 'Not specified',
+               startDate: formatDate(treatment.createdAt),
+               targetCompletionDate: formatDate(treatment.dateRiskTreatmentDue),
+               actualCompletionDate: formatDate(treatment.completionDate),
+               budget: treatment.budget || 'Not specified',
+               cost: treatment.cost || 'Not specified',
+               effectiveness: treatment.effectiveness || 'Not specified',
+               residualRisk: treatment.residualRisk || 'Not specified',
+               numberOfExtensions: treatment.numberOfExtensions || 0,
+               extendedDueDate: formatDate(treatment.extendedDueDate),
+               closureApprovedBy: treatment.closureApprovedBy || 'Not specified',
+               createdAt: formatDate(treatment.createdAt),
+               updatedAt: formatDate(treatment.updatedAt),
+             }
+           })
+          setTreatments(transformedTreatments)
         } else {
-          setError(result.error || 'Failed to fetch draft risks')
+          setError(result.error || 'Failed to fetch treatments')
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? `Failed to fetch draft risks: ${err.message}` : 'Failed to fetch draft risks: An unknown error occurred';
+        const errorMessage = err instanceof Error ? `Failed to fetch treatments: ${err.message}` : 'Failed to fetch treatments: An unknown error occurred';
         setError(errorMessage);
-        console.error('Error fetching draft risks:', err);
+        console.error('Error fetching treatments:', err);
       } finally {
         setLoading(false)
       }
     }
 
-    fetchDraftRisks()
+    fetchTreatments()
   }, [])
 
   const handleRowClick = (row: any) => {
-    // Navigate to specific risk info page
-    router.push(`/risk-management/register/${row.riskId}`)
+    // Navigate to specific treatment detail page
+    router.push(`/risk-management/treatments/${row.riskId}/${row.treatmentId}`)
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -99,98 +91,127 @@ export default function DraftRisks() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800'
-      case 'identification':
-        return 'bg-blue-100 text-blue-800'
-      case 'analysis':
+      case 'pending':
         return 'bg-yellow-100 text-yellow-800'
-      case 'evaluation':
-        return 'bg-orange-100 text-orange-800'
-      case 'treatment':
-        return 'bg-purple-100 text-purple-800'
-      case 'monitoring':
+      case 'approved':
         return 'bg-green-100 text-green-800'
+      case 'rejected':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getRiskLevelColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'high':
-        return 'bg-red-100 text-red-800'
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'low':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+
 
   const columns: Column[] = [
-    { key: 'riskId', label: 'Risk ID', sortable: true },
-    { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-    { key: 'raisedBy', label: 'Raised By', sortable: true },
-    { key: 'riskOwner', label: 'Risk Owner', sortable: true },
-    { key: 'informationAssets', label: 'Information Assets', sortable: true },
-    { key: 'threat', label: 'Threat', sortable: true },
-    { key: 'vulnerability', label: 'Vulnerability', sortable: true },
-    { key: 'riskStatement', label: 'Risk Statement', sortable: true },
-    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true },
-    { key: 'currentControls', label: 'Current Controls', sortable: true },
-    { key: 'currentControlsReference', label: 'Controls Reference', sortable: true },
-    { key: 'consequenceRating', label: 'Consequence', sortable: true },
-    { key: 'likelihoodRating', label: 'Likelihood', sortable: true },
-    { key: 'riskRating', label: 'Risk Rating', sortable: true },
-    { key: 'createdAt', label: 'Created Date', sortable: true },
-    { key: 'updatedAt', label: 'Last Updated', sortable: true },
+    { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
+    { key: 'actions', label: 'Actions', sortable: false, width: '120px' },
+    { key: 'riskId', label: 'Risk ID', sortable: true, width: '120px' },
+    { key: 'treatmentType', label: 'Treatment', sortable: true },
+    { key: 'treatmentOwner', label: 'Owner', sortable: true, width: '150px' },
+    { key: 'treatmentStatus', label: 'Status', sortable: true, width: '100px' },
+    { key: 'targetCompletionDate', label: 'Due Date', sortable: true, width: '110px' },
+    { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true, width: '130px' },
+    { key: 'numberOfExtensions', label: 'Extensions', sortable: true, width: '100px' },
+    { key: 'actualCompletionDate', label: 'Completion Date', sortable: true, width: '130px' },
+    { key: 'closureApprovedBy', label: 'Approved By', sortable: true, width: '150px' },
+    { key: 'createdAt', label: 'Created Date', sortable: true, width: '110px' },
   ].map(col => ({
     ...col,
     render: (value: any, row: any) => {
-      if (col.key === 'riskId') {
+             if (col.key === 'treatmentId') {
+         return (
+           <Link
+             href={`/risk-management/treatments/${row.riskId}/${row.treatmentId}`}
+             className="risk-id-button"
+             onClick={(e) => e.stopPropagation()}
+           >
+             <span className="tracking-wide">{value}</span>
+             <Icon name="arrow-right" size={10} className="arrow-icon" />
+           </Link>
+         )
+       }
+             if (col.key === 'actions') {
+         return (
+           <div className="flex items-center space-x-2">
+             <Tooltip content="Copy Link">
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation()
+                   const url = `${window.location.origin}/risk-management/treatments/${row.riskId}/${row.treatmentId}`
+                   navigator.clipboard.writeText(url).then(() => {
+                     alert('Link copied to clipboard!')
+                   })
+                 }}
+                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+               >
+                 <Icon name="link" size={12} />
+               </button>
+             </Tooltip>
+             <Tooltip content="Add to Workshop Agenda">
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation()
+                   // TODO: Implement workshop agenda functionality
+                   alert(`Treatment ${row.treatmentId} added to workshop agenda!`)
+                 }}
+                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+               >
+                 <Icon name="calendar-plus" size={12} className="mr-1" />
+                 Workshop
+               </button>
+             </Tooltip>
+           </div>
+         )
+       }
+             if (col.key === 'riskId') {
+         return (
+           <Link
+             href={`/risk-management/register/${row.riskId}`}
+             className="risk-id-button"
+             onClick={(e) => e.stopPropagation()}
+           >
+             <span className="tracking-wide">{value}</span>
+             <Icon name="arrow-right" size={10} className="arrow-icon" />
+           </Link>
+         )
+       }
+      if (col.key === 'treatmentStatus') {
         return (
-          <Link
-            href={`/risk-management/register/${row.riskId}`}
-            className="risk-id-button"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="tracking-wide">{value}</span>
-            <Icon name="arrow-right" size={10} className="arrow-icon" />
-          </Link>
-        )
-      }
-      if (col.key === 'impactCIA') {
-        return renderCIAValues(value)
-      }
-      if (col.key === 'riskRating') {
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskLevelColor(value)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
             {value}
           </span>
         )
       }
-      if (col.key === 'consequenceRating' || col.key === 'likelihoodRating') {
+      if (col.key === 'numberOfExtensions') {
+        if (!value || value === 0) return <span className="text-gray-400">0</span>
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskLevelColor(value)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${value > 2 ? 'bg-red-100 text-red-800' : value > 1 ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
             {value}
           </span>
         )
       }
-      if (col.key === 'createdAt' || col.key === 'updatedAt') {
-        if (!value || value === 'Not specified') return <span className="text-gray-400">-</span>
-        return <span>{value}</span>
-      }
-      // Implement tooltip rendering for all content
-      const cellValue = value ? String(value) : '-'
-      return (
-        <Tooltip content={cellValue} theme="dark">
-          <span className="truncate block max-w-full">
-            {cellValue}
-          </span>
-        </Tooltip>
-      )
+             if (col.key === 'treatmentType') {
+         return (
+           <div className="relative group">
+             <span className="text-sm truncate block max-w-full">
+               {value}
+             </span>
+             <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+               {value}
+               <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+             </div>
+           </div>
+         )
+       }
+             if (col.key === 'targetCompletionDate' || col.key === 'extendedDueDate' || col.key === 'actualCompletionDate' || col.key === 'createdAt') {
+         if (!value || value === 'Not specified') return <span className="text-gray-400">-</span>
+         return <span className="text-sm whitespace-nowrap">{value}</span>
+       }
+       // Default rendering for other columns
+       const cellValue = value ? String(value) : '-'
+       return <span className="truncate block max-w-full">{cellValue}</span>
     }
   }))
 
@@ -201,20 +222,7 @@ export default function DraftRisks() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Risk Management</h1>
         </div>
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-          <Link
-            href="/risk-management/register/new"
-            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ 
-              backgroundColor: '#4C1D95',
-              '--tw-ring-color': '#4C1D95'
-            } as React.CSSProperties}
-          >
-            <Icon name="plus" size={16} className="mr-2" />
-            <span className="hidden sm:inline">New Risk</span>
-            <span className="sm:hidden">New</span>
-          </Link>
-        </div>
+
       </div>
 
       {/* Tabs */}
@@ -227,10 +235,22 @@ export default function DraftRisks() {
             Register
           </Link>
           <Link
+            href="/risk-management/draft-risks"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          >
+            Draft Risks
+          </Link>
+          <Link
             href="/risk-management/treatments"
             className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-blue-500 text-blue-600"
           >
-            Draft Risks
+            Treatments
+          </Link>
+          <Link
+            href="/risk-management/workshops"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          >
+            Workshops
           </Link>
         </nav>
       </div>
@@ -240,7 +260,7 @@ export default function DraftRisks() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
-            <p className="mt-4" style={{ color: '#22223B' }}>Loading draft risks...</p>
+            <p className="mt-4" style={{ color: '#22223B' }}>Loading treatments...</p>
           </div>
         </div>
       )}
@@ -251,7 +271,7 @@ export default function DraftRisks() {
           <div className="text-red-500 mb-4">
             <Icon name="warning" size={48} />
           </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Draft Risks</h3>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Error Loading Treatments</h3>
           <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -263,13 +283,13 @@ export default function DraftRisks() {
         </div>
       )}
 
-      {/* Draft Risks Data Table */}
+      {/* Treatments Data Table */}
       {!loading && !error && (
         <DataTable
           columns={columns}
-          data={draftRisks}
-          title="Draft Risks"
-          searchPlaceholder="Search draft risks..."
+          data={treatments}
+          title="Risk Treatments"
+          searchPlaceholder="Search treatments..."
           onRowClick={handleRowClick}
           selectable={true}
           selectedRows={selectedRows}
