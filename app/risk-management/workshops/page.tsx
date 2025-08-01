@@ -9,14 +9,13 @@ import Tooltip from '../../components/Tooltip'
 
 interface Workshop {
   id: string
-  title: string
   date: string
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled'
+  status: 'Pending Agenda' | 'Planned' | 'Scheduled' | 'Finalising Meeting Minutes' | 'Completed'
   facilitator: string
   participants: string[]
   risks: string[]
-  objectives: string
   outcomes: string
+  securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
 }
 
 export default function Workshops() {
@@ -25,79 +24,47 @@ export default function Workshops() {
   const [loading, setLoading] = useState(true)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
-  // Mock data for workshops - in a real app, this would come from an API
+  // Fetch workshops from API
   useEffect(() => {
-    const mockWorkshops: Workshop[] = [
-      {
-        id: 'WS-001',
-        title: 'Q1 2024 Risk Assessment Workshop',
-        date: '2024-03-15',
-        status: 'completed',
-        facilitator: 'Sarah Johnson',
-        participants: ['John Smith', 'Mike Davis', 'Lisa Chen'],
-        risks: ['RISK-001', 'RISK-003', 'RISK-005'],
-        objectives: 'Review and assess current risk landscape for Q1 2024',
-        outcomes: 'Identified 3 new risks, updated 2 existing risk ratings'
-      },
-      {
-        id: 'WS-002',
-        title: 'Cybersecurity Risk Workshop',
-        date: '2024-04-20',
-        status: 'scheduled',
-        facilitator: 'David Wilson',
-        participants: ['Sarah Johnson', 'Alex Brown', 'Emma Taylor'],
-        risks: ['RISK-002', 'RISK-004'],
-        objectives: 'Focus on cybersecurity threats and vulnerabilities',
-        outcomes: ''
-      },
-      {
-        id: 'WS-003',
-        title: 'Third-Party Risk Management',
-        date: '2024-05-10',
-        status: 'scheduled',
-        facilitator: 'Lisa Chen',
-        participants: ['John Smith', 'David Wilson', 'Mike Davis'],
-        risks: ['RISK-006', 'RISK-007'],
-        objectives: 'Review third-party vendor risks and controls',
-        outcomes: ''
+    const fetchWorkshops = async () => {
+      try {
+        const response = await fetch('/api/workshops')
+        const result = await response.json()
+        
+        if (result.success) {
+          setWorkshops(result.data)
+        } else {
+          console.error('Failed to fetch workshops:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching workshops:', error)
+      } finally {
+        setLoading(false)
       }
-    ]
+    }
 
-    // Simulate API call
-    setTimeout(() => {
-      setWorkshops(mockWorkshops)
-      setLoading(false)
-    }, 1000)
+    fetchWorkshops()
   }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'Completed':
         return 'bg-green-100 text-green-800'
-      case 'in-progress':
+      case 'Finalising Meeting Minutes':
         return 'bg-blue-100 text-blue-800'
-      case 'scheduled':
+      case 'Scheduled':
         return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
+      case 'Planned':
+        return 'bg-purple-100 text-purple-800'
+      case 'Pending Agenda':
+        return 'bg-orange-100 text-orange-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusDisplayName = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Completed'
-      case 'in-progress':
-        return 'In Progress'
-      case 'scheduled':
-        return 'Scheduled'
-      case 'cancelled':
-        return 'Cancelled'
-      default:
-        return status
-    }
+    return status
   }
 
   const columns: Column[] = [
@@ -108,27 +75,49 @@ export default function Workshops() {
       width: '120px'
     },
     {
-      key: 'title',
-      label: 'Title',
-      sortable: true,
-      width: '250px'
-    },
-    {
       key: 'date',
       label: 'Date',
       sortable: true,
-      width: '120px'
+      width: '140px',
+      render: (value) => {
+        if (!value) return '-'
+        const date = new Date(value)
+        if (isNaN(date.getTime())) return value // Return original value if invalid date
+        
+        const day = date.getDate().toString().padStart(2, '0')
+        const month = date.toLocaleDateString('en-US', { month: 'short' })
+        const year = date.getFullYear()
+        
+        return (
+          <span className="whitespace-nowrap">
+            {`${day} ${month} ${year}`}
+          </span>
+        )
+      }
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      width: '120px',
+      width: '200px',
       render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}>
           {getStatusDisplayName(value)}
         </span>
       )
+    },
+    {
+      key: 'securitySteeringCommittee',
+      label: 'Security Steering Committee',
+      sortable: true,
+      width: '180px',
+      render: (value) => {
+        return (
+          <span className="whitespace-nowrap">
+            {value || '-'}
+          </span>
+        )
+      }
     },
     {
       key: 'facilitator',
@@ -173,22 +162,6 @@ export default function Workshops() {
       }
     },
     {
-      key: 'objectives',
-      label: 'Objectives',
-      sortable: false,
-      width: '200px',
-      render: (value) => {
-        const cellValue = value ? String(value) : '-'
-        return (
-          <Tooltip content={cellValue} theme="dark">
-            <span className="truncate block max-w-full">
-              {cellValue}
-            </span>
-          </Tooltip>
-        )
-      }
-    },
-    {
       key: 'outcomes',
       label: 'Outcomes',
       sortable: false,
@@ -214,16 +187,15 @@ export default function Workshops() {
   const handleExportCSV = (selectedRows: Set<number>) => {
     const selectedWorkshops = Array.from(selectedRows).map(index => workshops[index])
     const csvContent = [
-      ['Workshop ID', 'Title', 'Date', 'Status', 'Facilitator', 'Participants', 'Related Risks', 'Objectives', 'Outcomes'],
+      ['Workshop ID', 'Date', 'Status', 'Security Steering Committee', 'Facilitator', 'Participants', 'Related Risks', 'Outcomes'],
       ...selectedWorkshops.map(workshop => [
         workshop.id,
-        workshop.title,
         workshop.date,
         getStatusDisplayName(workshop.status),
+        workshop.securitySteeringCommittee,
         workshop.facilitator,
         workshop.participants.join('; '),
         workshop.risks.join('; '),
-        workshop.objectives,
         workshop.outcomes
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
