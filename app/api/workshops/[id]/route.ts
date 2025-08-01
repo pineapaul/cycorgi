@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '../../../../lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { validateWorkshopForUpdate } from '../../../../lib/workshop-validation'
 
 export async function GET(
   request: NextRequest,
@@ -52,34 +53,13 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     
-    // Validation constants
-    const VALID_SECURITY_COMMITTEES = [
-      'Core Systems Engineering',
-      'Software Engineering', 
-      'IP Engineering'
-    ]
-    
-    const VALID_STATUSES = [
-      'Pending Agenda',
-      'Planned',
-      'Scheduled', 
-      'Finalising Meeting Minutes',
-      'Completed'
-    ]
-    
-    // Validate security steering committee if provided
-    if (body.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(body.securitySteeringCommittee)) {
+    // Validate workshop data using shared validation function
+    try {
+      validateWorkshopForUpdate(body)
+    } catch (validationError) {
       return NextResponse.json({
         success: false,
-        error: `Invalid securitySteeringCommittee: "${body.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`
-      }, { status: 400 })
-    }
-    
-    // Validate status if provided
-    if (body.status && !VALID_STATUSES.includes(body.status)) {
-      return NextResponse.json({
-        success: false,
-        error: `Invalid status: "${body.status}". Must be one of: ${VALID_STATUSES.join(', ')}`
+        error: validationError instanceof Error ? validationError.message : 'Invalid workshop data'
       }, { status: 400 })
     }
     

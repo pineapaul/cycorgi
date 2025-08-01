@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '../../../lib/mongodb'
+import { validateWorkshopForCreate } from '../../../lib/workshop-validation'
 
 export async function GET() {
   try {
@@ -26,56 +27,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Validation constants
-    const VALID_SECURITY_COMMITTEES = [
-      'Core Systems Engineering',
-      'Software Engineering', 
-      'IP Engineering'
-    ]
-    
-    const VALID_STATUSES = [
-      'Pending Agenda',
-      'Planned',
-      'Scheduled', 
-      'Finalising Meeting Minutes',
-      'Completed'
-    ]
-    
-    // Validate security steering committee
-    if (body.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(body.securitySteeringCommittee)) {
+    // Validate workshop data using shared validation function
+    try {
+      validateWorkshopForCreate(body)
+    } catch (validationError) {
       return NextResponse.json({
         success: false,
-        error: `Invalid securitySteeringCommittee: "${body.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`
-      }, { status: 400 })
-    }
-    
-    // Validate status
-    if (body.status && !VALID_STATUSES.includes(body.status)) {
-      return NextResponse.json({
-        success: false,
-        error: `Invalid status: "${body.status}". Must be one of: ${VALID_STATUSES.join(', ')}`
-      }, { status: 400 })
-    }
-    
-    // Validate required fields
-    if (!body.id) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing required field: id'
-      }, { status: 400 })
-    }
-    
-    if (!body.date) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing required field: date'
-      }, { status: 400 })
-    }
-    
-    if (!body.facilitator) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing required field: facilitator'
+        error: validationError instanceof Error ? validationError.message : 'Invalid workshop data'
       }, { status: 400 })
     }
     
@@ -88,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: { ...body, _id: result.insertedId }
-    })
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating workshop:', error)
     return NextResponse.json({
