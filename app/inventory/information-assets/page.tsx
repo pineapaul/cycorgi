@@ -104,7 +104,6 @@ export default function InformationAssetsPage() {
           </Tooltip>
         )
       }
-      }
     },
     {
       key: 'location',
@@ -198,7 +197,6 @@ export default function InformationAssetsPage() {
             </span>
           </Tooltip>
         )
-      }
       }
     },
     {
