@@ -580,6 +580,12 @@ export default function RiskRegister() {
           >
             Draft Risks
           </Link>
+          <Link
+            href="/risk-management/workshops"
+            className="py-2 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          >
+            Workshops
+          </Link>
         </nav>
       </div>
 

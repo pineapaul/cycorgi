@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '../../components/DataTable'
 import Icon from '../../components/Icon'
 import Tooltip from '../../components/Tooltip'
@@ -23,6 +24,7 @@ interface InformationAsset {
 }
 
 export default function InformationAssetsPage() {
+  const router = useRouter()
   const [assets, setAssets] = useState<InformationAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +72,7 @@ export default function InformationAssetsPage() {
         <button
           onClick={(e) => {
             e.stopPropagation()
-            window.location.href = `/inventory/information-assets/${row.id}`
+            router.push(`/inventory/information-assets/${row.id}`)
           }}
           className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
         >
@@ -103,7 +105,6 @@ export default function InformationAssetsPage() {
             </span>
           </Tooltip>
         )
-      }
       }
     },
     {
@@ -199,7 +200,6 @@ export default function InformationAssetsPage() {
           </Tooltip>
         )
       }
-      }
     },
     {
       key: 'actions',
@@ -256,7 +256,7 @@ export default function InformationAssetsPage() {
 
   const handleRowClick = (row: InformationAsset) => {
     // Navigate to asset profile page
-    window.location.href = `/inventory/information-assets/${row.id}`
+    router.push(`/inventory/information-assets/${row.id}`)
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
