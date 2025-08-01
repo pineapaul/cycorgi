@@ -154,6 +154,7 @@ export default function RiskInformation() {
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false)
   const [floatingButtonPosition, setFloatingButtonPosition] = useState({ x: 0, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
+  const [commentCount, setCommentCount] = useState(0)
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -1769,14 +1770,21 @@ export default function RiskInformation() {
             document.addEventListener('mouseup', handleMouseUp)
           }}
         >
-          <button
-            onClick={() => setIsCommentSidebarOpen(true)}
-            className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            style={{ backgroundColor: '#4C1D95' }}
-            title="Open comments"
-          >
-            <Icon name="comments" size={24} className="text-white" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsCommentSidebarOpen(true)}
+              className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              style={{ backgroundColor: '#4C1D95' }}
+              title="Open comments"
+            >
+              <Icon name="comments" size={24} className="text-white" />
+            </button>
+            {commentCount > 0 && (
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg">
+                {commentCount > 99 ? '99+' : commentCount}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1785,6 +1793,7 @@ export default function RiskInformation() {
         isOpen={isCommentSidebarOpen}
         onClose={() => setIsCommentSidebarOpen(false)}
         riskId={validateRiskId(params.riskId) || ''}
+        onCommentCountChange={setCommentCount}
       />
     </div>
   )

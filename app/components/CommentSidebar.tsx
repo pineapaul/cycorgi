@@ -24,9 +24,10 @@ interface CommentSidebarProps {
   isOpen: boolean
   onClose: () => void
   riskId: string
+  onCommentCountChange?: (count: number) => void
 }
 
-export default function CommentSidebar({ isOpen, onClose, riskId }: CommentSidebarProps) {
+export default function CommentSidebar({ isOpen, onClose, riskId, onCommentCountChange }: CommentSidebarProps) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
@@ -63,6 +64,8 @@ export default function CommentSidebar({ isOpen, onClose, riskId }: CommentSideb
           }))
         }))
         setComments(transformedComments)
+        // Notify parent component of comment count
+        onCommentCountChange?.(transformedComments.length)
       } else {
         // Fallback to mock data if API fails
         const mockComments: Comment[] = [
@@ -90,6 +93,8 @@ export default function CommentSidebar({ isOpen, onClose, riskId }: CommentSideb
           }
         ]
         setComments(mockComments)
+        // Notify parent component of comment count
+        onCommentCountChange?.(mockComments.length)
       }
     } catch (error) {
       console.error('Error loading comments:', error)
@@ -128,6 +133,8 @@ export default function CommentSidebar({ isOpen, onClose, riskId }: CommentSideb
 
         setComments(prev => [newCommentObj, ...prev])
         setNewComment('')
+        // Update comment count
+        onCommentCountChange?.(comments.length + 1)
         
         showToast({
           type: 'success',
