@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
+import { useToast } from '@/app/components/Toast'
 
 interface InformationAsset {
   id: string
@@ -25,6 +26,7 @@ interface InformationAsset {
 export default function AssetProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
   const { goBack } = useBackNavigation({
     fallbackRoute: '/inventory/information-assets'
   })
@@ -143,8 +145,15 @@ export default function AssetProfilePage() {
   const handleCopyLink = () => {
     const url = window.location.href
     navigator.clipboard.writeText(url).then(() => {
-      // You could add a toast notification here
-      alert('Link copied to clipboard!')
+      showToast({
+        type: 'success',
+        title: 'Link copied to clipboard!'
+      })
+    }).catch(() => {
+      showToast({
+        type: 'error',
+        title: 'Failed to copy link to clipboard'
+      })
     })
   }
 

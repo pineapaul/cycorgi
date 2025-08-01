@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
+import { useToast } from '@/app/components/Toast'
 
 interface Risk {
   riskId: string
@@ -43,6 +44,7 @@ interface Risk {
 export default function RiskInformationPage() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
   const { goBack } = useBackNavigation({
     fallbackRoute: '/risk-management/register'
   })
@@ -214,7 +216,15 @@ export default function RiskInformationPage() {
   const handleCopyLink = () => {
     const url = window.location.href
     navigator.clipboard.writeText(url).then(() => {
-      alert('Link copied to clipboard!')
+      showToast({
+        type: 'success',
+        title: 'Link copied to clipboard!'
+      })
+    }).catch(() => {
+      showToast({
+        type: 'error',
+        title: 'Failed to copy link to clipboard'
+      })
     })
   }
 

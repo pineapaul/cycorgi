@@ -8,6 +8,7 @@ import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
+import { useToast } from '@/app/components/Toast'
 
 // Custom renderer for CIA values
 const renderCIAValues = (value: string) => {
@@ -108,6 +109,7 @@ const getColumns = (): Column[] => [
 
 export default function DraftRisks() {
   const router = useRouter()
+  const { showToast } = useToast()
 
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [risks, setRisks] = useState<any[]>([])
@@ -291,7 +293,10 @@ export default function DraftRisks() {
                  onClick={(e) => {
                    e.stopPropagation()
                    // TODO: Implement submit for review functionality
-                   alert(`Risk ${row.riskId} submitted for review!`)
+                   showToast({
+                     type: 'success',
+                     title: `Risk ${row.riskId} submitted for review!`
+                   })
                  }}
                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
                >

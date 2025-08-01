@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
+import { useToast } from '@/app/components/Toast'
 
 export default function Treatments() {
   const router = useRouter()
+  const { showToast } = useToast()
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [treatments, setTreatments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,7 +143,15 @@ export default function Treatments() {
                    e.stopPropagation()
                    const url = `${window.location.origin}/risk-management/treatments/${row.riskId}/${row.treatmentId}`
                    navigator.clipboard.writeText(url).then(() => {
-                     alert('Link copied to clipboard!')
+                     showToast({
+                       type: 'success',
+                       title: 'Link copied to clipboard!'
+                     })
+                   }).catch(() => {
+                     showToast({
+                       type: 'error',
+                       title: 'Failed to copy link to clipboard'
+                     })
                    })
                  }}
                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
@@ -154,7 +164,10 @@ export default function Treatments() {
                  onClick={(e) => {
                    e.stopPropagation()
                    // TODO: Implement workshop agenda functionality
-                   alert(`Treatment ${row.treatmentId} added to workshop agenda!`)
+                   showToast({
+                     type: 'success',
+                     title: `Treatment ${row.treatmentId} added to workshop agenda!`
+                   })
                  }}
                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
                >
