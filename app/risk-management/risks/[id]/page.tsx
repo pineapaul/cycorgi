@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Icon from '../../../components/Icon'
-import { getCIAConfig, extractRiskNumber } from '../../../../lib/utils'
+import Icon from '@/app/components/Icon'
+import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 
 interface Risk {
   riskId: string

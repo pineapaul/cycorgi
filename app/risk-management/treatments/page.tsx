@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import DataTable, { Column } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import Tooltip from '../../components/Tooltip'
-import { getCIAConfig } from '../../../lib/utils'
+import DataTable, { Column } from '@/app/components/DataTable'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
+import { getCIAConfig } from '@/lib/utils'
 
 // Custom renderer for CIA values
 const renderCIAValues = (value: string) => {

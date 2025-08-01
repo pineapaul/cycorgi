@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Icon from '../../../components/Icon'
+import Icon from '@/app/components/Icon'
 
 interface InformationAsset {
   id: string

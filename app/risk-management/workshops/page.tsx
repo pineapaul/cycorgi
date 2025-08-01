@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import DataTable, { Column } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import Tooltip from '../../components/Tooltip'
+import DataTable, { Column } from '@/app/components/DataTable'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
 
 interface Workshop {
   id: string
@@ -16,6 +16,9 @@ interface Workshop {
   risks: string[]
   outcomes: string
   securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
+  actionsTaken?: string
+  toDo?: string
+  notes?: string
 }
 
 export default function Workshops() {
@@ -187,7 +190,7 @@ export default function Workshops() {
   const handleExportCSV = (selectedRows: Set<number>) => {
     const selectedWorkshops = Array.from(selectedRows).map(index => workshops[index])
     const csvContent = [
-      ['Workshop ID', 'Date', 'Status', 'Security Steering Committee', 'Facilitator', 'Participants', 'Related Risks', 'Outcomes'],
+      ['Workshop ID', 'Date', 'Status', 'Security Steering Committee', 'Facilitator', 'Participants', 'Related Risks', 'Outcomes', 'Actions Taken', 'To Do', 'Notes'],
       ...selectedWorkshops.map(workshop => [
         workshop.id,
         workshop.date,
@@ -196,7 +199,10 @@ export default function Workshops() {
         workshop.facilitator,
         workshop.participants.join('; '),
         workshop.risks.join('; '),
-        workshop.outcomes
+        workshop.outcomes,
+        workshop.actionsTaken || '',
+        workshop.toDo || '',
+        workshop.notes || ''
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
 

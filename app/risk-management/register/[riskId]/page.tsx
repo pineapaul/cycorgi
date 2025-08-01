@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Icon from '../../../components/Icon'
-import Tooltip from '../../../components/Tooltip'
-import { getCIAConfig, extractRiskNumber } from '../../../../lib/utils'
-import DataTable, { Column } from '../../../components/DataTable'
-import { useToast } from '../../../components/Toast'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
+import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import DataTable, { Column } from '@/app/components/DataTable'
+import { useToast } from '@/app/components/Toast'
 
 interface RiskDetails {
   riskId: string

@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Icon from '../../../components/Icon'
-import { useToast } from '../../../components/Toast'
+import Icon from '@/app/components/Icon'
+import { useToast } from '@/app/components/Toast'
 
 interface RiskFormData {
   riskId: string
