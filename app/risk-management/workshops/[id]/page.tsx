@@ -208,14 +208,14 @@ export default function WorkshopDetails() {
             >
               <Icon name="arrow-left" size={16} />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-                Workshop {workshop.id}
-              </h1>
-              <p className="text-gray-600" style={{ color: '#22223B' }}>
-                Meeting Minutes & Details
-              </p>
-            </div>
+                         <div>
+               <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
+                 {workshop.securitySteeringCommittee} SSC
+               </h1>
+               <p className="text-gray-600" style={{ color: '#22223B' }}>
+                 {formatDate(workshop.date)} Meeting Minutes
+               </p>
+             </div>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -239,58 +239,57 @@ export default function WorkshopDetails() {
           </div>
         </div>
 
-        {/* Workshop Overview Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Workshop Overview</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Date</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">
-                {formatDate(workshop.date)}
+                 {/* Workshop Overview Section */}
+         <div className="mb-8">
+           <div className="flex items-center mb-6">
+             <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+             <h3 className="text-lg font-semibold text-gray-900">Workshop Overview</h3>
+             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-3 ${getStatusColor(workshop.status)}`}>
+               {workshop.status}
+             </span>
+           </div>
+           
+                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+                             <div className="bg-gray-50 rounded-lg p-4">
+                 <div className="space-y-2">
+                   <div className="text-sm">
+                     <span className="font-medium text-gray-900">Facilitator:</span>
+                     <span className="text-gray-700 ml-1">{workshop.facilitator}</span>
+                   </div>
+                   <div className="text-sm">
+                     <span className="font-medium text-gray-900">Participants:</span>
+                     {workshop.participants.length > 0 ? (
+                       <div className="mt-1 space-y-1">
+                         {workshop.participants.map((participant, index) => (
+                           <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                             {participant}
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <span className="text-gray-500 italic ml-1">No participants listed</span>
+                     )}
+                   </div>
+                 </div>
+               </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <span className="text-xs text-gray-500 uppercase tracking-wide">Agenda</span>
+                <div className="mt-2 space-y-2">
+                  <div className="text-sm text-gray-700">• Extensions of risk treatment due dates</div>
+                  <div className="text-sm text-gray-700">• Closure of risks and treatments</div>
+                  <div className="text-sm text-gray-700">• Discussion of newly identified risks</div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <span className="text-xs text-gray-500 uppercase tracking-wide">Summary</span>
+                <div className="mt-1 text-sm font-medium text-gray-900">
+                  {workshop.extensions?.length || 0} extensions, {workshop.closure?.length || 0} closures, {workshop.newRisks?.length || 0} new risks
+                </div>
               </div>
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
-              <div className="mt-1">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(workshop.status)}`}>
-                  {workshop.status}
-                </span>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Facilitator</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.facilitator}
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Security Steering Committee</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.securitySteeringCommittee}
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Participants</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.participants.length > 0 ? workshop.participants.join(', ') : 'No participants listed'}
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Risks Discussed</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.risks.length > 0 ? workshop.risks.join(', ') : 'No risks listed'}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Meeting Minutes Section */}
@@ -303,8 +302,7 @@ export default function WorkshopDetails() {
           <div className="space-y-8">
             {/* Extensions Subsection */}
             <div>
-              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                <Icon name="arrow-up" size={16} className="mr-2 text-blue-600" />
+              <h4 className="text-md font-semibold text-gray-800 mb-4">
                 Extensions
               </h4>
               {workshop.extensions && workshop.extensions.length > 0 ? (
@@ -351,8 +349,7 @@ export default function WorkshopDetails() {
 
             {/* Closure Subsection */}
             <div>
-              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                <Icon name="check-circle" size={16} className="mr-2 text-green-600" />
+              <h4 className="text-md font-semibold text-gray-800 mb-4">
                 Closure
               </h4>
               {workshop.closure && workshop.closure.length > 0 ? (
@@ -399,8 +396,7 @@ export default function WorkshopDetails() {
 
             {/* New Risks Subsection */}
             <div>
-              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                <Icon name="plus-circle" size={16} className="mr-2 text-orange-600" />
+              <h4 className="text-md font-semibold text-gray-800 mb-4">
                 New Risks
               </h4>
               {workshop.newRisks && workshop.newRisks.length > 0 ? (
