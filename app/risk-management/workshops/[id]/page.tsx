@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Icon from '../../../components/Icon'
-import Tooltip from '../../../components/Tooltip'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
 
 interface Workshop {
   _id: string

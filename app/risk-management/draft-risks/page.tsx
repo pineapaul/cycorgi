@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import DataTable, { Column } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import Tooltip from '../../components/Tooltip'
-import { getCIAConfig, extractRiskNumber } from '../../../lib/utils'
-import { CIA_DELIMITERS } from '../../../lib/constants'
+import DataTable, { Column } from '@/app/components/DataTable'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
+import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import { CIA_DELIMITERS } from '@/lib/constants'
 
 // Custom renderer for CIA values
 const renderCIAValues = (value: string) => {

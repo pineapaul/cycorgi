@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import DataTable, { Column } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import Tooltip from '../../components/Tooltip'
+import DataTable, { Column } from '@/app/components/DataTable'
+import Icon from '@/app/components/Icon'
+import Tooltip from '@/app/components/Tooltip'
 
 interface Workshop {
   id: string
