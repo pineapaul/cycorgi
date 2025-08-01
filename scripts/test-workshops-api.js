@@ -1,144 +1,142 @@
-const { MongoClient } = require('mongodb')
 require('dotenv').config({ path: '.env.local' })
+const { MongoClient } = require('mongodb')
 
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI not found in environment variables')
-  console.log('💡 Make sure your .env.local file contains MONGODB_URI=your_connection_string')
-  process.exit(1)
+const testWorkshop = {
+  id: 'WS-TEST-001',
+  date: '2024-12-01',
+  status: 'Planned',
+  facilitator: 'Test Facilitator',
+  participants: ['Test User 1', 'Test User 2'],
+  risks: ['RISK-TEST-001', 'RISK-TEST-002'],
+  outcomes: 'Test workshop outcomes',
+  securitySteeringCommittee: 'Software Engineering',
+  actionsTaken: 'Test actions taken',
+  toDo: 'Test to-do items',
+  notes: 'Test workshop notes',
+  extensions: [
+    {
+      riskId: 'RISK-TEST-001',
+      actionsTaken: 'Extended monitoring period',
+      toDo: 'Review effectiveness',
+      outcome: 'Risk level reduced'
+    }
+  ],
+  closure: [
+    {
+      riskId: 'RISK-TEST-002',
+      actionsTaken: 'All vulnerabilities patched',
+      toDo: 'None - risk fully mitigated',
+      outcome: 'Risk closed successfully'
+    }
+  ],
+  newRisks: [
+    {
+      riskId: 'RISK-TEST-003',
+      actionsTaken: 'Initial assessment completed',
+      toDo: 'Develop mitigation plan',
+      outcome: 'New risk identified'
+    }
+  ]
 }
 
-const uri = MONGODB_URI
-const dbName = 'cycorgi'
-
-const sampleWorkshops = [
-  {
-    id: 'WS-001',
-    date: '2024-03-15',
-    status: 'Completed',
-    facilitator: 'Sarah Johnson',
-    participants: ['John Smith', 'Mike Davis', 'Lisa Chen'],
-    risks: ['RISK-001', 'RISK-003', 'RISK-005'],
-    outcomes: 'Identified 3 new risks, updated 2 existing risk ratings',
-    securitySteeringCommittee: 'Core Systems Engineering',
-    actionsTaken: 'Implemented new risk monitoring dashboard, updated risk assessment procedures',
-    toDo: 'Schedule follow-up review in 3 months',
-    notes: 'Team showed excellent engagement during the workshop. Consider expanding to other departments.',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'WS-002',
-    date: '2024-04-20',
-    status: 'Scheduled',
-    facilitator: 'David Wilson',
-    participants: ['Sarah Johnson', 'Alex Brown', 'Emma Taylor'],
-    risks: ['RISK-002', 'RISK-004'],
-    outcomes: '',
-    securitySteeringCommittee: 'IP Engineering',
-    actionsTaken: '',
-    toDo: 'Prepare agenda, send pre-workshop materials to participants',
-    notes: 'Focus will be on cybersecurity threats and data protection measures',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'WS-003',
-    date: '2024-05-10',
-    status: 'Pending Agenda',
-    facilitator: 'Lisa Chen',
-    participants: ['John Smith', 'David Wilson', 'Mike Davis'],
-    risks: ['RISK-006', 'RISK-007'],
-    outcomes: '',
-    securitySteeringCommittee: 'Software Engineering',
-    actionsTaken: '',
-    toDo: 'Finalize agenda items, confirm participant availability',
-    notes: 'Need to address recent software vulnerabilities identified in audit',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'WS-004',
-    date: '2024-06-15',
-    status: 'Planned',
-    facilitator: 'Alex Brown',
-    participants: ['Sarah Johnson', 'Lisa Chen', 'Emma Taylor'],
-    risks: ['RISK-008', 'RISK-009'],
-    outcomes: '',
-    securitySteeringCommittee: 'Core Systems Engineering',
-    actionsTaken: '',
-    toDo: 'Book meeting room, prepare presentation materials',
-    notes: 'Strategic planning session for Q3 risk management initiatives',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'WS-005',
-    date: '2024-07-20',
-    status: 'Finalising Meeting Minutes',
-    facilitator: 'Emma Taylor',
-    participants: ['John Smith', 'David Wilson', 'Alex Brown'],
-    risks: ['RISK-010'],
-    outcomes: 'Completed risk assessment for new cloud migration project',
-    securitySteeringCommittee: 'Software Engineering',
-    actionsTaken: 'Drafted migration timeline, identified key stakeholders',
-    toDo: 'Finalize meeting minutes, distribute action items to team',
-    notes: 'Cloud migration risks are well understood. Team confident in proceeding with project.',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
-
 async function testWorkshopsAPI() {
+  const uri = process.env.MONGODB_URI
+  
+  if (!uri) {
+    console.error('MONGODB_URI environment variable is not set')
+    process.exit(1)
+  }
+  
   const client = new MongoClient(uri)
   
   try {
     await client.connect()
-    console.log('✅ Connected to MongoDB')
+    console.log('Connected to MongoDB')
     
-    const db = client.db(dbName)
+    const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    // Clear existing workshops
-    await collection.deleteMany({})
-    console.log('✅ Cleared existing workshops')
+    // Test 1: Insert a test workshop
+    console.log('\n1. Testing workshop insertion...')
+    const insertResult = await collection.insertOne(testWorkshop)
+    console.log(`✅ Inserted test workshop with ID: ${insertResult.insertedId}`)
     
-    // Insert sample workshops
-    const result = await collection.insertMany(sampleWorkshops)
-    console.log(`✅ Inserted ${result.insertedCount} workshops`)
+    // Test 2: Fetch all workshops
+    console.log('\n2. Testing workshop retrieval...')
+    const allWorkshops = await collection.find({}).toArray()
+    console.log(`✅ Retrieved ${allWorkshops.length} workshops`)
     
-    // Test fetching workshops
-    const workshops = await collection.find({}).toArray()
-    console.log(`✅ Retrieved ${workshops.length} workshops from database`)
+    // Test 3: Find specific workshop by ID
+    console.log('\n3. Testing specific workshop retrieval...')
+    const foundWorkshop = await collection.findOne({ id: testWorkshop.id })
+    if (foundWorkshop) {
+      console.log(`✅ Found workshop: ${foundWorkshop.id} - ${foundWorkshop.status}`)
+      console.log(`   Extensions: ${foundWorkshop.extensions?.length || 0} items`)
+      console.log(`   Closure: ${foundWorkshop.closure?.length || 0} items`)
+      console.log(`   New Risks: ${foundWorkshop.newRisks?.length || 0} items`)
+    } else {
+      console.log('❌ Workshop not found')
+    }
     
-    // Display sample data
-    console.log('\n📋 Sample workshop data:')
-    workshops.forEach(workshop => {
-      console.log(`  - ${workshop.id}: ${workshop.status} (${workshop.securitySteeringCommittee})`)
-    })
+    // Test 4: Update workshop
+    console.log('\n4. Testing workshop update...')
+    const updateResult = await collection.updateOne(
+      { id: testWorkshop.id },
+      { 
+        $set: { 
+          status: 'Completed',
+          'extensions.0.outcome': 'Updated outcome for extension'
+        } 
+      }
+    )
+    console.log(`✅ Updated ${updateResult.modifiedCount} workshop`)
     
-    // Create indexes
-    await collection.createIndex({ id: 1 }, { unique: true })
-    await collection.createIndex({ status: 1 })
-    await collection.createIndex({ date: 1 })
-    console.log('✅ Created indexes')
+    // Test 5: Verify update
+    console.log('\n5. Verifying update...')
+    const updatedWorkshop = await collection.findOne({ id: testWorkshop.id })
+    if (updatedWorkshop) {
+      console.log(`✅ Workshop status updated to: ${updatedWorkshop.status}`)
+      console.log(`✅ Extension outcome updated to: ${updatedWorkshop.extensions[0].outcome}`)
+    }
     
-    console.log('\n🎉 Workshops API test completed successfully!')
-    console.log('📝 Available status values:', ['Pending Agenda', 'Planned', 'Scheduled', 'Finalising Meeting Minutes', 'Completed'])
-    console.log('📝 Available security steering committee values:', ['Core Systems Engineering', 'Software Engineering', 'IP Engineering'])
+    // Test 6: Add new item to extensions
+    console.log('\n6. Testing adding new extension item...')
+    const addExtensionResult = await collection.updateOne(
+      { id: testWorkshop.id },
+      { 
+        $push: { 
+          extensions: {
+            riskId: 'RISK-TEST-004',
+            actionsTaken: 'New extension action',
+            toDo: 'New extension todo',
+            outcome: 'New extension outcome'
+          }
+        } 
+      }
+    )
+    console.log(`✅ Added new extension item: ${addExtensionResult.modifiedCount} workshop updated`)
+    
+    // Test 7: Verify new extension
+    console.log('\n7. Verifying new extension...')
+    const finalWorkshop = await collection.findOne({ id: testWorkshop.id })
+    if (finalWorkshop) {
+      console.log(`✅ Total extensions: ${finalWorkshop.extensions.length}`)
+      console.log(`   Latest extension: ${finalWorkshop.extensions[finalWorkshop.extensions.length - 1].riskId}`)
+    }
+    
+    // Test 8: Clean up - remove test workshop
+    console.log('\n8. Cleaning up test data...')
+    const deleteResult = await collection.deleteOne({ id: testWorkshop.id })
+    console.log(`✅ Removed test workshop: ${deleteResult.deletedCount} workshop deleted`)
+    
+    console.log('\n🎉 All tests completed successfully!')
     
   } catch (error) {
-    console.error('❌ Error testing workshops API:', error)
+    console.error('❌ Error during testing:', error)
   } finally {
     await client.close()
+    console.log('Disconnected from MongoDB')
   }
 }
 
-// Export for use in other scripts
-module.exports = { testWorkshopsAPI }
-
-// Run if called directly
-if (require.main === module) {
-  testWorkshopsAPI()
-} 
+testWorkshopsAPI() 

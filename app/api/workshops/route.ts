@@ -41,8 +41,16 @@ export async function POST(request: NextRequest) {
       'Completed'
     ]
     
+    // Required fields validation
+    if (!body.id || !body.date || !body.facilitator) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required fields: id, date, and facilitator are required'
+      }, { status: 400 })
+    }
+    
     // Validate security steering committee
-    if (body.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(body.securitySteeringCommittee)) {
+    if (!VALID_SECURITY_COMMITTEES.includes(body.securitySteeringCommittee)) {
       return NextResponse.json({
         success: false,
         error: `Invalid securitySteeringCommittee: "${body.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`
@@ -50,32 +58,71 @@ export async function POST(request: NextRequest) {
     }
     
     // Validate status
-    if (body.status && !VALID_STATUSES.includes(body.status)) {
+    if (!VALID_STATUSES.includes(body.status)) {
       return NextResponse.json({
         success: false,
         error: `Invalid status: "${body.status}". Must be one of: ${VALID_STATUSES.join(', ')}`
       }, { status: 400 })
     }
     
-    // Validate required fields
-    if (!body.id) {
+    // Validate Meeting Minutes structure if provided
+    if (body.extensions && !Array.isArray(body.extensions)) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required field: id'
+        error: 'Extensions must be an array'
       }, { status: 400 })
     }
     
-    if (!body.date) {
+    if (body.closure && !Array.isArray(body.closure)) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required field: date'
+        error: 'Closure must be an array'
       }, { status: 400 })
     }
     
-    if (!body.facilitator) {
+    if (body.newRisks && !Array.isArray(body.newRisks)) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required field: facilitator'
+        error: 'New Risks must be an array'
+      }, { status: 400 })
+    }
+    
+    // Validate each item in the arrays if they exist
+    const validateMeetingMinutesItem = (item: any, sectionName: string) => {
+      if (!item.riskId || typeof item.riskId !== 'string') {
+        throw new Error(`${sectionName}: Each item must have a valid riskId string`)
+      }
+      if (item.actionsTaken && typeof item.actionsTaken !== 'string') {
+        throw new Error(`${sectionName}: actionsTaken must be a string`)
+      }
+      if (item.toDo && typeof item.toDo !== 'string') {
+        throw new Error(`${sectionName}: toDo must be a string`)
+      }
+      if (item.outcome && typeof item.outcome !== 'string') {
+        throw new Error(`${sectionName}: outcome must be a string`)
+      }
+    }
+    
+    try {
+      if (body.extensions) {
+        body.extensions.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `Extensions item ${index + 1}`)
+        })
+      }
+      if (body.closure) {
+        body.closure.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `Closure item ${index + 1}`)
+        })
+      }
+      if (body.newRisks) {
+        body.newRisks.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `New Risks item ${index + 1}`)
+        })
+      }
+    } catch (validationError) {
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid Meeting Minutes structure'
       }, { status: 400 })
     }
     
@@ -88,7 +135,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: { ...body, _id: result.insertedId }
-    })
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating workshop:', error)
     return NextResponse.json({

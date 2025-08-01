@@ -83,6 +83,67 @@ export async function PUT(
       }, { status: 400 })
     }
     
+    // Validate Meeting Minutes structure if provided
+    if (body.extensions && !Array.isArray(body.extensions)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Extensions must be an array'
+      }, { status: 400 })
+    }
+    
+    if (body.closure && !Array.isArray(body.closure)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Closure must be an array'
+      }, { status: 400 })
+    }
+    
+    if (body.newRisks && !Array.isArray(body.newRisks)) {
+      return NextResponse.json({
+        success: false,
+        error: 'New Risks must be an array'
+      }, { status: 400 })
+    }
+    
+    // Validate each item in the arrays if they exist
+    const validateMeetingMinutesItem = (item: any, sectionName: string) => {
+      if (!item.riskId || typeof item.riskId !== 'string') {
+        throw new Error(`${sectionName}: Each item must have a valid riskId string`)
+      }
+      if (item.actionsTaken && typeof item.actionsTaken !== 'string') {
+        throw new Error(`${sectionName}: actionsTaken must be a string`)
+      }
+      if (item.toDo && typeof item.toDo !== 'string') {
+        throw new Error(`${sectionName}: toDo must be a string`)
+      }
+      if (item.outcome && typeof item.outcome !== 'string') {
+        throw new Error(`${sectionName}: outcome must be a string`)
+      }
+    }
+    
+    try {
+      if (body.extensions) {
+        body.extensions.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `Extensions item ${index + 1}`)
+        })
+      }
+      if (body.closure) {
+        body.closure.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `Closure item ${index + 1}`)
+        })
+      }
+      if (body.newRisks) {
+        body.newRisks.forEach((item: any, index: number) => {
+          validateMeetingMinutesItem(item, `New Risks item ${index + 1}`)
+        })
+      }
+    } catch (validationError) {
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid Meeting Minutes structure'
+      }, { status: 400 })
+    }
+    
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')

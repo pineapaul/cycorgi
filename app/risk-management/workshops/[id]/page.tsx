@@ -20,6 +20,25 @@ interface Workshop {
   actionsTaken?: string
   toDo?: string
   notes?: string
+  // Meeting Minutes subsections
+  extensions?: Array<{
+    riskId: string
+    actionsTaken: string
+    toDo: string
+    outcome: string
+  }>
+  closure?: Array<{
+    riskId: string
+    actionsTaken: string
+    toDo: string
+    outcome: string
+  }>
+  newRisks?: Array<{
+    riskId: string
+    actionsTaken: string
+    toDo: string
+    outcome: string
+  }>
   createdAt?: string
   updatedAt?: string
 }
@@ -281,65 +300,149 @@ export default function WorkshopDetails() {
             <h3 className="text-lg font-semibold text-gray-900">Meeting Minutes</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            {/* Outcomes */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          <div className="space-y-8">
+            {/* Extensions Subsection */}
+            <div>
+              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                <Icon name="arrow-up" size={16} className="mr-2 text-blue-600" />
+                Extensions
+              </h4>
+              {workshop.extensions && workshop.extensions.length > 0 ? (
+                <div className="space-y-4">
+                  {workshop.extensions.map((item, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
+                          <div className="mt-1 text-sm font-medium text-gray-900">
+                            <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-md font-mono text-xs">
+                              {item.riskId}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-500 italic text-center">No extensions recorded</p>
+                </div>
+              )}
+            </div>
+
+            {/* Closure Subsection */}
+            <div>
+              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
                 <Icon name="check-circle" size={16} className="mr-2 text-green-600" />
-                Outcomes
+                Closure
               </h4>
-              <div className="bg-white rounded-md p-3 border border-gray-200">
-                {workshop.outcomes ? (
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.outcomes}</p>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No outcomes recorded</p>
-                )}
-              </div>
+              {workshop.closure && workshop.closure.length > 0 ? (
+                <div className="space-y-4">
+                  {workshop.closure.map((item, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
+                          <div className="mt-1 text-sm font-medium text-gray-900">
+                            <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-md font-mono text-xs">
+                              {item.riskId}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-500 italic text-center">No closures recorded</p>
+                </div>
+              )}
             </div>
 
-            {/* Actions Taken */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <Icon name="check" size={16} className="mr-2 text-green-600" />
-                Actions Taken
+            {/* New Risks Subsection */}
+            <div>
+              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                <Icon name="plus-circle" size={16} className="mr-2 text-orange-600" />
+                New Risks
               </h4>
-              <div className="bg-white rounded-md p-3 border border-gray-200">
-                {workshop.actionsTaken ? (
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.actionsTaken}</p>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No actions taken recorded</p>
-                )}
-              </div>
-            </div>
-
-            {/* To Do */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <Icon name="clock" size={16} className="mr-2 text-yellow-600" />
-                To Do
-              </h4>
-              <div className="bg-white rounded-md p-3 border border-gray-200">
-                {workshop.toDo ? (
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.toDo}</p>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No to-do items recorded</p>
-                )}
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <Icon name="document-text" size={16} className="mr-2 text-blue-600" />
-                Notes
-              </h4>
-              <div className="bg-white rounded-md p-3 border border-gray-200">
-                {workshop.notes ? (
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{workshop.notes}</p>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No notes recorded</p>
-                )}
-              </div>
+              {workshop.newRisks && workshop.newRisks.length > 0 ? (
+                <div className="space-y-4">
+                  {workshop.newRisks.map((item, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
+                          <div className="mt-1 text-sm font-medium text-gray-900">
+                            <span className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-md font-mono text-xs">
+                              {item.riskId}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                          <div className="mt-1 text-sm text-gray-700">
+                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-500 italic text-center">No new risks recorded</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
