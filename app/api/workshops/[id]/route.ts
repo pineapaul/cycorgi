@@ -11,7 +11,17 @@ export async function GET(
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    const workshop = await collection.findOne({ _id: new ObjectId(params.id) })
+    // Try to find by workshop ID first, then by MongoDB _id
+    let workshop = await collection.findOne({ id: params.id })
+    
+    if (!workshop) {
+      // If not found by workshop ID, try by MongoDB _id
+      try {
+        workshop = await collection.findOne({ _id: new ObjectId(params.id) })
+      } catch (objectIdError) {
+        // Invalid ObjectId format, continue with null workshop
+      }
+    }
     
     if (!workshop) {
       return NextResponse.json({
@@ -75,10 +85,23 @@ export async function PUT(
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    const result = await collection.updateOne(
-      { _id: new ObjectId(params.id) },
+    // Try to update by workshop ID first, then by MongoDB _id
+    let result = await collection.updateOne(
+      { id: params.id },
       { $set: body }
     )
+    
+    if (result.matchedCount === 0) {
+      // If not found by workshop ID, try by MongoDB _id
+      try {
+        result = await collection.updateOne(
+          { _id: new ObjectId(params.id) },
+          { $set: body }
+        )
+      } catch (objectIdError) {
+        // Invalid ObjectId format, continue with result
+      }
+    }
     
     if (result.matchedCount === 0) {
       return NextResponse.json({
@@ -109,7 +132,17 @@ export async function DELETE(
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    const result = await collection.deleteOne({ _id: new ObjectId(params.id) })
+    // Try to delete by workshop ID first, then by MongoDB _id
+    let result = await collection.deleteOne({ id: params.id })
+    
+    if (result.deletedCount === 0) {
+      // If not found by workshop ID, try by MongoDB _id
+      try {
+        result = await collection.deleteOne({ _id: new ObjectId(params.id) })
+      } catch (objectIdError) {
+        // Invalid ObjectId format, continue with result
+      }
+    }
     
     if (result.deletedCount === 0) {
       return NextResponse.json({

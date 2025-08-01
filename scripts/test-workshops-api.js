@@ -22,6 +22,9 @@ const sampleWorkshops = [
     risks: ['RISK-001', 'RISK-003', 'RISK-005'],
     outcomes: 'Identified 3 new risks, updated 2 existing risk ratings',
     securitySteeringCommittee: 'Core Systems Engineering',
+    actionsTaken: 'Implemented new risk monitoring dashboard, updated risk assessment procedures',
+    toDo: 'Schedule follow-up review in 3 months',
+    notes: 'Team showed excellent engagement during the workshop. Consider expanding to other departments.',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -34,6 +37,9 @@ const sampleWorkshops = [
     risks: ['RISK-002', 'RISK-004'],
     outcomes: '',
     securitySteeringCommittee: 'IP Engineering',
+    actionsTaken: '',
+    toDo: 'Prepare agenda, send pre-workshop materials to participants',
+    notes: 'Focus will be on cybersecurity threats and data protection measures',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -46,6 +52,9 @@ const sampleWorkshops = [
     risks: ['RISK-006', 'RISK-007'],
     outcomes: '',
     securitySteeringCommittee: 'Software Engineering',
+    actionsTaken: '',
+    toDo: 'Finalize agenda items, confirm participant availability',
+    notes: 'Need to address recent software vulnerabilities identified in audit',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -58,6 +67,9 @@ const sampleWorkshops = [
     risks: ['RISK-008', 'RISK-009'],
     outcomes: '',
     securitySteeringCommittee: 'Core Systems Engineering',
+    actionsTaken: '',
+    toDo: 'Book meeting room, prepare presentation materials',
+    notes: 'Strategic planning session for Q3 risk management initiatives',
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -70,6 +82,9 @@ const sampleWorkshops = [
     risks: ['RISK-010'],
     outcomes: 'Completed risk assessment for new cloud migration project',
     securitySteeringCommittee: 'Software Engineering',
+    actionsTaken: 'Drafted migration timeline, identified key stakeholders',
+    toDo: 'Finalize meeting minutes, distribute action items to team',
+    notes: 'Cloud migration risks are well understood. Team confident in proceeding with project.',
     createdAt: new Date(),
     updatedAt: new Date()
   }
