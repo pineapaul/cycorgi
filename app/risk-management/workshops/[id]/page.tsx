@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
+import { useToast } from '@/app/components/Toast'
 
 interface Workshop {
   _id: string
@@ -26,6 +27,7 @@ interface Workshop {
 export default function WorkshopDetails() {
   const params = useParams()
   const router = useRouter()
+  const { showToast } = useToast()
   const [workshop, setWorkshop] = useState<Workshop | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,12 +100,41 @@ export default function WorkshopDetails() {
     return `${day} ${month} ${year} at ${time}`
   }
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const url = `${window.location.origin}/risk-management/workshops/${workshop?.id}`
-    navigator.clipboard.writeText(url).then(() => {
-      // You could add a toast notification here
-      alert('Link copied to clipboard!')
-    })
+    
+    try {
+      // Check if clipboard API is available
+      if (!navigator.clipboard) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = url
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        showToast({
+          type: 'success',
+          title: 'Link copied!',
+          message: 'Workshop link has been copied to clipboard'
+        })
+        return
+      }
+
+      await navigator.clipboard.writeText(url)
+      showToast({
+        type: 'success',
+        title: 'Link copied!',
+        message: 'Workshop link has been copied to clipboard'
+      })
+    } catch (error) {
+      console.error('Failed to copy link:', error)
+      showToast({
+        type: 'error',
+        title: 'Copy failed',
+        message: 'Unable to copy link to clipboard. Please try again.'
+      })
+    }
   }
 
   const handleEdit = () => {
@@ -199,39 +230,45 @@ export default function WorkshopDetails() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Date</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">{formatDate(workshop.date)}</div>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {formatDate(workshop.date)}
+              </div>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
               <div className="mt-1">
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(workshop.status)}`}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(workshop.status)}`}>
                   {workshop.status}
                 </span>
               </div>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Security Steering Committee</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">{workshop.securitySteeringCommittee}</div>
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Facilitator</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.facilitator}
+              </div>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Facilitator</span>
-              <div className="mt-1 text-sm font-medium text-gray-900">{workshop.facilitator}</div>
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Security Steering Committee</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.securitySteeringCommittee}
+              </div>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Participants</span>
               <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.participants.length > 0 ? workshop.participants.join(', ') : '-'}
+                {workshop.participants.length > 0 ? workshop.participants.join(', ') : 'No participants listed'}
               </div>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-4">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">Related Risks</span>
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Risks Discussed</span>
               <div className="mt-1 text-sm font-medium text-gray-900">
-                {workshop.risks.length > 0 ? workshop.risks.join(', ') : '-'}
+                {workshop.risks.length > 0 ? workshop.risks.join(', ') : 'No risks listed'}
               </div>
             </div>
           </div>
@@ -244,7 +281,7 @@ export default function WorkshopDetails() {
             <h3 className="text-lg font-semibold text-gray-900">Meeting Minutes</h3>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Outcomes */}
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">

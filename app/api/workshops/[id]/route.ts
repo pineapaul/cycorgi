@@ -4,20 +4,21 @@ import { ObjectId } from 'mongodb'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
     // Try to find by workshop ID first, then by MongoDB _id
-    let workshop = await collection.findOne({ id: params.id })
+    let workshop = await collection.findOne({ id })
     
     if (!workshop) {
       // If not found by workshop ID, try by MongoDB _id
       try {
-        workshop = await collection.findOne({ _id: new ObjectId(params.id) })
+        workshop = await collection.findOne({ _id: new ObjectId(id) })
       } catch (objectIdError) {
         // Invalid ObjectId format, continue with null workshop
       }
@@ -45,9 +46,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     
     // Validation constants
@@ -87,7 +89,7 @@ export async function PUT(
     
     // Try to update by workshop ID first, then by MongoDB _id
     let result = await collection.updateOne(
-      { id: params.id },
+      { id },
       { $set: body }
     )
     
@@ -95,7 +97,7 @@ export async function PUT(
       // If not found by workshop ID, try by MongoDB _id
       try {
         result = await collection.updateOne(
-          { _id: new ObjectId(params.id) },
+          { _id: new ObjectId(id) },
           { $set: body }
         )
       } catch (objectIdError) {
@@ -112,7 +114,7 @@ export async function PUT(
     
     return NextResponse.json({
       success: true,
-      data: { ...body, _id: params.id }
+      data: { ...body, _id: id }
     })
   } catch (error) {
     console.error('Error updating workshop:', error)
@@ -125,20 +127,21 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
     // Try to delete by workshop ID first, then by MongoDB _id
-    let result = await collection.deleteOne({ id: params.id })
+    let result = await collection.deleteOne({ id })
     
     if (result.deletedCount === 0) {
       // If not found by workshop ID, try by MongoDB _id
       try {
-        result = await collection.deleteOne({ _id: new ObjectId(params.id) })
+        result = await collection.deleteOne({ _id: new ObjectId(id) })
       } catch (objectIdError) {
         // Invalid ObjectId format, continue with result
       }
