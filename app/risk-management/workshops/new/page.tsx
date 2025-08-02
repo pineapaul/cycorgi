@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 import Tooltip from '@/app/components/Tooltip'
+import { MeetingMinutesItem } from '@/lib/workshop-validation'
 
 interface Risk {
   riskId: string
@@ -59,6 +60,20 @@ interface RiskSelection {
   riskStatement: string
   treatments: string[]
   category: RiskCategory
+}
+
+interface WorkshopSubmissionData {
+  id: string
+  date: string
+  status: 'Planned'
+  facilitator: string
+  participants: string[]
+  risks: string[]
+  notes: string
+  securitySteeringCommittee: string
+  extensions: MeetingMinutesItem[]
+  closure: MeetingMinutesItem[]
+  newRisks: MeetingMinutesItem[]
 }
 
 export default function NewWorkshop() {
@@ -149,7 +164,7 @@ export default function NewWorkshop() {
         if (result.success && result.data.length > 0) {
           // Find the highest workshop ID number
           const workshopIds = result.data
-            .map((workshop: any) => workshop.id)
+            .map((workshop: { id: string }) => workshop.id)
             .filter((id: string) => id && id.startsWith('WS-'))
             .map((id: string) => parseInt(id.replace('WS-', '')))
             .filter((num: number) => !isNaN(num))
@@ -270,7 +285,7 @@ export default function NewWorkshop() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: keyof WorkshopFormData, value: any) => {
+  const handleInputChange = (field: keyof WorkshopFormData, value: string | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -341,12 +356,32 @@ export default function NewWorkshop() {
     }))
   }
 
+  // Type guard to validate RiskSelection structure
+  const isValidRiskSelection = (obj: unknown): obj is RiskSelection => {
+    if (typeof obj !== 'object' || obj === null) return false
+    
+    const candidate = obj as Record<string, unknown>
+    
+    return (
+      'riskId' in candidate &&
+      typeof candidate.riskId === 'string' &&
+      'riskStatement' in candidate &&
+      typeof candidate.riskStatement === 'string' &&
+      'treatments' in candidate &&
+      Array.isArray(candidate.treatments) &&
+      candidate.treatments.every(item => typeof item === 'string') &&
+      'category' in candidate &&
+      typeof candidate.category === 'string' &&
+      ['extensions', 'closure', 'newRisk'].includes(candidate.category as RiskCategory)
+    )
+  }
+
   const getSelectedRiskData = (): (RiskSelection & { originalIndex: number })[] => {
     const result = formData.risks
       .map((riskJson, index) => {
         try {
           const parsed = JSON.parse(riskJson)
-          if (parsed && typeof parsed === 'object' && parsed.riskId) {
+          if (isValidRiskSelection(parsed)) {
             return { ...parsed, originalIndex: index }
           }
           return null
@@ -378,12 +413,12 @@ export default function NewWorkshop() {
       const parsedRisks = getSelectedRiskData()
       
       // Organize risks by category
-      const extensions: any[] = []
-      const closure: any[] = []
-      const newRisks: any[] = []
+      const extensions: MeetingMinutesItem[] = []
+      const closure: MeetingMinutesItem[] = []
+      const newRisks: MeetingMinutesItem[] = []
       
       parsedRisks.forEach(risk => {
-        const riskData = {
+        const riskData: MeetingMinutesItem = {
           riskId: risk.riskId,
           actionsTaken: '',
           toDo: '',
@@ -403,10 +438,10 @@ export default function NewWorkshop() {
         }
       })
       
-      const workshopData = {
+      const workshopData: WorkshopSubmissionData = {
         id: nextWorkshopId,
         date: formData.date,
-        status: 'Planned' as const,
+        status: 'Planned',
         facilitator: formData.facilitator,
         participants: formData.participants,
         risks: parsedRisks.map(r => r.riskId), // Keep original risks array for backward compatibility
