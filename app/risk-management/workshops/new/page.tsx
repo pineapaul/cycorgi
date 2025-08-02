@@ -16,6 +16,13 @@ interface Risk {
   riskLevel: string
 }
 
+interface TreatmentExtension {
+  extendedDueDate: string
+  approver: string
+  dateApproved: string
+  justification: string
+}
+
 interface Treatment {
   treatmentJiraTicket: string
   riskId: string
@@ -27,7 +34,7 @@ interface Treatment {
   completionDate?: string
   closureApproval: string
   closureApprovedBy?: string
-  extensions: any[]
+  extensions: TreatmentExtension[]
   createdAt: string
   updatedAt: string
 }
@@ -284,7 +291,7 @@ export default function NewWorkshop() {
         try {
           const parsed = JSON.parse(riskJson)
           if (parsed && typeof parsed === 'object' && parsed.riskId) {
-            return { ...parsed, _index: index }
+            return { ...parsed, originalIndex: index }
           }
           return null
         } catch {
@@ -596,7 +603,7 @@ export default function NewWorkshop() {
                     </h3>
                                          <div className="space-y-2">
                        {getSelectedRiskData().map((risk, index) => (
-                         <div key={`${risk.riskId}-${risk._index || index}`} className="flex items-start justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                         <div key={`${risk.riskId}-${risk.originalIndex}`} className="flex items-start justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex-1">
                             <div className="flex items-center mb-1">
                               <span className="text-sm font-medium text-gray-900">{risk.riskId}</span>
@@ -606,7 +613,7 @@ export default function NewWorkshop() {
                           </div>
                                                      <button
                              type="button"
-                             onClick={() => removeRiskFromWorkshop(risk._index || index)}
+                             onClick={() => removeRiskFromWorkshop(risk.originalIndex)}
                              className="ml-3 text-red-500 hover:text-red-700 transition-colors"
                              title="Remove risk from workshop"
                            >
