@@ -190,12 +190,18 @@ export default function NewWorkshop() {
   const validateForm = (): boolean => {
     const newErrors: WorkshopFormErrors = {}
 
+    // Validate required fields
     mandatoryFields.forEach(field => {
       const value = formData[field as keyof WorkshopFormData]
       if (typeof value === 'string' && !value.trim()) {
         newErrors[field as keyof WorkshopFormData] = 'This field is required'
       }
     })
+
+    // Additional explicit validation for facilitator
+    if (!formData.facilitator || !formData.facilitator.trim()) {
+      newErrors.facilitator = 'Facilitator is required'
+    }
 
     // Validate date is not in the past
     if (formData.date) {
