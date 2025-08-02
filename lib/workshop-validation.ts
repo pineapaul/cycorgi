@@ -13,8 +13,12 @@ export const VALID_STATUSES = [
   'Completed'
 ] as const
 
-export type SecuritySteeringCommittee = typeof VALID_SECURITY_COMMITTEES[number]
 export type WorkshopStatus = typeof VALID_STATUSES[number]
+
+// Type guard for workshop status validation
+const isValidWorkshopStatus = (status: unknown): status is WorkshopStatus => {
+  return typeof status === 'string' && VALID_STATUSES.some(validStatus => validStatus === status)
+}
 
 export interface MeetingMinutesItem {
   riskId: string
@@ -92,13 +96,8 @@ export const validateWorkshopForCreate = (data: WorkshopData): void => {
     throw new Error('Missing required fields: id and date are required')
   }
   
-  // Validate security steering committee
-  if (!data.securitySteeringCommittee || !VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
-    throw new Error(`Invalid securitySteeringCommittee: "${data.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`)
-  }
-  
   // Validate status
-  if (!VALID_STATUSES.includes(data.status as WorkshopStatus)) {
+  if (!isValidWorkshopStatus(data.status)) {
     throw new Error(`Invalid status: "${data.status}". Must be one of: ${VALID_STATUSES.join(', ')}`)
   }
   
@@ -108,13 +107,8 @@ export const validateWorkshopForCreate = (data: WorkshopData): void => {
 
 // Validate workshop data for PUT requests (only validates provided fields)
 export const validateWorkshopForUpdate = (data: WorkshopData): void => {
-  // Validate security steering committee if provided
-  if (data.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
-    throw new Error(`Invalid securitySteeringCommittee: "${data.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`)
-  }
-  
   // Validate status if provided
-  if (data.status && !VALID_STATUSES.includes(data.status as WorkshopStatus)) {
+  if (data.status && !isValidWorkshopStatus(data.status)) {
     throw new Error(`Invalid status: "${data.status}". Must be one of: ${VALID_STATUSES.join(', ')}`)
   }
   
