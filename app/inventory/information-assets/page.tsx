@@ -21,6 +21,7 @@ interface InformationAsset {
   confidentiality: string
   integrity: string
   availability: string
+  criticality: string
   additionalInfo: string
 }
 
@@ -37,7 +38,7 @@ export default function InformationAssetsPage() {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set([
     'informationAsset', 'category', 'type', 'description', 'location', 'owner', 
     'sme', 'administrator', 'agileReleaseTrain', 'confidentiality', 'integrity', 
-    'availability', 'additionalInfo', 'actions'
+    'availability', 'criticality', 'additionalInfo', 'actions'
   ]))
 
   useEffect(() => {
@@ -185,6 +186,23 @@ export default function InformationAssetsPage() {
           'bg-gray-100 text-gray-800'
         }`}>
           {value}
+        </span>
+      )
+    },
+    {
+      key: 'criticality',
+      label: 'Criticality',
+      sortable: true,
+      width: '130px',
+      render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value === 'mission-critical' ? 'bg-red-100 text-red-800' :
+          value === 'business-critical' ? 'bg-orange-100 text-orange-800' :
+          value === 'standard' ? 'bg-blue-100 text-blue-800' :
+          value === 'non-critical' ? 'bg-green-100 text-green-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
         </span>
       )
     },

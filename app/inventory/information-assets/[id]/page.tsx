@@ -20,6 +20,7 @@ interface InformationAsset {
   confidentiality: string
   integrity: string
   availability: string
+  criticality: string
   additionalInfo: string
 }
 
@@ -447,7 +448,7 @@ export default function AssetProfilePage() {
         {/* Security Classification */}
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#22223B' }}>Security Classification</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confidentiality</label>
               {isEditing ? (
@@ -518,6 +519,32 @@ export default function AssetProfilePage() {
                   'bg-gray-100 text-gray-800'
                 }`}>
                   {asset.availability}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Criticality</label>
+              {isEditing ? (
+                <select
+                  value={editedAsset?.criticality || ''}
+                  onChange={(e) => handleFieldChange('criticality', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="mission-critical">Mission Critical</option>
+                  <option value="business-critical">Business Critical</option>
+                  <option value="standard">Standard</option>
+                  <option value="non-critical">Non Critical</option>
+                </select>
+              ) : (
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  asset.criticality === 'mission-critical' ? 'bg-red-100 text-red-800' :
+                  asset.criticality === 'business-critical' ? 'bg-orange-100 text-orange-800' :
+                  asset.criticality === 'standard' ? 'bg-blue-100 text-blue-800' :
+                  asset.criticality === 'non-critical' ? 'bg-green-100 text-green-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {asset.criticality.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               )}
             </div>

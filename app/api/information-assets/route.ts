@@ -17,6 +17,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'High',
+    criticality: 'mission-critical',
     additionalInfo: 'Requires encryption at rest and in transit'
   },
   {
@@ -33,6 +34,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Contains sensitive HR information'
   },
   {
@@ -49,6 +51,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Regulatory compliance required'
   },
   {
@@ -65,6 +68,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'mission-critical',
     additionalInfo: 'Contains proprietary algorithms'
   },
   {
@@ -81,6 +85,7 @@ const fakeInformationAssets = [
     confidentiality: 'Low',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Critical for business operations'
   },
   {
@@ -97,6 +102,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Rotated quarterly'
   },
   {
@@ -113,6 +119,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Encrypted and geo-replicated'
   },
   {
@@ -129,6 +136,7 @@ const fakeInformationAssets = [
     confidentiality: 'Low',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: 'Publicly accessible for partners'
   },
   {
@@ -145,6 +153,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Audit trail required'
   },
   {
@@ -161,6 +170,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: 'Non-production data only'
   },
   {
@@ -177,6 +187,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'business-critical',
     additionalInfo: 'Contains customer PII'
   },
   {
@@ -193,6 +204,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'standard',
     additionalInfo: 'Retention policy: 1 year'
   },
   {
@@ -209,6 +221,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Legal review required'
   },
   {
@@ -225,6 +238,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Real-time processing required'
   },
   {
@@ -241,6 +255,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: '7-year retention policy'
   }
 ]
@@ -323,6 +338,14 @@ export async function GET() {
                       asset.type === 'Backup' ? 'Critical' :
                       asset.type === 'Credentials' ? 'Medium' :
                       asset.type === 'Configuration' ? 'Critical' : 'Medium',
+          criticality: asset.type === 'Database' ? 'business-critical' :
+                     asset.type === 'File System' ? 'standard' :
+                     asset.type === 'Document' ? 'business-critical' :
+                     asset.type === 'Code' ? 'mission-critical' :
+                     asset.type === 'Media' ? 'standard' :
+                     asset.type === 'Backup' ? 'mission-critical' :
+                     asset.type === 'Credentials' ? 'business-critical' :
+                     asset.type === 'Configuration' ? 'mission-critical' : 'standard',
           additionalInfo: asset.additionalInformation || 'No additional information'
         }
       }

@@ -44,6 +44,7 @@ function generateAdditionalAssets() {
   const confidentialityLevels = ['High', 'Medium', 'Low'];
   const integrityLevels = ['High', 'Medium', 'Low'];
   const availabilityLevels = ['Critical', 'High', 'Medium', 'Low'];
+  const criticalityLevels = ['mission-critical', 'business-critical', 'standard', 'non-critical'];
 
   const additionalAssets = [];
   
@@ -58,6 +59,7 @@ function generateAdditionalAssets() {
     const confidentiality = confidentialityLevels[Math.floor(Math.random() * confidentialityLevels.length)];
     const integrity = integrityLevels[Math.floor(Math.random() * integrityLevels.length)];
     const availability = availabilityLevels[Math.floor(Math.random() * availabilityLevels.length)];
+    const criticality = criticalityLevels[Math.floor(Math.random() * criticalityLevels.length)];
 
     // Generate asset names based on category and type
     let assetName = '';
@@ -103,6 +105,7 @@ function generateAdditionalAssets() {
       confidentiality: confidentiality,
       integrity: integrity,
       availability: availability,
+      criticality: criticality,
       additionalInfo: `Additional information for ${assetName.toLowerCase()}`
     });
   }
@@ -126,6 +129,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'High',
+    criticality: 'mission-critical',
     additionalInfo: 'Requires encryption at rest and in transit'
   },
   {
@@ -142,6 +146,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Contains sensitive HR information'
   },
   {
@@ -158,6 +163,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Regulatory compliance required'
   },
   {
@@ -174,6 +180,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'mission-critical',
     additionalInfo: 'Contains proprietary algorithms'
   },
   {
@@ -190,6 +197,7 @@ const fakeInformationAssets = [
     confidentiality: 'Low',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Critical for business operations'
   },
   {
@@ -206,6 +214,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Rotated quarterly'
   },
   {
@@ -222,6 +231,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Encrypted and geo-replicated'
   },
   {
@@ -238,6 +248,7 @@ const fakeInformationAssets = [
     confidentiality: 'Low',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: 'Publicly accessible for partners'
   },
   {
@@ -254,6 +265,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Audit trail required'
   },
   {
@@ -270,6 +282,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: 'Non-production data only'
   },
   {
@@ -286,6 +299,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'business-critical',
     additionalInfo: 'Contains customer PII'
   },
   {
@@ -302,6 +316,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'High',
+    criticality: 'standard',
     additionalInfo: 'Retention policy: 1 year'
   },
   {
@@ -318,6 +333,7 @@ const fakeInformationAssets = [
     confidentiality: 'High',
     integrity: 'High',
     availability: 'Medium',
+    criticality: 'business-critical',
     additionalInfo: 'Legal review required'
   },
   {
@@ -334,6 +350,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'High',
     availability: 'Critical',
+    criticality: 'mission-critical',
     additionalInfo: 'Real-time processing required'
   },
   {
@@ -350,6 +367,7 @@ const fakeInformationAssets = [
     confidentiality: 'Medium',
     integrity: 'Medium',
     availability: 'Medium',
+    criticality: 'standard',
     additionalInfo: '7-year retention policy'
   }
 ];
