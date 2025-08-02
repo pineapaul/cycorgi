@@ -34,7 +34,7 @@ export default function InformationAssetsPage() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [showFilter, setShowFilter] = useState(false)
   const [showColumns, setShowColumns] = useState(false)
-  const [activeTab, setActiveTab] = useState<'assets' | 'cia'>('assets')
+  const [activeTab, setActiveTab] = useState<'assets' | 'cia' | 'decommissioning'>('assets')
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set([
     'informationAsset', 'category', 'type', 'description', 'location', 'owner', 
     'sme', 'administrator', 'agileReleaseTrain', 'confidentiality', 'integrity', 
@@ -81,6 +81,63 @@ export default function InformationAssetsPage() {
         >
           {value}
         </button>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      width: '150px',
+      align: 'center',
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Tooltip content="View Profile">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                window.location.href = `/inventory/information-assets/${row.id}`
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
+            >
+              <Icon name="eye" size={14} className="text-blue-600" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Copy Link">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const url = `${window.location.origin}/inventory/information-assets/${row.id}`
+                navigator.clipboard.writeText(url).then(() => {
+                  showToast({
+                    type: 'success',
+                    title: 'Link copied to clipboard!'
+                  })
+                }).catch(() => {
+                  showToast({
+                    type: 'error',
+                    title: 'Failed to copy link to clipboard'
+                  })
+                })
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"
+            >
+              <Icon name="link" size={14} className="text-green-600" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Delete Asset">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
+                  handleDeleteAsset(row.id)
+                }
+              }}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
+            >
+              <Icon name="trash" size={14} className="text-red-600" />
+            </button>
+          </Tooltip>
+        </div>
       )
     },
     {
@@ -193,9 +250,9 @@ export default function InformationAssetsPage() {
       key: 'criticality',
       label: 'Criticality',
       sortable: true,
-      width: '130px',
+      width: '160px',
       render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
           value === 'mission-critical' ? 'bg-red-100 text-red-800' :
           value === 'business-critical' ? 'bg-orange-100 text-orange-800' :
           value === 'standard' ? 'bg-blue-100 text-blue-800' :
@@ -220,63 +277,6 @@ export default function InformationAssetsPage() {
           </Tooltip>
         )
       }
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      sortable: false,
-      width: '150px',
-      align: 'center',
-      render: (value, row) => (
-        <div className="flex items-center space-x-2">
-          <Tooltip content="View Profile">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                window.location.href = `/inventory/information-assets/${row.id}`
-              }}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
-            >
-              <Icon name="eye" size={14} className="text-blue-600" />
-            </button>
-          </Tooltip>
-          <Tooltip content="Copy Link">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                const url = `${window.location.origin}/inventory/information-assets/${row.id}`
-                navigator.clipboard.writeText(url).then(() => {
-                  showToast({
-                    type: 'success',
-                    title: 'Link copied to clipboard!'
-                  })
-                }).catch(() => {
-                  showToast({
-                    type: 'error',
-                    title: 'Failed to copy link to clipboard'
-                  })
-                })
-              }}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-green-100 bg-white border border-gray-300"
-            >
-              <Icon name="link" size={14} className="text-green-600" />
-            </button>
-          </Tooltip>
-          <Tooltip content="Delete Asset">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
-                  handleDeleteAsset(row.id)
-                }
-              }}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
-            >
-              <Icon name="trash" size={14} className="text-red-600" />
-            </button>
-          </Tooltip>
-        </div>
-      )
     }
   ]
 
@@ -410,31 +410,41 @@ export default function InformationAssetsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('assets')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'assets'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Assets
-          </button>
-          <button
-            onClick={() => setActiveTab('cia')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'cia'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            CIA Assessments
-          </button>
-        </nav>
-      </div>
+             {/* Tabs */}
+       <div className="border-b border-gray-200">
+         <nav className="-mb-px flex space-x-8">
+           <button
+             onClick={() => setActiveTab('assets')}
+             className={`py-2 px-1 border-b-2 font-medium text-sm ${
+               activeTab === 'assets'
+                 ? 'border-blue-500 text-blue-600'
+                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+             }`}
+           >
+             Assets
+           </button>
+           <button
+             onClick={() => setActiveTab('cia')}
+             className={`py-2 px-1 border-b-2 font-medium text-sm ${
+               activeTab === 'cia'
+                 ? 'border-blue-500 text-blue-600'
+                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+             }`}
+           >
+             CIA Assessments
+           </button>
+           <button
+             onClick={() => setActiveTab('decommissioning')}
+             className={`py-2 px-1 border-b-2 font-medium text-sm ${
+               activeTab === 'decommissioning'
+                 ? 'border-blue-500 text-blue-600'
+                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+             }`}
+           >
+             Decommissioning Assessments
+           </button>
+         </nav>
+       </div>
 
       {/* Tab Content */}
       {activeTab === 'assets' && (
@@ -483,28 +493,51 @@ export default function InformationAssetsPage() {
         </div>
       )}
 
-      {activeTab === 'cia' && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Icon name="shield" size={48} />
-          </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>CIA Assessments</h3>
-          <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>
-            Confidentiality, Integrity, and Availability assessments will be available here.
-          </p>
-          <button
-            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ 
-              backgroundColor: '#4C1D95',
-              '--tw-ring-color': '#4C1D95'
-            } as React.CSSProperties}
-          >
-            <Icon name="plus" size={16} className="mr-2" />
-            <span className="hidden sm:inline">Create Assessment</span>
-            <span className="sm:hidden">Create</span>
-          </button>
-        </div>
-      )}
+             {activeTab === 'cia' && (
+         <div className="text-center py-12">
+           <div className="text-gray-400 mb-4">
+             <Icon name="shield" size={48} />
+           </div>
+           <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>CIA Assessments</h3>
+           <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>
+             Confidentiality, Integrity, and Availability assessments will be available here.
+           </p>
+           <button
+             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+             style={{ 
+               backgroundColor: '#4C1D95',
+               '--tw-ring-color': '#4C1D95'
+             } as React.CSSProperties}
+           >
+             <Icon name="plus" size={16} className="mr-2" />
+             <span className="hidden sm:inline">Create Assessment</span>
+             <span className="sm:hidden">Create</span>
+           </button>
+         </div>
+       )}
+
+       {activeTab === 'decommissioning' && (
+         <div className="text-center py-12">
+           <div className="text-gray-400 mb-4">
+             <Icon name="trash" size={48} />
+           </div>
+           <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Decommissioning Assessments</h3>
+           <p className="text-gray-600 mb-4" style={{ color: '#22223B' }}>
+             Assess and manage the decommissioning process for information assets that are no longer needed.
+           </p>
+           <button
+             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+             style={{ 
+               backgroundColor: '#4C1D95',
+               '--tw-ring-color': '#4C1D95'
+             } as React.CSSProperties}
+           >
+             <Icon name="plus" size={16} className="mr-2" />
+             <span className="hidden sm:inline">Create Assessment</span>
+             <span className="sm:hidden">Create</span>
+           </button>
+         </div>
+       )}
     </div>
   )
 } 
