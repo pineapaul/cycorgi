@@ -278,33 +278,7 @@ export default function EditTreatment() {
           <p className="mt-2 text-gray-600">Update treatment details for {treatmentDetails.treatmentJiraTicket}</p>
         </div>
 
-        {/* Risk Context */}
-        {riskDetails && (
-          <div className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Icon name="info-circle" size={16} className="mr-2 text-blue-500" />
-              Risk Context
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-700">Risk ID:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskId}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Risk Title:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskTitle}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Information Asset:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.informationAsset}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Risk Score:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.riskScore}</p>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Form */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
