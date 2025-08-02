@@ -41,7 +41,6 @@ interface Treatment {
 
 interface WorkshopFormData {
   date: string
-  securitySteeringCommittee: string
   facilitator: string
   participants: string[]
   risks: string[]
@@ -52,11 +51,7 @@ type WorkshopFormErrors = {
   [K in keyof WorkshopFormData]?: string
 }
 
-const VALID_SECURITY_COMMITTEES = [
-  'Core Systems Engineering',
-  'Software Engineering', 
-  'IP Engineering'
-] as const
+
 
 export default function NewWorkshop() {
   const router = useRouter()
@@ -78,14 +73,13 @@ export default function NewWorkshop() {
   
   const [formData, setFormData] = useState<WorkshopFormData>({
     date: '',
-    securitySteeringCommittee: '',
     facilitator: '',
     participants: [],
     risks: [],
     notes: ''
   })
 
-  const mandatoryFields = ['date', 'securitySteeringCommittee']
+  const mandatoryFields = ['date', 'facilitator']
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 80) => {
@@ -196,12 +190,18 @@ export default function NewWorkshop() {
   const validateForm = (): boolean => {
     const newErrors: WorkshopFormErrors = {}
 
+    // Validate required fields
     mandatoryFields.forEach(field => {
       const value = formData[field as keyof WorkshopFormData]
       if (typeof value === 'string' && !value.trim()) {
         newErrors[field as keyof WorkshopFormData] = 'This field is required'
       }
     })
+
+    // Additional explicit validation for facilitator
+    if (!formData.facilitator || !formData.facilitator.trim()) {
+      newErrors.facilitator = 'Facilitator is required'
+    }
 
     // Validate date is not in the past
     if (formData.date) {
@@ -325,10 +325,9 @@ export default function NewWorkshop() {
         id: nextWorkshopId,
         date: formData.date,
         status: 'Planned' as const,
-        facilitator: formData.facilitator || '',
+        facilitator: formData.facilitator,
         participants: formData.participants,
         risks: parsedRisks, // Use the parsed risk data instead of raw strings
-        securitySteeringCommittee: formData.securitySteeringCommittee,
         notes: formData.notes || '',
         extensions: [],
         closure: [],
@@ -421,55 +420,50 @@ export default function NewWorkshop() {
                 <Icon name="exclamation-triangle" size={16} className="mr-2 text-red-500" />
                 Required Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Date */}
-                <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                    Workshop Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.date 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  />
-                  {errors.date && (
-                    <p className="mt-1 text-sm text-red-600">{errors.date}</p>
-                  )}
-                </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Date */}
+                 <div>
+                   <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                     Workshop Date <span className="text-red-500">*</span>
+                   </label>
+                   <input
+                     type="date"
+                     id="date"
+                     value={formData.date}
+                     onChange={(e) => handleInputChange('date', e.target.value)}
+                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                       errors.date 
+                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                         : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                     }`}
+                   />
+                   {errors.date && (
+                     <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                   )}
+                 </div>
 
-                {/* Security Steering Committee */}
-                <div>
-                  <label htmlFor="securitySteeringCommittee" className="block text-sm font-medium text-gray-700 mb-2">
-                    Security Steering Committee <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="securitySteeringCommittee"
-                    value={formData.securitySteeringCommittee}
-                    onChange={(e) => handleInputChange('securitySteeringCommittee', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.securitySteeringCommittee 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  >
-                    <option value="">Select a committee</option>
-                    {VALID_SECURITY_COMMITTEES.map((committee) => (
-                      <option key={committee} value={committee}>
-                        {committee}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.securitySteeringCommittee && (
-                    <p className="mt-1 text-sm text-red-600">{errors.securitySteeringCommittee}</p>
-                  )}
-                </div>
-              </div>
+                 {/* Facilitator */}
+                 <div>
+                   <label htmlFor="facilitator" className="block text-sm font-medium text-gray-700 mb-2">
+                     Facilitator <span className="text-red-500">*</span>
+                   </label>
+                   <input
+                     type="text"
+                     id="facilitator"
+                     value={formData.facilitator}
+                     onChange={(e) => handleInputChange('facilitator', e.target.value)}
+                     placeholder="Enter facilitator name"
+                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                       errors.facilitator 
+                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                         : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                     }`}
+                   />
+                   {errors.facilitator && (
+                     <p className="mt-1 text-sm text-red-600">{errors.facilitator}</p>
+                   )}
+                 </div>
+               </div>
             </div>
 
             {/* Additional Information Section */}
@@ -480,21 +474,6 @@ export default function NewWorkshop() {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Facilitator */}
-                <div>
-                  <label htmlFor="facilitator" className="block text-sm font-medium text-gray-700 mb-2">
-                    Facilitator
-                  </label>
-                  <input
-                    type="text"
-                    id="facilitator"
-                    value={formData.facilitator}
-                    onChange={(e) => handleInputChange('facilitator', e.target.value)}
-                    placeholder="Enter facilitator name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-purple-500 focus:ring-purple-500 transition-colors"
-                  />
-                </div>
-
                 {/* Participants */}
                 <div>
                   <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-2">
