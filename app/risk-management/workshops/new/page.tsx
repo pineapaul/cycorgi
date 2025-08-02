@@ -46,7 +46,6 @@ interface WorkshopFormData {
   participants: string[]
   risks: string[]
   notes: string
-  securitySteeringCommittee: string
 }
 
 type WorkshopFormErrors = {
@@ -70,7 +69,6 @@ interface WorkshopSubmissionData {
   participants: string[]
   risks: string[]
   notes: string
-  securitySteeringCommittee: string
   extensions: MeetingMinutesItem[]
   closure: MeetingMinutesItem[]
   newRisks: MeetingMinutesItem[]
@@ -100,11 +98,10 @@ export default function NewWorkshop() {
     facilitator: '',
     participants: [],
     risks: [],
-    notes: '',
-    securitySteeringCommittee: ''
+    notes: ''
   })
 
-  const mandatoryFields = ['date', 'facilitator', 'securitySteeringCommittee']
+  const mandatoryFields = ['date', 'facilitator']
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 80) => {
@@ -446,7 +443,6 @@ export default function NewWorkshop() {
         participants: formData.participants,
         risks: parsedRisks.map(r => r.riskId), // Keep original risks array for backward compatibility
         notes: formData.notes || '',
-        securitySteeringCommittee: formData.securitySteeringCommittee,
         extensions,
         closure,
         newRisks
@@ -581,33 +577,8 @@ export default function NewWorkshop() {
                      <p className="mt-1 text-sm text-red-600">{errors.facilitator}</p>
                    )}
                  </div>
-               </div>
-
-               {/* Security Steering Committee */}
-               <div className="mt-6">
-                 <label htmlFor="securitySteeringCommittee" className="block text-sm font-medium text-gray-700 mb-2">
-                   Security Steering Committee <span className="text-red-500">*</span>
-                 </label>
-                 <select
-                   id="securitySteeringCommittee"
-                   value={formData.securitySteeringCommittee}
-                   onChange={(e) => handleInputChange('securitySteeringCommittee', e.target.value)}
-                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                     errors.securitySteeringCommittee 
-                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                       : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                   }`}
-                 >
-                   <option value="">Select a committee...</option>
-                   <option value="Core Systems Engineering">Core Systems Engineering</option>
-                   <option value="Software Engineering">Software Engineering</option>
-                   <option value="IP Engineering">IP Engineering</option>
-                 </select>
-                 {errors.securitySteeringCommittee && (
-                   <p className="mt-1 text-sm text-red-600">{errors.securitySteeringCommittee}</p>
-                 )}
-               </div>
-            </div>
+                              </div>
+             </div>
 
             {/* Additional Information Section */}
             <div>

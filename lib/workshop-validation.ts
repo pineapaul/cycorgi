@@ -92,8 +92,8 @@ export const validateWorkshopForCreate = (data: WorkshopData): void => {
     throw new Error('Missing required fields: id and date are required')
   }
   
-  // Validate security steering committee
-  if (!data.securitySteeringCommittee || !VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
+  // Validate security steering committee if provided
+  if (data.securitySteeringCommittee && !VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
     throw new Error(`Invalid securitySteeringCommittee: "${data.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`)
   }
   
