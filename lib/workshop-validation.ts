@@ -88,12 +88,12 @@ const validateMeetingMinutesArrays = (data: WorkshopData): void => {
 // Validate workshop data for POST requests (requires all mandatory fields)
 export const validateWorkshopForCreate = (data: WorkshopData): void => {
   // Required fields validation
-  if (!data.id || !data.date || !data.facilitator) {
-    throw new Error('Missing required fields: id, date, and facilitator are required')
+  if (!data.id || !data.date) {
+    throw new Error('Missing required fields: id and date are required')
   }
   
   // Validate security steering committee
-  if (!VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
+  if (!data.securitySteeringCommittee || !VALID_SECURITY_COMMITTEES.includes(data.securitySteeringCommittee as SecuritySteeringCommittee)) {
     throw new Error(`Invalid securitySteeringCommittee: "${data.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`)
   }
   
