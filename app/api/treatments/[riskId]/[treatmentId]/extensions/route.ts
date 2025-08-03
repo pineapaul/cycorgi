@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { clientPromise } from '../../../../../../lib/mongodb'
+import clientPromise from '../../../../../../lib/mongodb'
 import { EXTENSION_STATUS } from '../../../../../../lib/constants'
 
 export async function POST(
@@ -9,6 +9,10 @@ export async function POST(
   try {
     const { extendedDueDate, justification } = await request.json()
     const { riskId, treatmentId } = await params
+    
+    // Check if this is a direct approval (workshop scenario)
+    const url = new URL(request.url)
+    const directApproval = url.searchParams.get('directApproval') === 'true'
 
     // Validate required fields
     if (!extendedDueDate || !justification) {
@@ -60,8 +64,8 @@ export async function POST(
     const extension = {
       extendedDueDate: extendedDueDate,
       justification: justification.trim(),
-      approver: EXTENSION_STATUS.PENDING_APPROVAL, // This would typically be set by an admin
-      dateApproved: null, // This will be set when approved
+      approver: directApproval ? EXTENSION_STATUS.APPROVED : EXTENSION_STATUS.PENDING_APPROVAL,
+      dateApproved: directApproval ? new Date().toISOString() : null,
       createdAt: new Date().toISOString()
     }
 
@@ -90,7 +94,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'Extension request submitted successfully',
+      message: directApproval ? 'Extension approved and recorded successfully' : 'Extension request submitted successfully',
       extension
     })
 
