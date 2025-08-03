@@ -19,7 +19,8 @@ interface Risk {
 interface Treatment {
   _id: string
   riskId: string
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskTreatment: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
@@ -40,7 +41,8 @@ interface Treatment {
 
 // Discriminated union for selectedTreatments
 interface TreatmentMinutes {
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   actionsTaken?: string
   toDo?: string
   outcome?: string
@@ -57,7 +59,7 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
   return selectedTreatments.length > 0 && 
          typeof selectedTreatments[0] === 'object' && 
          selectedTreatments[0] !== null &&
-         'treatmentJiraTicket' in selectedTreatments[0]
+         'treatmentId' in selectedTreatments[0]
 }
 
 interface Workshop {
@@ -124,10 +126,7 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
         await onSave(editValue.trim())
         setIsEditing(false)
       } catch (error) {
-        console.error(
-          `Error saving field${fieldName ? ` "${fieldName}"` : ''}: value="${editValue.trim()}"`,
-          error
-        )
+        console.error('Error saving:', error)
       } finally {
         setIsSaving(false)
       }
@@ -222,13 +221,13 @@ const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatment
 
   if (isStringArray(selectedTreatments)) {
     return allRiskTreatments.filter(treatment => 
-      selectedTreatments.includes(treatment.treatmentJiraTicket)
+      selectedTreatments.includes(treatment.treatmentId)
     )
   }
 
   if (isTreatmentMinutesArray(selectedTreatments)) {
     return allRiskTreatments.filter(treatment => 
-      selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
+      selectedTreatments.some(st => st.treatmentId === treatment.treatmentId)
     )
   }
 
@@ -236,13 +235,13 @@ const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatment
 }
 
 const getTreatmentMinutes = (
-  treatmentJiraTicket: string,
+  treatmentId: string,
   selectedTreatments?: SelectedTreatments
 ): TreatmentMinutes | undefined => {
   if (!selectedTreatments || selectedTreatments.length === 0) return undefined
   
   if (isTreatmentMinutesArray(selectedTreatments)) {
-    return selectedTreatments.find(st => st.treatmentJiraTicket === treatmentJiraTicket)
+    return selectedTreatments.find(st => st.treatmentId === treatmentId)
   }
   
   return undefined
@@ -261,7 +260,7 @@ interface RiskCardProps {
   treatments: Treatment[]
   sectionType: 'extensions' | 'closure' | 'newRisks'
   onUpdate: (field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
-  onUpdateTreatment: (treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
+  onUpdateTreatment: (treatmentId: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
 }
 
 function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment }: RiskCardProps) {
@@ -294,11 +293,11 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <span className="text-sm font-medium text-gray-900">Risk ID: {item.riskId}</span>
-                             {risk?.riskLevel && (
-                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
-                   {risk.riskLevel}
-                 </span>
-               )}
+              {risk?.riskLevel && (
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
+                  {risk.riskLevel}
+                </span>
+              )}
             </div>
             {risk && (
               <div className="space-y-3">
@@ -319,9 +318,9 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
         {riskTreatments.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Treatments</h4>
-                         <div className="space-y-4">
-               {riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
-                 const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
+            <div className="space-y-4">
+              {riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
+                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentId, item.selectedTreatments)
                 return (
                   <div key={treatmentIndex} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
@@ -341,7 +340,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                         <EditableField
                           value={treatmentMinutes?.actionsTaken || ''}
                           placeholder="Add actions taken..."
-                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'actionsTaken', value)}
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentId, 'actionsTaken', value)}
                         />
                       </div>
                       <div>
@@ -349,7 +348,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                         <EditableField
                           value={treatmentMinutes?.toDo || ''}
                           placeholder="Add to do items..."
-                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'toDo', value)}
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentId, 'toDo', value)}
                         />
                       </div>
                       <div>
@@ -357,7 +356,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                         <EditableField
                           value={treatmentMinutes?.outcome || ''}
                           placeholder="Add outcome..."
-                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'outcome', value)}
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentId, 'outcome', value)}
                         />
                       </div>
                     </div>
@@ -467,10 +466,10 @@ export default function WorkshopDetails() {
   }
 
   // Update treatment-level meeting minutes
-  const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
+  const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentId: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
-    const fieldKey = `${section}-${index}-treatment-${treatmentJiraTicket}-${field}`
+    const fieldKey = `${section}-${index}-treatment-${treatmentId}-${field}`
     setSavingFields(prev => new Set(prev).add(fieldKey))
     
     try {
@@ -486,7 +485,8 @@ export default function WorkshopDetails() {
         // Convert string array to TreatmentMinutes array if needed
         if (isStringArray(item.selectedTreatments)) {
           item.selectedTreatments = item.selectedTreatments.map(treatmentId => ({
-            treatmentJiraTicket: treatmentId,
+            treatmentId: treatmentId,
+            treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
             actionsTaken: '',
             toDo: '',
             outcome: ''
@@ -495,12 +495,13 @@ export default function WorkshopDetails() {
         
         // Ensure it's a TreatmentMinutes array
         if (isTreatmentMinutesArray(item.selectedTreatments)) {
-          let treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentJiraTicket === treatmentJiraTicket)
+          let treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentId === treatmentId)
           
           // If treatment not found, add it
           if (treatmentIndex === -1) {
             item.selectedTreatments.push({
-              treatmentJiraTicket,
+              treatmentId,
+              treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
               actionsTaken: '',
               toDo: '',
               outcome: ''
@@ -723,8 +724,6 @@ export default function WorkshopDetails() {
     )
   }
 
-
-
   if (error || !workshop) {
     return (
       <div className="space-y-6">
@@ -762,14 +761,14 @@ export default function WorkshopDetails() {
             >
               <Icon name="arrow-left" size={16} />
             </button>
-                         <div>
-               <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-                 Risk Workshop - {workshop.id}
-               </h1>
-               <p className="text-gray-600" style={{ color: '#22223B' }}>
-                 {formatDate(workshop.date)} Meeting Minutes
-               </p>
-             </div>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
+                Risk Workshop - {workshop.id}
+              </h1>
+              <p className="text-gray-600" style={{ color: '#22223B' }}>
+                {formatDate(workshop.date)} Meeting Minutes
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -793,84 +792,83 @@ export default function WorkshopDetails() {
           </div>
         </div>
 
-                 {/* Workshop Overview Section */}
-         <div className="mb-8">
-           <div className="flex items-center mb-6">
-             <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-             <h3 className="text-lg font-semibold text-gray-900">Workshop Overview</h3>
-             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-3 ${getStatusColor(workshop.status)}`}>
-               {workshop.status}
-             </span>
-           </div>
-           
-                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              
-                             <div className="bg-gray-50 rounded-lg p-4">
-                 <div className="space-y-2">
-                   <div className="text-sm">
-                     <span className="font-medium text-gray-900">Facilitator:</span>
-                     <span className="text-gray-700 ml-1">
-                       {workshop.facilitator}
-                       {workshop.facilitatorPosition && (
-                         <span className="text-gray-500 ml-1">({workshop.facilitatorPosition})</span>
-                       )}
-                     </span>
-                   </div>
-                                       <div className="text-sm">
-                      <span className="font-medium text-gray-900">Participants:</span>
-                      {workshop.participants.length > 0 ? (
-                        <div className="mt-1 space-y-1">
-                          {workshop.participants.map((participant, index) => {
-                            // Handle both old string format and new object format
-                            if (typeof participant === 'string') {
-                              // Old format: "Name, Position" or just "Name"
-                              const parts = participant.split(', ')
-                              const name = parts[0]
-                              const position = parts[1]
-                              return (
-                                <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
-                                  {name}
-                                  {position && (
-                                    <span className="text-gray-500 ml-1">({position})</span>
-                                  )}
-                                </div>
-                              )
-                            } else {
-                              // New format: { name: string, position?: string }
-                              return (
-                                <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
-                                  {participant.name}
-                                  {participant.position && (
-                                    <span className="text-gray-500 ml-1">({participant.position})</span>
-                                  )}
-                                </div>
-                              )
-                            }
-                          })}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 italic ml-1">No participants listed</span>
-                      )}
-                    </div>
-                 </div>
-               </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <span className="text-xs text-gray-500 uppercase tracking-wide">Agenda</span>
-                <div className="mt-2 space-y-2">
-                  <div className="text-sm text-gray-700">• Extensions of risk treatment due dates</div>
-                  <div className="text-sm text-gray-700">• Closure of risks and treatments</div>
-                  <div className="text-sm text-gray-700">• Discussion of newly identified risks</div>
+        {/* Workshop Overview Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Workshop Overview</h3>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-3 ${getStatusColor(workshop.status)}`}>
+              {workshop.status}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">Facilitator:</span>
+                  <span className="text-gray-700 ml-1">
+                    {workshop.facilitator}
+                    {workshop.facilitatorPosition && (
+                      <span className="text-gray-500 ml-1">({workshop.facilitatorPosition})</span>
+                    )}
+                  </span>
                 </div>
-              </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <span className="text-xs text-gray-500 uppercase tracking-wide">Summary</span>
-                <div className="mt-1 text-sm font-medium text-gray-900">
-                  {workshop.extensions?.length || 0} extensions, {workshop.closure?.length || 0} closures, {workshop.newRisks?.length || 0} new risks
+                <div className="text-sm">
+                  <span className="font-medium text-gray-900">Participants:</span>
+                  {workshop.participants.length > 0 ? (
+                    <div className="mt-1 space-y-1">
+                      {workshop.participants.map((participant, index) => {
+                        // Handle both old string format and new object format
+                        if (typeof participant === 'string') {
+                          // Old format: "Name, Position" or just "Name"
+                          const parts = participant.split(', ')
+                          const name = parts[0]
+                          const position = parts[1]
+                          return (
+                            <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                              {name}
+                              {position && (
+                                <span className="text-gray-500 ml-1">({position})</span>
+                              )}
+                            </div>
+                          )
+                        } else {
+                          // New format: { name: string, position?: string }
+                          return (
+                            <div key={index} className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                              {participant.name}
+                              {participant.position && (
+                                <span className="text-gray-500 ml-1">({participant.position})</span>
+                              )}
+                            </div>
+                          )
+                        }
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-gray-500 italic ml-1">No participants listed</span>
+                  )}
                 </div>
               </div>
             </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Agenda</span>
+              <div className="mt-2 space-y-2">
+                <div className="text-sm text-gray-700">• Extensions of risk treatment due dates</div>
+                <div className="text-sm text-gray-700">• Closure of risks and treatments</div>
+                <div className="text-sm text-gray-700">• Discussion of newly identified risks</div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <span className="text-xs text-gray-500 uppercase tracking-wide">Summary</span>
+              <div className="mt-1 text-sm font-medium text-gray-900">
+                {workshop.extensions?.length || 0} extensions, {workshop.closure?.length || 0} closures, {workshop.newRisks?.length || 0} new risks
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Meeting Minutes Section */}
@@ -891,10 +889,6 @@ export default function WorkshopDetails() {
                   {workshop.extensions.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
-                    
-
                     
                     return (
                       <RiskCard
@@ -904,7 +898,7 @@ export default function WorkshopDetails() {
                         treatments={allRiskTreatments}
                         sectionType="extensions"
                         onUpdate={(field, value) => updateRiskMinutes('extensions', index, field, value)}
-                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('extensions', index, treatmentJiraTicket, field, value)}
+                        onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('extensions', index, treatmentId, field, value)}
                       />
                     )
                   })}
@@ -926,10 +920,6 @@ export default function WorkshopDetails() {
                   {workshop.closure.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
-                    
-
                     
                     return (
                       <RiskCard
@@ -939,7 +929,7 @@ export default function WorkshopDetails() {
                         treatments={allRiskTreatments}
                         sectionType="closure"
                         onUpdate={(field, value) => updateRiskMinutes('closure', index, field, value)}
-                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('closure', index, treatmentJiraTicket, field, value)}
+                        onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('closure', index, treatmentId, field, value)}
                       />
                     )
                   })}
@@ -961,10 +951,6 @@ export default function WorkshopDetails() {
                   {workshop.newRisks.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
-                    
-
                     
                     return (
                       <RiskCard
@@ -974,7 +960,7 @@ export default function WorkshopDetails() {
                         treatments={allRiskTreatments}
                         sectionType="newRisks"
                         onUpdate={(field, value) => updateRiskMinutes('newRisks', index, field, value)}
-                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('newRisks', index, treatmentJiraTicket, field, value)}
+                        onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('newRisks', index, treatmentId, field, value)}
                       />
                     )
                   })}

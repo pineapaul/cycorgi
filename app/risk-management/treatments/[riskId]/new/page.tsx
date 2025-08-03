@@ -9,7 +9,8 @@ import { TREATMENT_STATUS } from '../../../../../lib/constants'
 
 interface TreatmentFormData {
   riskId: string
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskTreatment: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
@@ -33,7 +34,8 @@ export default function AddTreatment() {
   
   const [formData, setFormData] = useState<TreatmentFormData>({
     riskId: riskId,
-    treatmentJiraTicket: '',
+    treatmentId: '',
+    treatmentJira: '',
     riskTreatment: '',
     riskTreatmentOwner: '',
     dateRiskTreatmentDue: '',
@@ -49,7 +51,7 @@ export default function AddTreatment() {
   const [errors, setErrors] = useState<TreatmentFormErrors>({})
   const [riskDetails, setRiskDetails] = useState<any>(null)
 
-  const mandatoryFields = ['treatmentJiraTicket', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
+  const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
 
   // Fetch risk details to display context
   useEffect(() => {

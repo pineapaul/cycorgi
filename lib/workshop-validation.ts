@@ -21,7 +21,8 @@ const isValidWorkshopStatus = (status: unknown): status is WorkshopStatus => {
 }
 
 export interface TreatmentMinutes {
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   actionsTaken?: string
   toDo?: string
   outcome?: string
@@ -39,7 +40,7 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
   return selectedTreatments.length > 0 && 
          typeof selectedTreatments[0] === 'object' && 
          selectedTreatments[0] !== null &&
-         'treatmentJiraTicket' in selectedTreatments[0]
+         'treatmentId' in selectedTreatments[0]
 }
 
 export interface MeetingMinutesItem {
@@ -64,8 +65,11 @@ export interface WorkshopData {
 
 // Validate Treatment Minutes structure
 const validateTreatmentMinutes = (treatment: any, sectionName: string): void => {
-  if (!treatment.treatmentJiraTicket || typeof treatment.treatmentJiraTicket !== 'string') {
-    throw new Error(`${sectionName}: Each treatment must have a valid treatmentJiraTicket string`)
+  if (!treatment.treatmentId || typeof treatment.treatmentId !== 'string') {
+    throw new Error(`${sectionName}: Each treatment must have a valid treatmentId string`)
+  }
+  if (treatment.treatmentJira && typeof treatment.treatmentJira !== 'string') {
+    throw new Error(`${sectionName}: treatment treatmentJira must be a string`)
   }
   if (treatment.actionsTaken && typeof treatment.actionsTaken !== 'string') {
     throw new Error(`${sectionName}: treatment actionsTaken must be a string`)

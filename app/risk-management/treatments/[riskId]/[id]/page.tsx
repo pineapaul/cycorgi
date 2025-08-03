@@ -20,7 +20,8 @@ interface Extension {
 interface Treatment {
   _id: string
   riskId: string
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskTreatment: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
@@ -485,7 +486,7 @@ export default function TreatmentInformation() {
             </button>
                          <div>
                <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-                 {treatment.treatmentJiraTicket} - Treatment Details
+                 {treatment.treatmentId} - Treatment Details
                </h1>
              </div>
           </div>

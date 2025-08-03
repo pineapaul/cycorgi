@@ -43,9 +43,9 @@ export async function POST(
     const client = await clientPromise
     const db = client.db('cycorgi')
 
-    // Find the treatment by treatmentJiraTicket and riskId
+    // Find the treatment by treatmentId and riskId
     const treatment = await db.collection('treatments').findOne({
-      treatmentJiraTicket: treatmentId,
+      treatmentId: treatmentId,
       riskId: riskId
     })
 
@@ -68,7 +68,7 @@ export async function POST(
     // Add the extension to the treatment
     const result = await db.collection('treatments').updateOne(
       { 
-        treatmentJiraTicket: treatmentId,
+        treatmentId: treatmentId,
         riskId: riskId
       },
       {

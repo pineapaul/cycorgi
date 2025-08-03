@@ -25,7 +25,8 @@ interface TreatmentExtension {
 }
 
 interface Treatment {
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskId: string
   riskTreatment: string
   riskTreatmentOwner: string
@@ -312,11 +313,11 @@ export default function NewWorkshop() {
     setSelectedCategory('extensions')
   }
 
-  const handleTreatmentSelection = (treatmentJiraTicket: string, checked: boolean) => {
+  const handleTreatmentSelection = (treatmentId: string, checked: boolean) => {
     if (checked) {
-      setSelectedTreatments(prev => [...prev, treatmentJiraTicket])
+      setSelectedTreatments(prev => [...prev, treatmentId])
     } else {
-      setSelectedTreatments(prev => prev.filter(id => id !== treatmentJiraTicket))
+      setSelectedTreatments(prev => prev.filter(id => id !== treatmentId))
     }
   }
 
@@ -417,7 +418,8 @@ export default function NewWorkshop() {
       parsedRisks.forEach(risk => {
         // Convert selected treatment IDs to TreatmentMinutes structure
         const selectedTreatmentMinutes = risk.treatments.map(treatmentId => ({
-          treatmentJiraTicket: treatmentId,
+          treatmentId: treatmentId,
+          treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
           actionsTaken: '',
           toDo: '',
           outcome: ''
@@ -659,17 +661,17 @@ export default function NewWorkshop() {
                     ) : (
                       <div className="space-y-2">
                         {treatments.map(treatment => (
-                          <div key={treatment.treatmentJiraTicket} className="flex items-start">
+                          <div key={treatment.treatmentId} className="flex items-start">
                             <input
                               type="checkbox"
-                              id={`treatment-${selectedRiskId}-${treatment.treatmentJiraTicket}`}
-                              checked={selectedTreatments.includes(treatment.treatmentJiraTicket)}
-                              onChange={(e) => handleTreatmentSelection(treatment.treatmentJiraTicket, e.target.checked)}
+                              id={`treatment-${selectedRiskId}-${treatment.treatmentId}`}
+                              checked={selectedTreatments.includes(treatment.treatmentId)}
+                              onChange={(e) => handleTreatmentSelection(treatment.treatmentId, e.target.checked)}
                               className="mt-1 mr-3"
                             />
                             <div className="flex-1">
-                              <label htmlFor={`treatment-${selectedRiskId}-${treatment.treatmentJiraTicket}`} className="text-sm text-gray-700 cursor-pointer">
-                                <div className="font-medium text-gray-900">{treatment.treatmentJiraTicket}</div>
+                              <label htmlFor={`treatment-${selectedRiskId}-${treatment.treatmentId}`} className="text-sm text-gray-700 cursor-pointer">
+                                <div className="font-medium text-gray-900">{treatment.treatmentId}</div>
                                 <div className="text-gray-700">{treatment.riskTreatment}</div>
                               </label>
                               <div className="flex items-center mt-1 space-x-4 text-xs text-gray-500">

@@ -10,9 +10,9 @@ export async function GET(
     const db = client.db('cycorgi')
     const { riskId, treatmentId } = await params
 
-    // Query by treatmentJiraTicket and riskId to ensure we get the correct treatment
+    // Query by treatmentId and riskId to ensure we get the correct treatment
     const treatment = await db.collection('treatments').findOne({
-      treatmentJiraTicket: treatmentId,
+      treatmentId: treatmentId,
       riskId: riskId
     })
 
