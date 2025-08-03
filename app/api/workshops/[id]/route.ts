@@ -50,14 +50,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('API: Starting PUT request')
     const { id } = await params
-    const body = await request.json()
+    console.log('API: Workshop ID from params:', id)
     
+    const body = await request.json()
     console.log('API: Received update request for workshop:', id)
     console.log('API: Request body:', JSON.stringify(body, null, 2))
     
     // Validate workshop data using shared validation function
     try {
+      console.log('API: Starting validation')
       validateWorkshopForUpdate(body)
       console.log('API: Validation passed')
     } catch (validationError) {
@@ -68,9 +71,11 @@ export async function PUT(
       }, { status: 400 })
     }
     
+    console.log('API: Connecting to MongoDB')
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
+    console.log('API: MongoDB connected successfully')
     
     // Add updatedAt timestamp
     const updateData = {
@@ -81,6 +86,7 @@ export async function PUT(
     console.log('API: Update data:', JSON.stringify(updateData, null, 2))
     
     // Try to update by workshop ID first, then by MongoDB _id
+    console.log('API: Attempting first update by workshop ID')
     let result = await collection.updateOne(
       { id },
       { $set: updateData }
@@ -90,6 +96,7 @@ export async function PUT(
     
     if (result.matchedCount === 0) {
       // If not found by workshop ID, try by MongoDB _id
+      console.log('API: Workshop not found by ID, trying by MongoDB _id')
       try {
         result = await collection.updateOne(
           { _id: new ObjectId(id) },
@@ -117,6 +124,7 @@ export async function PUT(
     })
   } catch (error) {
     console.error('API: Error updating workshop:', error)
+    console.error('API: Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json({
       success: false,
       error: 'Failed to update workshop'
