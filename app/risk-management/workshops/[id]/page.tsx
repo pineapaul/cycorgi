@@ -83,7 +83,7 @@ interface Workshop {
     position?: string
   }>
   risks: string[]
-  outcomes: string
+  outcomes?: string
   securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
   actionsTaken?: string
   toDo?: string
@@ -493,43 +493,47 @@ export default function WorkshopDetails() {
         
         // Convert string array to TreatmentMinutes array if needed
         if (isStringArray(item.selectedTreatments)) {
-          item.selectedTreatments = item.selectedTreatments.map(treatmentId => ({
-            treatmentId: treatmentId,
-            treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
+          item.selectedTreatments = item.selectedTreatments.map(treatmentIdStr => ({
+            treatmentId: treatmentIdStr,
+            treatmentJira: `https://jira.company.com/browse/${treatmentIdStr}`,
             actionsTaken: '',
             toDo: '',
             outcome: ''
           }))
         }
         
-        // Handle empty array or ensure it's a TreatmentMinutes array
-        if (isEmptyOrTreatmentMinutesArray(item.selectedTreatments)) {
-          // If it's empty, ensure it's typed as TreatmentMinutes[]
-          if (item.selectedTreatments.length === 0) {
-            item.selectedTreatments = [] as TreatmentMinutes[]
-          }
-          
-          let treatmentIndex = (item.selectedTreatments as TreatmentMinutes[]).findIndex(t => t.treatmentId === treatmentId)
-          
-          // If treatment not found, add it
-          if (treatmentIndex === -1) {
-            (item.selectedTreatments as TreatmentMinutes[]).push({
-              treatmentId,
-              treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
-              actionsTaken: '',
-              toDo: '',
-              outcome: ''
-            })
-            treatmentIndex = (item.selectedTreatments as TreatmentMinutes[]).length - 1
-          }
-          
-          // Update the treatment
-          (item.selectedTreatments as TreatmentMinutes[])[treatmentIndex] = {
-            ...(item.selectedTreatments as TreatmentMinutes[])[treatmentIndex],
-            [field]: value
-          }
+        // Ensure we have a TreatmentMinutes array
+        if (!isTreatmentMinutesArray(item.selectedTreatments)) {
+          // If it's not a TreatmentMinutes array, initialize it
+          item.selectedTreatments = [] as TreatmentMinutes[]
+        }
+        
+        // At this point, TypeScript knows it's a TreatmentMinutes array
+        const treatmentsArray = item.selectedTreatments as TreatmentMinutes[]
+        
+        // Find the treatment in the array
+        let treatmentIndex = treatmentsArray.findIndex(t => t.treatmentId === treatmentId)
+        
+        // If treatment not found, add it
+        if (treatmentIndex === -1) {
+          treatmentsArray.push({
+            treatmentId,
+            treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
+            actionsTaken: '',
+            toDo: '',
+            outcome: ''
+          })
+          treatmentIndex = treatmentsArray.length - 1
+        }
+        
+        // Update the treatment
+        treatmentsArray[treatmentIndex] = {
+          ...treatmentsArray[treatmentIndex],
+          [field]: value
         }
       }
+
+      console.log('Updating workshop with data:', JSON.stringify(updatedWorkshop, null, 2))
 
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
@@ -540,6 +544,8 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
+      console.log('Update response:', result)
+      
       if (result.success) {
         setWorkshop(updatedWorkshop)
         showToast({
