@@ -6,6 +6,22 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 
+interface Participant {
+  name: string
+  position?: string
+}
+
+type ParticipantData = string | Participant
+
+// Type guards for participant data
+const isParticipantObject = (participant: ParticipantData): participant is Participant => {
+  return typeof participant === 'object' && participant !== null && 'name' in participant
+}
+
+const isParticipantString = (participant: ParticipantData): participant is string => {
+  return typeof participant === 'string'
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -13,10 +29,7 @@ interface Workshop {
   status: 'Pending Agenda' | 'Planned' | 'Scheduled' | 'Finalising Meeting Minutes' | 'Completed'
   facilitator: string
   facilitatorPosition?: string
-  participants: Array<string | {
-    name: string
-    position?: string
-  }>
+  participants: ParticipantData[]
   risks: string[]
   notes?: string
   // Meeting Minutes subsections
@@ -100,9 +113,14 @@ export default function EditWorkshop() {
           
           // Convert participants to string array if needed
           const participants = Array.isArray(workshopData.participants) 
-            ? workshopData.participants.map((p: any) => 
-                typeof p === 'string' ? p : `${p.name}${p.position ? `, ${p.position}` : ''}`
-              )
+            ? workshopData.participants.map((p: ParticipantData) => {
+                if (isParticipantString(p)) {
+                  return p
+                } else if (isParticipantObject(p)) {
+                  return `${p.name}${p.position ? `, ${p.position}` : ''}`
+                }
+                return ''
+              }).filter(p => p.length > 0)
             : []
           
           setFormData({
@@ -131,7 +149,7 @@ export default function EditWorkshop() {
     }
   }, [params.id])
 
-  const handleInputChange = (field: keyof WorkshopFormData, value: any) => {
+  const handleInputChange = (field: keyof WorkshopFormData, value: string | string[] | Workshop['status']) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -172,6 +190,20 @@ export default function EditWorkshop() {
     return true
   }
 
+  // Helper function to convert string participants back to proper format
+  const convertParticipantsToAPIFormat = (participants: string[]): ParticipantData[] => {
+    return participants.map(participant => {
+      const parts = participant.split(', ')
+      if (parts.length > 1) {
+        return {
+          name: parts[0].trim(),
+          position: parts.slice(1).join(', ').trim()
+        }
+      }
+      return participant.trim()
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -182,28 +214,32 @@ export default function EditWorkshop() {
     setSaving(true)
 
     try {
+      // Convert participants back to proper format for API
+      const apiFormData = {
+        ...formData,
+        participants: convertParticipantsToAPIFormat(formData.participants)
+      }
+
       const response = await fetch(`/api/workshops/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiFormData),
       })
 
       const result = await response.json()
 
-      if (result.success) {
-        showToast({
-          type: 'success',
-          title: 'Workshop Updated',
-          message: `Workshop ${workshop?.id} has been updated successfully`
-        })
-        
-        // Redirect back to the workshop details page
-        setTimeout(() => {
-          router.push(`/risk-management/workshops/${workshop?.id}`)
-        }, 1500)
-      } else {
+             if (result.success) {
+         showToast({
+           type: 'success',
+           title: 'Workshop Updated',
+           message: `Workshop ${workshop?.id} has been updated successfully`
+         })
+         
+         // Navigate immediately back to the workshop details page
+         router.push(`/risk-management/workshops/${workshop?.id}`)
+       } else {
         showToast({
           type: 'error',
           title: 'Update Failed',

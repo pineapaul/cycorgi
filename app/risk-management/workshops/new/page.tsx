@@ -465,10 +465,8 @@ export default function NewWorkshop() {
           message: `Workshop ${nextWorkshopId} has been created successfully`
         })
         
-        // Redirect to the new workshop page after a short delay
-        setTimeout(() => {
-          router.push(`/risk-management/workshops/${nextWorkshopId}`)
-        }, 1500)
+        // Navigate immediately to the new workshop page
+        router.push(`/risk-management/workshops/${nextWorkshopId}`)
       } else {
         showToast({
           type: 'error',
