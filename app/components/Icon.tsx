@@ -63,7 +63,14 @@ import {
   faShieldHalved,
   faMessage,
   faPaperPlane,
-  faComments
+  faComments,
+  faHammer,
+  faCalendar,
+  faServer,
+  faWrench,
+  faArrowTrendUp,
+  faBullseye,
+  faFileLines
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -141,6 +148,13 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'message-circle': faMessage,
     send: faPaperPlane,
     comments: faComments,
+    construction: faHammer,
+    calendar: faCalendar,
+    server: faServer,
+    'wrench-screwdriver': faWrench,
+    'arrow-trending-up': faArrowTrendUp,
+    target: faBullseye,
+    'document-text': faFileLines,
   }
 
   const icon = icons[name]
@@ -227,6 +241,13 @@ function getFallbackEmoji(name: string): string {
     'message-circle': '💬',
     send: '📤',
     comments: '💬',
+    construction: '🔨',
+    calendar: '📅',
+    server: '🖥️',
+    'wrench-screwdriver': '🔧',
+    'arrow-trending-up': '📈',
+    target: '🎯',
+    'document-text': '📄',
   }
   return emojiMap[name] || '📄'
 } 
