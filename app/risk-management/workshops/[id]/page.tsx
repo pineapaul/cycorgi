@@ -124,7 +124,10 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
         await onSave(editValue.trim())
         setIsEditing(false)
       } catch (error) {
-        console.error('Error saving:', error)
+        console.error(
+          `Error saving field${fieldName ? ` "${fieldName}"` : ''}: value="${editValue.trim()}"`,
+          error
+        )
       } finally {
         setIsSaving(false)
       }
