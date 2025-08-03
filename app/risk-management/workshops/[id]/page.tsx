@@ -493,9 +493,9 @@ export default function WorkshopDetails() {
         
         // Convert string array to TreatmentMinutes array if needed
         if (isStringArray(item.selectedTreatments)) {
-          item.selectedTreatments = item.selectedTreatments.map(treatmentId => ({
-            treatmentId: treatmentId,
-            treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
+          item.selectedTreatments = item.selectedTreatments.map(treatmentIdStr => ({
+            treatmentId: treatmentIdStr,
+            treatmentJira: `https://jira.company.com/browse/${treatmentIdStr}`,
             actionsTaken: '',
             toDo: '',
             outcome: ''
@@ -531,6 +531,8 @@ export default function WorkshopDetails() {
         }
       }
 
+      console.log('Updating workshop with data:', JSON.stringify(updatedWorkshop, null, 2))
+      
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
         headers: {
@@ -540,6 +542,8 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
+      console.log('Update response:', result)
+      
       if (result.success) {
         setWorkshop(updatedWorkshop)
         showToast({
