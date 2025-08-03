@@ -128,10 +128,12 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
   const [isSaving, setIsSaving] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
 
-  // Update editValue when value prop changes
+  // Update editValue when value prop changes, but only when not currently editing
   useEffect(() => {
-    setEditValue(value)
-  }, [value])
+    if (!isEditing) {
+      setEditValue(value)
+    }
+  }, [value, isEditing])
 
   const handleSave = async () => {
     if (editValue.trim() !== value) {
@@ -849,6 +851,10 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
     extendedDueDate: '',
     justification: ''
   })
+  const [errors, setErrors] = useState<{
+    extendedDueDate?: string
+    justification?: string
+  }>({})
   const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -858,6 +864,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
         extendedDueDate: '',
         justification: ''
       })
+      setErrors({})
     }
   }, [isOpen])
 
@@ -926,9 +933,42 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
     }
   }
 
+  const validateForm = () => {
+    const newErrors: { extendedDueDate?: string; justification?: string } = {}
+
+    // Validate extended due date
+    if (!formData.extendedDueDate) {
+      newErrors.extendedDueDate = 'Extended due date is required'
+    } else {
+      const selectedDate = new Date(formData.extendedDueDate)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      selectedDate.setHours(0, 0, 0, 0)
+      
+      if (isNaN(selectedDate.getTime())) {
+        newErrors.extendedDueDate = 'Please enter a valid date'
+      } else if (selectedDate < today) {
+        newErrors.extendedDueDate = 'Extended due date must be today or a future date'
+      }
+    }
+
+    // Validate justification
+    const trimmedJustification = formData.justification.trim()
+    if (!trimmedJustification) {
+      newErrors.justification = 'Justification is required'
+    } else if (trimmedJustification.length < 10) {
+      newErrors.justification = `Justification must be at least 10 characters long (currently ${trimmedJustification.length} characters)`
+    } else if (trimmedJustification.length > 1000) {
+      newErrors.justification = 'Justification must be less than 1000 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.extendedDueDate && formData.justification.trim()) {
+    if (validateForm()) {
       await onSubmit(formData)
       onClose()
     }
@@ -939,6 +979,35 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       ...prev,
       [field]: value
     }))
+    
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }))
+    }
+
+    // Real-time validation for justification field
+    if (field === 'justification') {
+      const trimmedValue = value.trim()
+      if (trimmedValue && trimmedValue.length < 10) {
+        setErrors(prev => ({
+          ...prev,
+          justification: `Justification must be at least 10 characters long (currently ${trimmedValue.length} characters)`
+        }))
+      } else if (trimmedValue && trimmedValue.length > 1000) {
+        setErrors(prev => ({
+          ...prev,
+          justification: 'Justification must be less than 1000 characters'
+        }))
+      } else if (trimmedValue) {
+        setErrors(prev => ({
+          ...prev,
+          justification: undefined
+        }))
+      }
+    }
   }
 
   if (!isOpen) return null
@@ -992,7 +1061,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
 
           <div>
             <label htmlFor="extendedDueDate" className="block text-sm font-medium text-gray-700 mb-2">
-              Extended Due Date <span className="text-red-500">*</span>
+              Extended Due Date <span className="text-red-500" aria-label="required">*</span>
             </label>
             <input
               type="date"
@@ -1000,19 +1069,31 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
               name="extendedDueDate"
               value={formData.extendedDueDate}
               onChange={(e) => handleInputChange('extendedDueDate', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                errors.extendedDueDate 
+                  ? 'border-red-300 focus:ring-red-500' 
+                  : 'border-gray-300 focus:ring-purple-500'
+              }`}
               required
               min={new Date().toISOString().split('T')[0]}
-              aria-describedby="date-help"
+              aria-invalid={errors.extendedDueDate ? 'true' : 'false'}
+              aria-describedby={errors.extendedDueDate ? 'date-error' : 'date-help'}
+              aria-required="true"
             />
-            <p id="date-help" className="text-xs text-gray-500 mt-1">
-              Must be today or a future date
-            </p>
+            {errors.extendedDueDate ? (
+              <p id="date-error" className="text-xs text-red-600 mt-1" role="alert">
+                {errors.extendedDueDate}
+              </p>
+            ) : (
+              <p id="date-help" className="text-xs text-gray-500 mt-1">
+                Must be today or a future date
+              </p>
+            )}
           </div>
 
           <div>
             <label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-2">
-              Justification <span className="text-red-500">*</span>
+              Justification <span className="text-red-500" aria-label="required">*</span>
             </label>
             <textarea
               id="justification"
@@ -1020,11 +1101,33 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
               value={formData.justification}
               onChange={(e) => handleInputChange('justification', e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              maxLength={1000}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
+                errors.justification 
+                  ? 'border-red-300 focus:ring-red-500' 
+                  : 'border-gray-300 focus:ring-purple-500'
+              }`}
               placeholder="Please provide a detailed justification for the extension request..."
               required
-              aria-describedby="justification-help"
+              aria-invalid={errors.justification ? 'true' : 'false'}
+              aria-describedby={errors.justification ? 'justification-error' : 'justification-help'}
+              aria-required="true"
+              aria-label="Justification for extension request"
             />
+            <div className="flex justify-between items-center mt-1">
+              {errors.justification ? (
+                <p id="justification-error" className="text-xs text-red-600" role="alert" aria-live="polite">
+                  {errors.justification}
+                </p>
+              ) : (
+                <p id="justification-help" className="text-xs text-gray-500">
+                  Provide a detailed explanation for why the extension is needed (minimum 10 characters)
+                </p>
+              )}
+              <span className="text-xs text-gray-400" aria-label="Character count">
+                {formData.justification.trim().length}/1000
+              </span>
+            </div>
           </div>
 
           {/* Form Actions */}
@@ -1041,7 +1144,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim()}
+              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || Object.keys(errors).length > 0}
               aria-label="Submit extension request"
             >
               {submitting ? (
