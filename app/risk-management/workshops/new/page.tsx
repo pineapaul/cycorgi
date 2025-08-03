@@ -417,6 +417,7 @@ export default function NewWorkshop() {
       parsedRisks.forEach(risk => {
         const riskData: MeetingMinutesItem = {
           riskId: risk.riskId,
+          selectedTreatments: risk.treatments, // Include the selected treatment IDs
           actionsTaken: '',
           toDo: '',
           outcome: ''
