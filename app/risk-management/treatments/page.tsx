@@ -88,7 +88,7 @@ export default function Treatments() {
              }
 
              return {
-               treatmentId: treatment.treatmentJiraTicket,
+               treatmentId: treatment.treatmentId,
                riskId: treatment.riskId,
                riskStatement: treatment.riskStatement || 'Not specified',
                informationAsset: treatment.informationAsset || 'Not specified',

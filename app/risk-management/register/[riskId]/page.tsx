@@ -44,7 +44,8 @@ interface RiskDetails {
 
 interface Treatment {
   riskTreatment: string
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
   extendedDueDate: string
@@ -703,7 +704,7 @@ export default function RiskInformation() {
               ${treatments.map(treatment => `
                 <tr>
                   <td>${treatment.riskTreatment}</td>
-                  <td>${treatment.treatmentJiraTicket}</td>
+                                      <td>${treatment.treatmentId}</td>
                   <td>${treatment.riskTreatmentOwner}</td>
                   <td>${formatDate(treatment.dateRiskTreatmentDue)}</td>
                   <td>${formatDate(treatment.extendedDueDate)}</td>
@@ -1614,7 +1615,7 @@ export default function RiskInformation() {
             columns={[
               { key: 'riskTreatment', label: 'Risk Treatment', sortable: true },
               { key: 'actions', label: 'Actions', sortable: false },
-              { key: 'treatmentJiraTicket', label: 'Treatment Jira Ticket', sortable: true },
+              { key: 'treatmentId', label: 'Treatment ID', sortable: true },
               { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true },
               { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true },
               { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true },
@@ -1625,7 +1626,7 @@ export default function RiskInformation() {
             ].map(col => ({
               ...col,
               render: (value: any, row: any) => {
-                if (col.key === 'treatmentJiraTicket') {
+                if (col.key === 'treatmentId') {
                   return (
                     <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
                       {value}
@@ -1655,7 +1656,7 @@ export default function RiskInformation() {
                      <div className="flex items-center space-x-2">
                        <Tooltip content="View Treatment Details">
                          <Link
-                           href={`/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentJiraTicket}`}
+                           href={`/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentId}`}
                            className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                          >
                            <Icon name="eye" size={12} />
@@ -1665,7 +1666,7 @@ export default function RiskInformation() {
                          <button
                            onClick={(e) => {
                              e.stopPropagation()
-                             const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentJiraTicket}`
+                             const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.riskId)}/${row.treatmentId}`
                              navigator.clipboard.writeText(url).then(() => {
                                showToast({
                                  title: 'Success',
@@ -1692,7 +1693,7 @@ export default function RiskInformation() {
                              // TODO: Implement workshop agenda functionality
                              showToast({
                                title: 'Success',
-                               message: `Treatment ${row.treatmentJiraTicket} added to workshop agenda!`,
+                               message: `Treatment ${row.treatmentId} added to workshop agenda!`,
                                type: 'success'
                              })
                            }}

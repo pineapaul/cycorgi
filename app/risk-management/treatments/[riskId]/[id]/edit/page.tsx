@@ -11,7 +11,8 @@ import { useBackNavigation } from '../../../../../hooks/useBackNavigation'
 
 interface TreatmentFormData {
   riskId: string
-  treatmentJiraTicket: string
+  treatmentId: string
+  treatmentJira?: string
   riskTreatment: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
@@ -39,7 +40,8 @@ export default function EditTreatment() {
   
   const [formData, setFormData] = useState<TreatmentFormData>({
     riskId: riskId || '',
-    treatmentJiraTicket: '',
+    treatmentId: '',
+    treatmentJira: '',
     riskTreatment: '',
     riskTreatmentOwner: '',
     dateRiskTreatmentDue: '',
@@ -57,7 +59,7 @@ export default function EditTreatment() {
   const [riskDetails, setRiskDetails] = useState<any>(null)
   const [treatmentDetails, setTreatmentDetails] = useState<any>(null)
 
-  const mandatoryFields = ['treatmentJiraTicket', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
+  const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
 
   // Fetch treatment and risk details
   useEffect(() => {
@@ -76,7 +78,8 @@ export default function EditTreatment() {
         // Populate form with existing data
         setFormData({
           riskId: treatmentData.riskId || riskId || '',
-          treatmentJiraTicket: treatmentData.treatmentJiraTicket || '',
+          treatmentId: treatmentData.treatmentId || '',
+          treatmentJira: treatmentData.treatmentJira || '',
           riskTreatment: treatmentData.riskTreatment || '',
           riskTreatmentOwner: treatmentData.riskTreatmentOwner || '',
           dateRiskTreatmentDue: treatmentData.dateRiskTreatmentDue ? new Date(treatmentData.dateRiskTreatmentDue).toISOString().split('T')[0] : '',

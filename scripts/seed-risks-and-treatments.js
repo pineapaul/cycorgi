@@ -282,7 +282,7 @@ function generateTreatments() {
     
     // Generate 4 treatments per risk
     for (let treatmentIndex = 1; treatmentIndex <= 4; treatmentIndex++) {
-      const treatmentJiraTicket = `TREAT-${riskIndex.toString().padStart(3, '0')}-${treatmentIndex.toString().padStart(2, '0')}`;
+      const treatmentId = `TREAT-${riskIndex.toString().padStart(3, '0')}-${treatmentIndex.toString().padStart(2, '0')}`;
       const treatmentType = treatmentTypes[riskIndex - 1];
       const treatmentOwner = treatmentOwners[riskIndex - 1];
       const approver = approvers[riskIndex - 1];
@@ -337,7 +337,8 @@ function generateTreatments() {
 
       const treatment = {
         riskId,
-        treatmentJiraTicket,
+        treatmentId,
+        treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
         riskTreatment: treatmentType,
         riskTreatmentOwner: treatmentOwner,
         dateRiskTreatmentDue: baseDueDate.toISOString().split('T')[0],
