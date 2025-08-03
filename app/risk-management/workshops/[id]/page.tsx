@@ -103,6 +103,287 @@ interface Workshop {
   updatedAt?: string
 }
 
+// Inline Editable Field Component
+interface EditableFieldProps {
+  value: string
+  placeholder: string
+  onSave: (value: string) => void
+  className?: string
+}
+
+function EditableField({ value, placeholder, onSave, className = '' }: EditableFieldProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(value)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (editValue.trim() !== value) {
+      setIsSaving(true)
+      try {
+        await onSave(editValue.trim())
+        setIsEditing(false)
+      } catch (error) {
+        console.error('Error saving:', error)
+      } finally {
+        setIsSaving(false)
+      }
+    } else {
+      setIsEditing(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditValue(value)
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSave()
+    } else if (e.key === 'Escape') {
+      handleCancel()
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className={`relative ${className}`}>
+        <textarea
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSave}
+          placeholder={placeholder}
+          className="w-full p-2 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          rows={3}
+          autoFocus
+        />
+        <div className="absolute top-1 right-1 flex space-x-1">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="p-1 text-green-600 hover:text-green-800 disabled:opacity-50"
+            title="Save"
+          >
+            <Icon name="check" size={14} />
+          </button>
+          <button
+            onClick={handleCancel}
+            className="p-1 text-red-600 hover:text-red-800"
+            title="Cancel"
+          >
+            <Icon name="x" size={14} />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div 
+      className={`group cursor-pointer p-2 rounded-md hover:bg-gray-50 transition-colors ${className}`}
+      onClick={() => setIsEditing(true)}
+    >
+      <div className="text-sm text-gray-700 whitespace-pre-wrap">
+        {value || <span className="text-gray-500 italic">{placeholder}</span>}
+      </div>
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+        <Icon name="pencil" size={12} className="text-gray-400" />
+      </div>
+    </div>
+  )
+}
+
+// Helper functions (moved outside components)
+const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatments?: SelectedTreatments): Treatment[] => {
+  if (!selectedTreatments || selectedTreatments.length === 0) {
+    return allRiskTreatments
+  }
+
+  if (isStringArray(selectedTreatments)) {
+    return allRiskTreatments.filter(treatment => 
+      selectedTreatments.includes(treatment.treatmentJiraTicket)
+    )
+  }
+
+  if (isTreatmentMinutesArray(selectedTreatments)) {
+    return allRiskTreatments.filter(treatment => 
+      selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
+    )
+  }
+
+  return allRiskTreatments
+}
+
+const getTreatmentMinutes = (
+  treatmentJiraTicket: string,
+  selectedTreatments?: SelectedTreatments
+): TreatmentMinutes | undefined => {
+  if (!selectedTreatments || selectedTreatments.length === 0) return undefined
+  
+  if (isTreatmentMinutesArray(selectedTreatments)) {
+    return selectedTreatments.find(st => st.treatmentJiraTicket === treatmentJiraTicket)
+  }
+  
+  return undefined
+}
+
+// Risk Card Component
+interface RiskCardProps {
+  item: {
+    riskId: string
+    selectedTreatments?: SelectedTreatments
+    actionsTaken: string
+    toDo: string
+    outcome: string
+  }
+  risk: Risk | undefined
+  treatments: Treatment[]
+  sectionType: 'extensions' | 'closure' | 'newRisks'
+  onUpdate: (field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
+  onUpdateTreatment: (treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
+}
+
+function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment }: RiskCardProps) {
+  const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
+  
+  const getSectionColor = () => {
+    switch (sectionType) {
+      case 'extensions': return 'border-l-blue-500 bg-blue-50'
+      case 'closure': return 'border-l-green-500 bg-green-50'
+      case 'newRisks': return 'border-l-orange-500 bg-orange-50'
+      default: return 'border-l-gray-500 bg-gray-50'
+    }
+  }
+
+  const getRiskLevelColor = () => {
+    if (!risk || !risk.riskLevel) return 'bg-gray-100 text-gray-800'
+    switch (risk.riskLevel.toLowerCase()) {
+      case 'high': return 'bg-red-100 text-red-800'
+      case 'medium': return 'bg-yellow-100 text-yellow-800'
+      case 'low': return 'bg-green-100 text-green-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  return (
+    <div className={`border-l-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ${getSectionColor()}`}>
+      <div className="p-6">
+        {/* Risk Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-2">
+              <span className="text-sm font-medium text-gray-900">Risk ID: {item.riskId}</span>
+                             {risk && risk.riskLevel && (
+                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
+                   {risk.riskLevel}
+                 </span>
+               )}
+            </div>
+            {risk && (
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Risk Statement</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">{risk.riskStatement}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Information Asset</h4>
+                  <p className="text-sm text-gray-700">{risk.informationAsset}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Risk Treatments */}
+        {riskTreatments.length > 0 && (
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Treatments</h4>
+                         <div className="space-y-4">
+               {riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
+                 const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
+                return (
+                  <div key={treatmentIndex} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-900 mb-1">Treatment Description</h5>
+                        <p className="text-sm text-gray-700">{treatment.riskTreatment}</p>
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-900 mb-1">Owner</h5>
+                        <p className="text-sm text-gray-700">{treatment.riskTreatmentOwner}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                      <div>
+                        <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Actions Taken</h6>
+                        <EditableField
+                          value={treatmentMinutes?.actionsTaken || ''}
+                          placeholder="Add actions taken..."
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'actionsTaken', value)}
+                        />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">To Do</h6>
+                        <EditableField
+                          value={treatmentMinutes?.toDo || ''}
+                          placeholder="Add to do items..."
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'toDo', value)}
+                        />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Outcome</h6>
+                        <EditableField
+                          value={treatmentMinutes?.outcome || ''}
+                          placeholder="Add outcome..."
+                          onSave={(value) => onUpdateTreatment(treatment.treatmentJiraTicket, 'outcome', value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Risk-level Meeting Minutes */}
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk-level Meeting Minutes</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Actions Taken</h6>
+              <EditableField
+                value={item.actionsTaken}
+                placeholder="Add risk-level actions taken..."
+                onSave={(value) => onUpdate('actionsTaken', value)}
+              />
+            </div>
+            <div>
+              <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">To Do</h6>
+              <EditableField
+                value={item.toDo}
+                placeholder="Add risk-level to do items..."
+                onSave={(value) => onUpdate('toDo', value)}
+              />
+            </div>
+            <div>
+              <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Outcome</h6>
+              <EditableField
+                value={item.outcome}
+                placeholder="Add risk-level outcome..."
+                onSave={(value) => onUpdate('outcome', value)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function WorkshopDetails() {
   const params = useParams()
   const router = useRouter()
@@ -112,40 +393,102 @@ export default function WorkshopDetails() {
   const [error, setError] = useState<string | null>(null)
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
+  const [saving, setSaving] = useState(false)
 
-  // Consolidated filtering logic
-  const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatments?: SelectedTreatments): Treatment[] => {
-    if (!selectedTreatments || selectedTreatments.length === 0) {
-      return allRiskTreatments
+  // Update risk-level meeting minutes
+  const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
+    if (!workshop) return
+
+    setSaving(true)
+    try {
+      const updatedWorkshop = { ...workshop }
+      if (updatedWorkshop[section]) {
+        updatedWorkshop[section]![index] = {
+          ...updatedWorkshop[section]![index],
+          [field]: value
+        }
+      }
+
+      const response = await fetch(`/api/workshops/${workshop.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedWorkshop),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        setWorkshop(updatedWorkshop)
+        showToast({
+          type: 'success',
+          title: 'Updated',
+          message: 'Meeting minutes updated successfully'
+        })
+      } else {
+        throw new Error(result.error || 'Failed to update')
+      }
+    } catch (error) {
+      console.error('Error updating risk minutes:', error)
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update meeting minutes. Please try again.'
+      })
+    } finally {
+      setSaving(false)
     }
-
-    if (isStringArray(selectedTreatments)) {
-      return allRiskTreatments.filter(treatment => 
-        selectedTreatments.includes(treatment.treatmentJiraTicket)
-      )
-    }
-
-    if (isTreatmentMinutesArray(selectedTreatments)) {
-      return allRiskTreatments.filter(treatment => 
-        selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
-      )
-    }
-
-    return allRiskTreatments
   }
 
-  // Helper function to get treatment minutes for a specific treatment
-  const getTreatmentMinutes = (
-    treatmentJiraTicket: string,
-    selectedTreatments?: SelectedTreatments
-  ): TreatmentMinutes | undefined => {
-    if (!selectedTreatments || selectedTreatments.length === 0) return undefined
-    
-    if (isTreatmentMinutesArray(selectedTreatments)) {
-      return selectedTreatments.find(st => st.treatmentJiraTicket === treatmentJiraTicket)
+  // Update treatment-level meeting minutes
+  const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
+    if (!workshop) return
+
+    setSaving(true)
+    try {
+      const updatedWorkshop = { ...workshop }
+      if (updatedWorkshop[section]) {
+        const item = updatedWorkshop[section]![index]
+        if (item.selectedTreatments && isTreatmentMinutesArray(item.selectedTreatments)) {
+          const treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentJiraTicket === treatmentJiraTicket)
+          if (treatmentIndex !== -1) {
+            item.selectedTreatments[treatmentIndex] = {
+              ...item.selectedTreatments[treatmentIndex],
+              [field]: value
+            }
+          }
+        }
+      }
+
+      const response = await fetch(`/api/workshops/${workshop.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedWorkshop),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        setWorkshop(updatedWorkshop)
+        showToast({
+          type: 'success',
+          title: 'Updated',
+          message: 'Treatment minutes updated successfully'
+        })
+      } else {
+        throw new Error(result.error || 'Failed to update')
+      }
+    } catch (error) {
+      console.error('Error updating treatment minutes:', error)
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update treatment minutes. Please try again.'
+      })
+    } finally {
+      setSaving(false)
     }
-    
-    return undefined
   }
 
   useEffect(() => {
@@ -315,6 +658,17 @@ export default function WorkshopDetails() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#898AC4' }}></div>
           <p className="mt-4" style={{ color: '#22223B' }}>Loading workshop details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (saving) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: '#898AC4' }}></div>
+          <p className="text-gray-700">Saving changes...</p>
         </div>
       </div>
     )
@@ -492,98 +846,15 @@ export default function WorkshopDetails() {
 
                     
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        {/* Risk Information */}
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
-                            {risk && (
-                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-md">
-                                {risk.riskLevel}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {risk && (
-                            <div className="space-y-2 mb-4">
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.riskStatement}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.informationAsset}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Risk Treatments */}
-                        {riskTreatments.length > 0 && (
-                          <div className="mb-4">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
-                            <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => {
-                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
-                                return (
-                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Treatment Description</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Owner</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Actions Taken</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">To Do</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Outcome</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Meeting Minutes */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.toDo || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.outcome || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <RiskCard
+                        key={index}
+                        item={item}
+                        risk={risk}
+                        treatments={allRiskTreatments}
+                        sectionType="extensions"
+                        onUpdate={(field, value) => updateRiskMinutes('extensions', index, field, value)}
+                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('extensions', index, treatmentJiraTicket, field, value)}
+                      />
                     )
                   })}
                 </div>
@@ -610,98 +881,15 @@ export default function WorkshopDetails() {
 
                     
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        {/* Risk Information */}
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
-                            {risk && (
-                              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-md">
-                                {risk.riskLevel}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {risk && (
-                            <div className="space-y-2 mb-4">
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.riskStatement}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.informationAsset}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Risk Treatments */}
-                        {riskTreatments.length > 0 && (
-                          <div className="mb-4">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
-                            <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => {
-                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
-                                return (
-                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Treatment Description</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Owner</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Actions Taken</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">To Do</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Outcome</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Meeting Minutes */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.toDo || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.outcome || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <RiskCard
+                        key={index}
+                        item={item}
+                        risk={risk}
+                        treatments={allRiskTreatments}
+                        sectionType="closure"
+                        onUpdate={(field, value) => updateRiskMinutes('closure', index, field, value)}
+                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('closure', index, treatmentJiraTicket, field, value)}
+                      />
                     )
                   })}
                 </div>
@@ -728,98 +916,15 @@ export default function WorkshopDetails() {
 
                     
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        {/* Risk Information */}
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
-                            {risk && (
-                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-md">
-                                {risk.riskLevel}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {risk && (
-                            <div className="space-y-2 mb-4">
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.riskStatement}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                                <div className="mt-1 text-sm text-gray-700">
-                                  {risk.informationAsset}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Risk Treatments */}
-                        {riskTreatments.length > 0 && (
-                          <div className="mb-4">
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
-                            <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => {
-                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
-                                return (
-                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Treatment Description</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Owner</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                                      <div>
-                                        <span className="text-xs text-gray-500">Actions Taken</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">To Do</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                      <div>
-                                        <span className="text-xs text-gray-500">Outcome</span>
-                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Meeting Minutes */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.toDo || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {item.outcome || <span className="text-gray-500 italic">None</span>}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <RiskCard
+                        key={index}
+                        item={item}
+                        risk={risk}
+                        treatments={allRiskTreatments}
+                        sectionType="newRisks"
+                        onUpdate={(field, value) => updateRiskMinutes('newRisks', index, field, value)}
+                        onUpdateTreatment={(treatmentJiraTicket, field, value) => updateTreatmentMinutes('newRisks', index, treatmentJiraTicket, field, value)}
+                      />
                     )
                   })}
                 </div>
