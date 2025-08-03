@@ -107,7 +107,7 @@ interface Workshop {
 interface EditableFieldProps {
   value: string
   placeholder: string
-  onSave: (value: string) => void
+  onSave: (value: string) => Promise<void>
   className?: string
 }
 
@@ -115,6 +115,7 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
   const [isSaving, setIsSaving] = useState(false)
+  const [isCanceling, setIsCanceling] = useState(false)
 
   const handleSave = async () => {
     if (editValue.trim() !== value) {
@@ -133,8 +134,18 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
   }
 
   const handleCancel = () => {
+    setIsCanceling(true)
     setEditValue(value)
     setIsEditing(false)
+    // Reset canceling flag after a brief delay to prevent onBlur from triggering
+    setTimeout(() => setIsCanceling(false), 100)
+  }
+
+  const handleBlur = (e: React.FocusEvent) => {
+    // Only save on blur if we're not canceling and the focus is not moving to the cancel button
+    if (!isCanceling && !e.relatedTarget?.closest('button')) {
+      handleSave()
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -153,7 +164,7 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={handleSave}
+          onBlur={handleBlur}
           placeholder={placeholder}
           className="w-full p-2 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           rows={3}
@@ -166,11 +177,16 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
             className="p-1 text-green-600 hover:text-green-800 disabled:opacity-50"
             title="Save"
           >
-            <Icon name="check" size={14} />
+            {isSaving ? (
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600"></div>
+            ) : (
+              <Icon name="check" size={14} />
+            )}
           </button>
           <button
             onClick={handleCancel}
-            className="p-1 text-red-600 hover:text-red-800"
+            disabled={isSaving}
+            className="p-1 text-red-600 hover:text-red-800 disabled:opacity-50"
             title="Cancel"
           >
             <Icon name="x" size={14} />
@@ -258,7 +274,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
   }
 
   const getRiskLevelColor = () => {
-    if (!risk || !risk.riskLevel) return 'bg-gray-100 text-gray-800'
+    if (!risk?.riskLevel) return 'bg-gray-100 text-gray-800'
     switch (risk.riskLevel.toLowerCase()) {
       case 'high': return 'bg-red-100 text-red-800'
       case 'medium': return 'bg-yellow-100 text-yellow-800'
@@ -275,7 +291,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <span className="text-sm font-medium text-gray-900">Risk ID: {item.riskId}</span>
-                             {risk && risk.riskLevel && (
+                             {risk?.riskLevel && (
                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
                    {risk.riskLevel}
                  </span>
@@ -393,13 +409,16 @@ export default function WorkshopDetails() {
   const [error, setError] = useState<string | null>(null)
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
-  const [saving, setSaving] = useState(false)
+  // Per-field saving states
+  const [savingFields, setSavingFields] = useState<Set<string>>(new Set())
 
   // Update risk-level meeting minutes
   const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
-    setSaving(true)
+    const fieldKey = `${section}-${index}-${field}`
+    setSavingFields(prev => new Set(prev).add(fieldKey))
+    
     try {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
@@ -436,7 +455,11 @@ export default function WorkshopDetails() {
         message: 'Failed to update meeting minutes. Please try again.'
       })
     } finally {
-      setSaving(false)
+      setSavingFields(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(fieldKey)
+        return newSet
+      })
     }
   }
 
@@ -444,7 +467,9 @@ export default function WorkshopDetails() {
   const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
-    setSaving(true)
+    const fieldKey = `${section}-${index}-treatment-${treatmentJiraTicket}-${field}`
+    setSavingFields(prev => new Set(prev).add(fieldKey))
+    
     try {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
@@ -487,7 +512,11 @@ export default function WorkshopDetails() {
         message: 'Failed to update treatment minutes. Please try again.'
       })
     } finally {
-      setSaving(false)
+      setSavingFields(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(fieldKey)
+        return newSet
+      })
     }
   }
 
@@ -663,16 +692,7 @@ export default function WorkshopDetails() {
     )
   }
 
-  if (saving) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: '#898AC4' }}></div>
-          <p className="text-gray-700">Saving changes...</p>
-        </div>
-      </div>
-    )
-  }
+
 
   if (error || !workshop) {
     return (
