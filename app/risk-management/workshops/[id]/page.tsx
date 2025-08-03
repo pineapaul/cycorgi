@@ -52,13 +52,17 @@ type SelectedTreatments = string[] | TreatmentMinutes[]
 
 // Type guards for discriminated union
 const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
-  return selectedTreatments.length > 0 && typeof selectedTreatments[0] === 'string'
+  return selectedTreatments.length > 0 && 
+         selectedTreatments[0] !== undefined && 
+         selectedTreatments[0] !== null &&
+         typeof selectedTreatments[0] === 'string'
 }
 
 const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
   return selectedTreatments.length > 0 && 
-         typeof selectedTreatments[0] === 'object' && 
+         selectedTreatments[0] !== undefined && 
          selectedTreatments[0] !== null &&
+         typeof selectedTreatments[0] === 'object' && 
          'treatmentId' in selectedTreatments[0]
 }
 
