@@ -467,6 +467,9 @@ export default function WorkshopDetails() {
   const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
+    console.log('Updating treatment minutes:', { section, index, treatmentJiraTicket, field, value })
+    console.log('Current workshop state:', workshop)
+
     const fieldKey = `${section}-${index}-treatment-${treatmentJiraTicket}-${field}`
     setSavingFields(prev => new Set(prev).add(fieldKey))
     
@@ -474,17 +477,46 @@ export default function WorkshopDetails() {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
         const item = updatedWorkshop[section]![index]
-        if (item.selectedTreatments && isTreatmentMinutesArray(item.selectedTreatments)) {
-          const treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentJiraTicket === treatmentJiraTicket)
-          if (treatmentIndex !== -1) {
-            item.selectedTreatments[treatmentIndex] = {
-              ...item.selectedTreatments[treatmentIndex],
-              [field]: value
-            }
+        
+        // Initialize selectedTreatments as TreatmentMinutes array if it doesn't exist
+        if (!item.selectedTreatments) {
+          item.selectedTreatments = []
+        }
+        
+        // Convert string array to TreatmentMinutes array if needed
+        if (isStringArray(item.selectedTreatments)) {
+          item.selectedTreatments = item.selectedTreatments.map(treatmentId => ({
+            treatmentJiraTicket: treatmentId,
+            actionsTaken: '',
+            toDo: '',
+            outcome: ''
+          }))
+        }
+        
+        // Ensure it's a TreatmentMinutes array
+        if (isTreatmentMinutesArray(item.selectedTreatments)) {
+          let treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentJiraTicket === treatmentJiraTicket)
+          
+          // If treatment not found, add it
+          if (treatmentIndex === -1) {
+            item.selectedTreatments.push({
+              treatmentJiraTicket,
+              actionsTaken: '',
+              toDo: '',
+              outcome: ''
+            })
+            treatmentIndex = item.selectedTreatments.length - 1
+          }
+          
+          // Update the treatment
+          item.selectedTreatments[treatmentIndex] = {
+            ...item.selectedTreatments[treatmentIndex],
+            [field]: value
           }
         }
       }
 
+      console.log('Sending treatment update data:', JSON.stringify(updatedWorkshop, null, 2))
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
         headers: {
@@ -494,6 +526,7 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
+      console.log('API Response:', result)
       if (result.success) {
         setWorkshop(updatedWorkshop)
         showToast({
