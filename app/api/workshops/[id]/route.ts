@@ -67,10 +67,16 @@ export async function PUT(
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
+    // Add updatedAt timestamp
+    const updateData = {
+      ...body,
+      updatedAt: new Date().toISOString()
+    }
+    
     // Try to update by workshop ID first, then by MongoDB _id
     let result = await collection.updateOne(
       { id },
-      { $set: body }
+      { $set: updateData }
     )
     
     if (result.matchedCount === 0) {
@@ -78,7 +84,7 @@ export async function PUT(
       try {
         result = await collection.updateOne(
           { _id: new ObjectId(id) },
-          { $set: body }
+          { $set: updateData }
         )
       } catch (objectIdError) {
         // Invalid ObjectId format, continue with result
@@ -94,7 +100,7 @@ export async function PUT(
     
     return NextResponse.json({
       success: true,
-      data: { ...body, _id: id }
+      data: { ...updateData, _id: id }
     })
   } catch (error) {
     console.error('Error updating workshop:', error)

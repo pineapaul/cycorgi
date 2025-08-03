@@ -41,11 +41,19 @@ export async function POST(request: NextRequest) {
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    const result = await collection.insertOne(body)
+    // Add metadata timestamps
+    const now = new Date().toISOString()
+    const workshopData = {
+      ...body,
+      createdAt: now,
+      updatedAt: now
+    }
+    
+    const result = await collection.insertOne(workshopData)
     
     return NextResponse.json({
       success: true,
-      data: { ...body, _id: result.insertedId }
+      data: { ...workshopData, _id: result.insertedId }
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating workshop:', error)
