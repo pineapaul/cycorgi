@@ -415,9 +415,17 @@ export default function NewWorkshop() {
       const newRisks: MeetingMinutesItem[] = []
       
       parsedRisks.forEach(risk => {
+        // Convert selected treatment IDs to TreatmentMinutes structure
+        const selectedTreatmentMinutes = risk.treatments.map(treatmentId => ({
+          treatmentJiraTicket: treatmentId,
+          actionsTaken: '',
+          toDo: '',
+          outcome: ''
+        }))
+        
         const riskData: MeetingMinutesItem = {
           riskId: risk.riskId,
-          selectedTreatments: risk.treatments, // Include the selected treatment IDs
+          selectedTreatments: selectedTreatmentMinutes,
           actionsTaken: '',
           toDo: '',
           outcome: ''

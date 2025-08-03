@@ -38,6 +38,28 @@ interface Treatment {
   updatedAt: string
 }
 
+// Discriminated union for selectedTreatments
+interface TreatmentMinutes {
+  treatmentJiraTicket: string
+  actionsTaken?: string
+  toDo?: string
+  outcome?: string
+}
+
+type SelectedTreatments = string[] | TreatmentMinutes[]
+
+// Type guards for discriminated union
+const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
+  return selectedTreatments.length > 0 && typeof selectedTreatments[0] === 'string'
+}
+
+const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
+  return selectedTreatments.length > 0 && 
+         typeof selectedTreatments[0] === 'object' && 
+         selectedTreatments[0] !== null &&
+         'treatmentJiraTicket' in selectedTreatments[0]
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -58,21 +80,21 @@ interface Workshop {
   // Meeting Minutes subsections
   extensions?: Array<{
     riskId: string
-    selectedTreatments?: string[]
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   closure?: Array<{
     riskId: string
-    selectedTreatments?: string[]
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   newRisks?: Array<{
     riskId: string
-    selectedTreatments?: string[]
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
@@ -90,6 +112,41 @@ export default function WorkshopDetails() {
   const [error, setError] = useState<string | null>(null)
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
+
+  // Consolidated filtering logic
+  const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatments?: SelectedTreatments): Treatment[] => {
+    if (!selectedTreatments || selectedTreatments.length === 0) {
+      return allRiskTreatments
+    }
+
+    if (isStringArray(selectedTreatments)) {
+      return allRiskTreatments.filter(treatment => 
+        selectedTreatments.includes(treatment.treatmentJiraTicket)
+      )
+    }
+
+    if (isTreatmentMinutesArray(selectedTreatments)) {
+      return allRiskTreatments.filter(treatment => 
+        selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
+      )
+    }
+
+    return allRiskTreatments
+  }
+
+  // Helper function to get treatment minutes for a specific treatment
+  const getTreatmentMinutes = (
+    treatmentJiraTicket: string,
+    selectedTreatments?: SelectedTreatments
+  ): TreatmentMinutes | undefined => {
+    if (!selectedTreatments || selectedTreatments.length === 0) return undefined
+    
+    if (isTreatmentMinutesArray(selectedTreatments)) {
+      return selectedTreatments.find(st => st.treatmentJiraTicket === treatmentJiraTicket)
+    }
+    
+    return undefined
+  }
 
   useEffect(() => {
     const fetchWorkshop = async () => {
@@ -430,11 +487,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => 
-                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
-                        )
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
@@ -474,24 +527,37 @@ export default function WorkshopDetails() {
                           <div className="mb-4">
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
                             <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => (
-                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                      <span className="text-xs text-gray-500">Treatment Description</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatment}
+                              {riskTreatments.map((treatment, treatmentIndex) => {
+                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
+                                return (
+                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Treatment Description</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Owner</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
                                       </div>
                                     </div>
-                                    <div>
-                                      <span className="text-xs text-gray-500">Owner</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatmentOwner}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Actions Taken</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">To Do</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Outcome</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
@@ -539,11 +605,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => 
-                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
-                        )
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
@@ -583,24 +645,37 @@ export default function WorkshopDetails() {
                           <div className="mb-4">
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
                             <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => (
-                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                      <span className="text-xs text-gray-500">Treatment Description</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatment}
+                              {riskTreatments.map((treatment, treatmentIndex) => {
+                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
+                                return (
+                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Treatment Description</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Owner</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
                                       </div>
                                     </div>
-                                    <div>
-                                      <span className="text-xs text-gray-500">Owner</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatmentOwner}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Actions Taken</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">To Do</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Outcome</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
@@ -648,11 +723,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => 
-                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
-                        )
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
@@ -692,24 +763,37 @@ export default function WorkshopDetails() {
                           <div className="mb-4">
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
                             <div className="mt-2 space-y-2">
-                              {riskTreatments.map((treatment, treatmentIndex) => (
-                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                      <span className="text-xs text-gray-500">Treatment Description</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatment}
+                              {riskTreatments.map((treatment, treatmentIndex) => {
+                                const treatmentMinutes = getTreatmentMinutes(treatment.treatmentJiraTicket, item.selectedTreatments)
+                                return (
+                                  <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Treatment Description</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatment}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Owner</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatment.riskTreatmentOwner}</div>
                                       </div>
                                     </div>
-                                    <div>
-                                      <span className="text-xs text-gray-500">Owner</span>
-                                      <div className="mt-1 text-sm text-gray-700">
-                                        {treatment.riskTreatmentOwner}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                                      <div>
+                                        <span className="text-xs text-gray-500">Actions Taken</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.actionsTaken || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">To Do</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.toDo || <span className="text-gray-500 italic">None</span>}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs text-gray-500">Outcome</span>
+                                        <div className="mt-1 text-sm text-gray-700">{treatmentMinutes?.outcome || <span className="text-gray-500 italic">None</span>}</div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
