@@ -27,9 +27,24 @@ export interface TreatmentMinutes {
   outcome?: string
 }
 
+// Discriminated union for selectedTreatments
+type SelectedTreatments = string[] | TreatmentMinutes[]
+
+// Type guards for discriminated union
+const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
+  return selectedTreatments.length > 0 && typeof selectedTreatments[0] === 'string'
+}
+
+const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
+  return selectedTreatments.length > 0 && 
+         typeof selectedTreatments[0] === 'object' && 
+         selectedTreatments[0] !== null &&
+         'treatmentJiraTicket' in selectedTreatments[0]
+}
+
 export interface MeetingMinutesItem {
   riskId: string
-  selectedTreatments?: TreatmentMinutes[] // Array of treatment details with their own minutes
+  selectedTreatments?: SelectedTreatments // Array of treatment details with their own minutes
   actionsTaken?: string // General risk-level actions taken
   toDo?: string // General risk-level to do
   outcome?: string // General risk-level outcome
@@ -80,9 +95,21 @@ const validateMeetingMinutesItem = (item: any, sectionName: string): void => {
   
   // Validate selectedTreatments if present
   if (item.selectedTreatments && Array.isArray(item.selectedTreatments)) {
-    item.selectedTreatments.forEach((treatment: any, index: number) => {
-      validateTreatmentMinutes(treatment, `${sectionName} treatment ${index + 1}`)
-    })
+    if (isStringArray(item.selectedTreatments)) {
+      // Validate string array - each item should be a string
+      item.selectedTreatments.forEach((treatmentId: any, index: number) => {
+        if (typeof treatmentId !== 'string') {
+          throw new Error(`${sectionName} treatment ${index + 1}: treatmentId must be a string`)
+        }
+      })
+    } else if (isTreatmentMinutesArray(item.selectedTreatments)) {
+      // Validate TreatmentMinutes array
+      item.selectedTreatments.forEach((treatment: any, index: number) => {
+        validateTreatmentMinutes(treatment, `${sectionName} treatment ${index + 1}`)
+      })
+    } else {
+      throw new Error(`${sectionName}: selectedTreatments must be either string[] or TreatmentMinutes[]`)
+    }
   }
 }
 

@@ -38,6 +38,28 @@ interface Treatment {
   updatedAt: string
 }
 
+// Discriminated union for selectedTreatments
+interface TreatmentMinutes {
+  treatmentJiraTicket: string
+  actionsTaken?: string
+  toDo?: string
+  outcome?: string
+}
+
+type SelectedTreatments = string[] | TreatmentMinutes[]
+
+// Type guards for discriminated union
+const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
+  return selectedTreatments.length > 0 && typeof selectedTreatments[0] === 'string'
+}
+
+const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
+  return selectedTreatments.length > 0 && 
+         typeof selectedTreatments[0] === 'object' && 
+         selectedTreatments[0] !== null &&
+         'treatmentJiraTicket' in selectedTreatments[0]
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -58,36 +80,21 @@ interface Workshop {
   // Meeting Minutes subsections
   extensions?: Array<{
     riskId: string
-    selectedTreatments?: Array<{
-      treatmentJiraTicket: string
-      actionsTaken?: string
-      toDo?: string
-      outcome?: string
-    }>
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   closure?: Array<{
     riskId: string
-    selectedTreatments?: Array<{
-      treatmentJiraTicket: string
-      actionsTaken?: string
-      toDo?: string
-      outcome?: string
-    }>
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   newRisks?: Array<{
     riskId: string
-    selectedTreatments?: Array<{
-      treatmentJiraTicket: string
-      actionsTaken?: string
-      toDo?: string
-      outcome?: string
-    }>
+    selectedTreatments?: SelectedTreatments
     actionsTaken: string
     toDo: string
     outcome: string
@@ -106,26 +113,39 @@ export default function WorkshopDetails() {
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
 
-  // Helper function to filter treatments based on selectedTreatments
-  const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatments?: Array<{treatmentJiraTicket: string, actionsTaken?: string, toDo?: string, outcome?: string}>) => {
+  // Consolidated filtering logic
+  const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatments?: SelectedTreatments): Treatment[] => {
     if (!selectedTreatments || selectedTreatments.length === 0) {
       return allRiskTreatments
     }
-    return allRiskTreatments.filter(treatment => 
-      selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
-    )
+
+    if (isStringArray(selectedTreatments)) {
+      return allRiskTreatments.filter(treatment => 
+        selectedTreatments.includes(treatment.treatmentJiraTicket)
+      )
+    }
+
+    if (isTreatmentMinutesArray(selectedTreatments)) {
+      return allRiskTreatments.filter(treatment => 
+        selectedTreatments.some(st => st.treatmentJiraTicket === treatment.treatmentJiraTicket)
+      )
+    }
+
+    return allRiskTreatments
   }
 
   // Helper function to get treatment minutes for a specific treatment
   const getTreatmentMinutes = (
     treatmentJiraTicket: string,
-    selectedTreatments?: Array<string | { treatmentJiraTicket: string; actionsTaken?: string; toDo?: string; outcome?: string }>
-  ) => {
+    selectedTreatments?: SelectedTreatments
+  ): TreatmentMinutes | undefined => {
     if (!selectedTreatments || selectedTreatments.length === 0) return undefined
-    if (typeof selectedTreatments[0] === 'string') return undefined
-    return (selectedTreatments as { treatmentJiraTicket: string; actionsTaken?: string; toDo?: string; outcome?: string }[]).find(
-      st => st.treatmentJiraTicket === treatmentJiraTicket
-    )
+    
+    if (isTreatmentMinutesArray(selectedTreatments)) {
+      return selectedTreatments.find(st => st.treatmentJiraTicket === treatmentJiraTicket)
+    }
+    
+    return undefined
   }
 
   useEffect(() => {
@@ -467,17 +487,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => {
-                          if (typeof item.selectedTreatments[0] === 'string') {
-                            return (item.selectedTreatments as string[]).includes(treatment.treatmentJiraTicket)
-                          } else {
-                            return (item.selectedTreatments as {treatmentJiraTicket: string}[]).some(
-                              st => st.treatmentJiraTicket === treatment.treatmentJiraTicket
-                            )
-                          }
-                        })
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
@@ -595,17 +605,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => {
-                          if (typeof item.selectedTreatments[0] === 'string') {
-                            return (item.selectedTreatments as string[]).includes(treatment.treatmentJiraTicket)
-                          } else {
-                            return (item.selectedTreatments as {treatmentJiraTicket: string}[]).some(
-                              st => st.treatmentJiraTicket === treatment.treatmentJiraTicket
-                            )
-                          }
-                        })
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
@@ -723,17 +723,7 @@ export default function WorkshopDetails() {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
                     // Show selected treatments if available, otherwise show all treatments
-                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
-                      ? allRiskTreatments.filter(treatment => {
-                          if (typeof item.selectedTreatments[0] === 'string') {
-                            return (item.selectedTreatments as string[]).includes(treatment.treatmentJiraTicket)
-                          } else {
-                            return (item.selectedTreatments as {treatmentJiraTicket: string}[]).some(
-                              st => st.treatmentJiraTicket === treatment.treatmentJiraTicket
-                            )
-                          }
-                        })
-                      : allRiskTreatments
+                    const riskTreatments = getFilteredTreatments(allRiskTreatments, item.selectedTreatments)
                     
 
                     
