@@ -62,6 +62,11 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
          'treatmentId' in selectedTreatments[0]
 }
 
+// Helper function to safely check if array is empty or can be treated as TreatmentMinutes
+const isEmptyOrTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): boolean => {
+  return selectedTreatments.length === 0 || isTreatmentMinutesArray(selectedTreatments)
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -493,25 +498,30 @@ export default function WorkshopDetails() {
           }))
         }
         
-        // Ensure it's a TreatmentMinutes array
-        if (isTreatmentMinutesArray(item.selectedTreatments)) {
-          let treatmentIndex = item.selectedTreatments.findIndex(t => t.treatmentId === treatmentId)
+        // Handle empty array or ensure it's a TreatmentMinutes array
+        if (isEmptyOrTreatmentMinutesArray(item.selectedTreatments)) {
+          // If it's empty, ensure it's typed as TreatmentMinutes[]
+          if (item.selectedTreatments.length === 0) {
+            item.selectedTreatments = [] as TreatmentMinutes[]
+          }
+          
+          let treatmentIndex = (item.selectedTreatments as TreatmentMinutes[]).findIndex(t => t.treatmentId === treatmentId)
           
           // If treatment not found, add it
           if (treatmentIndex === -1) {
-            item.selectedTreatments.push({
+            (item.selectedTreatments as TreatmentMinutes[]).push({
               treatmentId,
               treatmentJira: `https://jira.company.com/browse/${treatmentId}`,
               actionsTaken: '',
               toDo: '',
               outcome: ''
             })
-            treatmentIndex = item.selectedTreatments.length - 1
+            treatmentIndex = (item.selectedTreatments as TreatmentMinutes[]).length - 1
           }
           
           // Update the treatment
-          item.selectedTreatments[treatmentIndex] = {
-            ...item.selectedTreatments[treatmentIndex],
+          (item.selectedTreatments as TreatmentMinutes[])[treatmentIndex] = {
+            ...(item.selectedTreatments as TreatmentMinutes[])[treatmentIndex],
             [field]: value
           }
         }

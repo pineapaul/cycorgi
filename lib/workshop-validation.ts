@@ -43,6 +43,11 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
          'treatmentId' in selectedTreatments[0]
 }
 
+// Helper function to safely check if array is empty or can be treated as TreatmentMinutes
+const isEmptyOrTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): boolean => {
+  return selectedTreatments.length === 0 || isTreatmentMinutesArray(selectedTreatments)
+}
+
 export interface MeetingMinutesItem {
   riskId: string
   selectedTreatments?: SelectedTreatments // Array of treatment details with their own minutes
