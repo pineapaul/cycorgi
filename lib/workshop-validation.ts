@@ -22,6 +22,7 @@ const isValidWorkshopStatus = (status: unknown): status is WorkshopStatus => {
 
 export interface MeetingMinutesItem {
   riskId: string
+  selectedTreatments?: string[] // Array of treatment Jira ticket IDs that were selected for this risk
   actionsTaken?: string
   toDo?: string
   outcome?: string

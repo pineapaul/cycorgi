@@ -7,6 +7,37 @@ import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { useToast } from '@/app/components/Toast'
 
+interface Risk {
+  riskId: string
+  riskStatement: string
+  informationAsset: string
+  likelihood: string
+  impact: string
+  riskLevel: string
+}
+
+interface Treatment {
+  _id: string
+  riskId: string
+  treatmentJiraTicket: string
+  riskTreatment: string
+  riskTreatmentOwner: string
+  dateRiskTreatmentDue: string
+  extendedDueDate?: string
+  numberOfExtensions: number
+  completionDate?: string
+  closureApproval: string
+  closureApprovedBy?: string
+  extensions: Array<{
+    extendedDueDate: string
+    approver: string
+    dateApproved: string
+    justification: string
+  }>
+  createdAt: string
+  updatedAt: string
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -27,18 +58,21 @@ interface Workshop {
   // Meeting Minutes subsections
   extensions?: Array<{
     riskId: string
+    selectedTreatments?: string[]
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   closure?: Array<{
     riskId: string
+    selectedTreatments?: string[]
     actionsTaken: string
     toDo: string
     outcome: string
   }>
   newRisks?: Array<{
     riskId: string
+    selectedTreatments?: string[]
     actionsTaken: string
     toDo: string
     outcome: string
@@ -54,6 +88,8 @@ export default function WorkshopDetails() {
   const [workshop, setWorkshop] = useState<Workshop | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [risks, setRisks] = useState<Record<string, Risk>>({})
+  const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
 
   useEffect(() => {
     const fetchWorkshop = async () => {
@@ -78,6 +114,58 @@ export default function WorkshopDetails() {
       fetchWorkshop()
     }
   }, [params.id])
+
+  // Fetch risk and treatment data for meeting minutes items
+  useEffect(() => {
+    const fetchRiskAndTreatmentData = async () => {
+      if (!workshop) return
+
+      try {
+        // Get all unique risk IDs from meeting minutes
+        const riskIds = new Set<string>()
+        ;(workshop.extensions || []).forEach(item => riskIds.add(item.riskId))
+        ;(workshop.closure || []).forEach(item => riskIds.add(item.riskId))
+        ;(workshop.newRisks || []).forEach(item => riskIds.add(item.riskId))
+
+        if (riskIds.size === 0) return
+
+        // Fetch risks data
+        const risksResponse = await fetch('/api/risks')
+        const risksResult = await risksResponse.json()
+        
+        if (risksResult.success) {
+          const risksMap: Record<string, Risk> = {}
+          risksResult.data.forEach((risk: Risk) => {
+            if (riskIds.has(risk.riskId)) {
+              risksMap[risk.riskId] = risk
+            }
+          })
+          setRisks(risksMap)
+        }
+
+        // Fetch treatments data
+        const treatmentsResponse = await fetch('/api/treatments')
+        const treatmentsResult = await treatmentsResponse.json()
+        
+        if (treatmentsResult.success) {
+          const treatmentsMap: Record<string, Treatment[]> = {}
+          treatmentsResult.data.forEach((treatment: Treatment) => {
+            if (riskIds.has(treatment.riskId)) {
+              if (!treatmentsMap[treatment.riskId]) {
+                treatmentsMap[treatment.riskId] = []
+              }
+              treatmentsMap[treatment.riskId].push(treatment)
+            }
+          })
+          setTreatments(treatmentsMap)
+        }
+      } catch (error) {
+        console.error('Error fetching risk and treatment data:', error)
+      }
+    }
+
+    fetchRiskAndTreatmentData()
+  }, [workshop])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -338,38 +426,100 @@ export default function WorkshopDetails() {
               </h4>
               {workshop.extensions && workshop.extensions.length > 0 ? (
                 <div className="space-y-4">
-                  {workshop.extensions.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
-                          <div className="mt-1 text-sm font-medium text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-md font-mono text-xs">
-                              {item.riskId}
-                            </span>
+                  {workshop.extensions.map((item, index) => {
+                    const risk = risks[item.riskId]
+                    const allRiskTreatments = treatments[item.riskId] || []
+                    // Show selected treatments if available, otherwise show all treatments
+                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
+                      ? allRiskTreatments.filter(treatment => 
+                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
+                        )
+                      : allRiskTreatments
+                    
+
+                    
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        {/* Risk Information */}
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
+                            {risk && (
+                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-md">
+                                {risk.riskLevel}
+                              </span>
+                            )}
                           </div>
+                          
+                          {risk && (
+                            <div className="space-y-2 mb-4">
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.riskStatement}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.informationAsset}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+
+                        {/* Risk Treatments */}
+                        {riskTreatments.length > 0 && (
+                          <div className="mb-4">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
+                            <div className="mt-2 space-y-2">
+                              {riskTreatments.map((treatment, treatmentIndex) => (
+                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                      <span className="text-xs text-gray-500">Treatment Description</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatment}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs text-gray-500">Owner</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatmentOwner}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                        )}
+
+                        {/* Meeting Minutes */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.toDo || <span className="text-gray-500 italic">None</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.outcome || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -385,38 +535,100 @@ export default function WorkshopDetails() {
               </h4>
               {workshop.closure && workshop.closure.length > 0 ? (
                 <div className="space-y-4">
-                  {workshop.closure.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
-                          <div className="mt-1 text-sm font-medium text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-md font-mono text-xs">
-                              {item.riskId}
-                            </span>
+                  {workshop.closure.map((item, index) => {
+                    const risk = risks[item.riskId]
+                    const allRiskTreatments = treatments[item.riskId] || []
+                    // Show selected treatments if available, otherwise show all treatments
+                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
+                      ? allRiskTreatments.filter(treatment => 
+                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
+                        )
+                      : allRiskTreatments
+                    
+
+                    
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        {/* Risk Information */}
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
+                            {risk && (
+                              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-md">
+                                {risk.riskLevel}
+                              </span>
+                            )}
                           </div>
+                          
+                          {risk && (
+                            <div className="space-y-2 mb-4">
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.riskStatement}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.informationAsset}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+
+                        {/* Risk Treatments */}
+                        {riskTreatments.length > 0 && (
+                          <div className="mb-4">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
+                            <div className="mt-2 space-y-2">
+                              {riskTreatments.map((treatment, treatmentIndex) => (
+                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                      <span className="text-xs text-gray-500">Treatment Description</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatment}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs text-gray-500">Owner</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatmentOwner}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                        )}
+
+                        {/* Meeting Minutes */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.toDo || <span className="text-gray-500 italic">None</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.outcome || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -432,38 +644,100 @@ export default function WorkshopDetails() {
               </h4>
               {workshop.newRisks && workshop.newRisks.length > 0 ? (
                 <div className="space-y-4">
-                  {workshop.newRisks.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID</span>
-                          <div className="mt-1 text-sm font-medium text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-md font-mono text-xs">
-                              {item.riskId}
-                            </span>
+                  {workshop.newRisks.map((item, index) => {
+                    const risk = risks[item.riskId]
+                    const allRiskTreatments = treatments[item.riskId] || []
+                    // Show selected treatments if available, otherwise show all treatments
+                    const riskTreatments = item.selectedTreatments && item.selectedTreatments.length > 0
+                      ? allRiskTreatments.filter(treatment => 
+                          item.selectedTreatments?.includes(treatment.treatmentJiraTicket)
+                        )
+                      : allRiskTreatments
+                    
+
+                    
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        {/* Risk Information */}
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk ID: {item.riskId}</span>
+                            {risk && (
+                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-md">
+                                {risk.riskLevel}
+                              </span>
+                            )}
                           </div>
+                          
+                          {risk && (
+                            <div className="space-y-2 mb-4">
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Statement</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.riskStatement}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
+                                <div className="mt-1 text-sm text-gray-700">
+                                  {risk.informationAsset}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+
+                        {/* Risk Treatments */}
+                        {riskTreatments.length > 0 && (
+                          <div className="mb-4">
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Treatments</span>
+                            <div className="mt-2 space-y-2">
+                              {riskTreatments.map((treatment, treatmentIndex) => (
+                                <div key={treatmentIndex} className="bg-white rounded p-3 border border-gray-200">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                      <span className="text-xs text-gray-500">Treatment Description</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatment}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="text-xs text-gray-500">Owner</span>
+                                      <div className="mt-1 text-sm text-gray-700">
+                                        {treatment.riskTreatmentOwner}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.toDo || <span className="text-gray-500 italic">None</span>}
+                        )}
+
+                        {/* Meeting Minutes */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Actions Taken</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.actionsTaken || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
-                          <div className="mt-1 text-sm text-gray-700">
-                            {item.outcome || <span className="text-gray-500 italic">None</span>}
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">To Do</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.toDo || <span className="text-gray-500 italic">None</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Outcome</span>
+                            <div className="mt-1 text-sm text-gray-700">
+                              {item.outcome || <span className="text-gray-500 italic">None</span>}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
