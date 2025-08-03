@@ -83,7 +83,7 @@ interface Workshop {
     position?: string
   }>
   risks: string[]
-  outcomes: string
+  outcomes?: string
   securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
   actionsTaken?: string
   toDo?: string
@@ -531,8 +531,6 @@ export default function WorkshopDetails() {
         }
       }
 
-      console.log('Updating workshop with data:', JSON.stringify(updatedWorkshop, null, 2))
-      
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
         headers: {
@@ -542,7 +540,6 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      console.log('Update response:', result)
       
       if (result.success) {
         setWorkshop(updatedWorkshop)
