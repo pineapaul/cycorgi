@@ -60,13 +60,70 @@ export async function PUT(
     console.log('API: Received update request for workshop:', id)
     console.log('API: Request body:', JSON.stringify(body, null, 2))
     
-    // For now, let's skip validation and MongoDB to isolate the issue
-    console.log('API: Skipping validation and MongoDB for testing')
+    // Test validation first
+    try {
+      console.log('API: Starting validation')
+      validateWorkshopForUpdate(body)
+      console.log('API: Validation passed')
+    } catch (validationError) {
+      console.log('API: Validation failed:', validationError)
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid workshop data'
+      }, { status: 400 })
+    }
     
+    // Test MongoDB connection
+    console.log('API: Connecting to MongoDB')
+    const client = await clientPromise
+    const db = client.db('cycorgi')
+    const collection = db.collection('workshops')
+    console.log('API: MongoDB connected successfully')
+    
+    // Add updatedAt timestamp
+    const updateData = {
+      ...body,
+      updatedAt: new Date().toISOString()
+    }
+    
+    console.log('API: Update data:', JSON.stringify(updateData, null, 2))
+    
+    // Try to update by workshop ID first, then by MongoDB _id
+    console.log('API: Attempting first update by workshop ID')
+    let result = await collection.updateOne(
+      { id },
+      { $set: updateData }
+    )
+    
+    console.log('API: First update attempt result:', result)
+    
+    if (result.matchedCount === 0) {
+      // If not found by workshop ID, try by MongoDB _id
+      console.log('API: Workshop not found by ID, trying by MongoDB _id')
+      try {
+        result = await collection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData }
+        )
+        console.log('API: Second update attempt result:', result)
+      } catch (objectIdError) {
+        console.log('API: ObjectId error:', objectIdError)
+        // Invalid ObjectId format, continue with result
+      }
+    }
+    
+    if (result.matchedCount === 0) {
+      console.log('API: No workshop found to update')
+      return NextResponse.json({
+        success: false,
+        error: 'Workshop not found'
+      }, { status: 404 })
+    }
+    
+    console.log('API: Update successful')
     return NextResponse.json({
       success: true,
-      message: 'Test response - API route is working',
-      receivedId: id
+      data: { ...updateData, _id: id }
     })
     
   } catch (error) {
