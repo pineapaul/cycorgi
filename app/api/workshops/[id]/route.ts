@@ -53,10 +53,15 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     
+    console.log('API: Received update request for workshop:', id)
+    console.log('API: Request body:', JSON.stringify(body, null, 2))
+    
     // Validate workshop data using shared validation function
     try {
       validateWorkshopForUpdate(body)
+      console.log('API: Validation passed')
     } catch (validationError) {
+      console.log('API: Validation failed:', validationError)
       return NextResponse.json({
         success: false,
         error: validationError instanceof Error ? validationError.message : 'Invalid workshop data'
@@ -73,11 +78,15 @@ export async function PUT(
       updatedAt: new Date().toISOString()
     }
     
+    console.log('API: Update data:', JSON.stringify(updateData, null, 2))
+    
     // Try to update by workshop ID first, then by MongoDB _id
     let result = await collection.updateOne(
       { id },
       { $set: updateData }
     )
+    
+    console.log('API: First update attempt result:', result)
     
     if (result.matchedCount === 0) {
       // If not found by workshop ID, try by MongoDB _id
@@ -86,24 +95,28 @@ export async function PUT(
           { _id: new ObjectId(id) },
           { $set: updateData }
         )
+        console.log('API: Second update attempt result:', result)
       } catch (objectIdError) {
+        console.log('API: ObjectId error:', objectIdError)
         // Invalid ObjectId format, continue with result
       }
     }
     
     if (result.matchedCount === 0) {
+      console.log('API: No workshop found to update')
       return NextResponse.json({
         success: false,
         error: 'Workshop not found'
       }, { status: 404 })
     }
     
+    console.log('API: Update successful')
     return NextResponse.json({
       success: true,
       data: { ...updateData, _id: id }
     })
   } catch (error) {
-    console.error('Error updating workshop:', error)
+    console.error('API: Error updating workshop:', error)
     return NextResponse.json({
       success: false,
       error: 'Failed to update workshop'
