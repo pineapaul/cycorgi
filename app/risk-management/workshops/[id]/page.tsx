@@ -467,9 +467,6 @@ export default function WorkshopDetails() {
   const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentJiraTicket: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
-    console.log('Updating treatment minutes:', { section, index, treatmentJiraTicket, field, value })
-    console.log('Current workshop state:', workshop)
-
     const fieldKey = `${section}-${index}-treatment-${treatmentJiraTicket}-${field}`
     setSavingFields(prev => new Set(prev).add(fieldKey))
     
@@ -516,7 +513,6 @@ export default function WorkshopDetails() {
         }
       }
 
-      console.log('Sending treatment update data:', JSON.stringify(updatedWorkshop, null, 2))
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
         headers: {
@@ -526,7 +522,6 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      console.log('API Response:', result)
       if (result.success) {
         setWorkshop(updatedWorkshop)
         showToast({
