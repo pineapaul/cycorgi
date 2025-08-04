@@ -3,7 +3,7 @@
 import React from 'react'
 
 interface TooltipProps {
-  content: string
+  content: React.ReactNode
   children: React.ReactNode
   position?: 'top' | 'bottom' | 'left' | 'right'
   theme?: 'purple' | 'dark' | 'light'
