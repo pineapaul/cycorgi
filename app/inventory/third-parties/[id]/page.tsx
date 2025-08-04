@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
+import { formatDate } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -79,19 +80,7 @@ export default function ThirdPartyDetailPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch (error) {
-      return dateString
-    }
-  }
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -217,30 +206,7 @@ export default function ThirdPartyDetailPage() {
     'IT Operations'
   ]
 
-  const dataPrivacyOptions = [
-    'DPR-2023-001',
-    'DPR-2023-002',
-    'DPR-2023-003',
-    'DPR-2023-004',
-    'DPR-2023-005',
-    'DPR-2023-006',
-    'DPR-2023-007',
-    'DPR-2023-008',
-    'DPR-2023-009',
-    'DPR-2023-010',
-    'DPR-2023-011',
-    'DPR-2023-012',
-    'DPR-2023-013',
-    'DPR-2023-014',
-    'DPR-2023-015',
-    'DPR-2022-010',
-    'DPR-2022-015',
-    'DPR-2022-020',
-    'DPR-2022-022',
-    'DPR-2022-025',
-    'DPR-2022-030',
-    'DPR-2022-035'
-  ]
+
 
   const statusOptions = [
     'Active',

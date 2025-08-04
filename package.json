@@ -9,6 +9,7 @@
     "lint": "next lint",
     "seed": "node scripts/seed-information-assets.js",
     "seed-soa": "node scripts/seed-soa-controls.js",
+    "seed-third-parties": "node scripts/seed-third-parties-dev.js",
     "test-soa-api": "node scripts/test-soa-api.js"
   },
   "dependencies": {

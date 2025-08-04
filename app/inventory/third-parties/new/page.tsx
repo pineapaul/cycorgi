@@ -108,30 +108,7 @@ export default function NewThirdPartyPage() {
     'IT Operations'
   ]
 
-  const dataPrivacyOptions = [
-    'DPR-2023-001',
-    'DPR-2023-002',
-    'DPR-2023-003',
-    'DPR-2023-004',
-    'DPR-2023-005',
-    'DPR-2023-006',
-    'DPR-2023-007',
-    'DPR-2023-008',
-    'DPR-2023-009',
-    'DPR-2023-010',
-    'DPR-2023-011',
-    'DPR-2023-012',
-    'DPR-2023-013',
-    'DPR-2023-014',
-    'DPR-2023-015',
-    'DPR-2022-010',
-    'DPR-2022-015',
-    'DPR-2022-020',
-    'DPR-2022-022',
-    'DPR-2022-025',
-    'DPR-2022-030',
-    'DPR-2022-035'
-  ]
+
 
   const statusOptions = [
     'Active',

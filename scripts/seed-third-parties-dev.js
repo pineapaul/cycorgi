@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import clientPromise from '@/lib/mongodb'
+const { MongoClient } = require('mongodb')
+require('dotenv').config({ path: '.env.local' })
 
 // Comprehensive fake data for third parties with multiple information assets
 const fakeThirdParties = [
@@ -260,178 +260,56 @@ const fakeThirdParties = [
   }
 ]
 
-export async function GET(request: Request) {
+async function seedThirdParties() {
+  const uri = process.env.MONGODB_URI
+  
+  if (!uri) {
+    console.error('MONGODB_URI environment variable is not set')
+    process.exit(1)
+  }
+
+  const client = new MongoClient(uri)
+
   try {
-    const { searchParams } = new URL(request.url)
-    
-    // Parse query parameters
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const search = searchParams.get('search') || ''
-    const sortBy = searchParams.get('sortBy') || 'vendorName'
-    const sortOrder = searchParams.get('sortOrder') || 'asc'
-    const status = searchParams.get('status') || ''
-    const functionalUnit = searchParams.get('functionalUnit') || ''
-    
-    // Connect to MongoDB
-    const client = await clientPromise
+    await client.connect()
+    console.log('Connected to MongoDB')
+
     const db = client.db('cycorgi')
     const collection = db.collection('third-parties')
+
+    // Check if data already exists
+    const existingCount = await collection.countDocuments()
     
-    // Only insert fake data in development environment
-    if (process.env.NODE_ENV === 'development') {
-      const existingData = await collection.find({}).limit(1).toArray()
+    if (existingCount > 0) {
+      console.log(`Collection already contains ${existingCount} documents`)
+      console.log('Use --force flag to overwrite existing data')
       
-      if (existingData.length === 0) {
-        // Insert fake data if collection is empty (development only)
-        await collection.insertMany(fakeThirdParties)
-        console.log('Inserted fake third parties data (development mode)')
+      if (process.argv.includes('--force')) {
+        console.log('Force flag detected. Dropping existing data...')
+        await collection.deleteMany({})
+        console.log('Existing data dropped')
+      } else {
+        console.log('Skipping seed. Use --force to overwrite existing data.')
+        return
       }
     }
+
+    // Insert fake data
+    const result = await collection.insertMany(fakeThirdParties)
+    console.log(`Successfully inserted ${result.insertedCount} third party records`)
     
-    // Build filter query
-    const filter: any = {}
-    
-    if (search) {
-      filter.$or = [
-        { vendorId: { $regex: search, $options: 'i' } },
-        { vendorName: { $regex: search, $options: 'i' } },
-        { entity: { $regex: search, $options: 'i' } },
-        { vendorContact: { $regex: search, $options: 'i' } },
-        { internalContact: { $regex: search, $options: 'i' } }
-      ]
-    }
-    
-    if (status) {
-      filter.status = status
-    }
-    
-    if (functionalUnit) {
-      filter.functionalUnit = functionalUnit
-    }
-    
-    // Build sort query
-    const sort: any = {}
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1
-    
-    // Calculate pagination
-    const skip = (page - 1) * limit
-    
-    // Get total count for pagination
-    const totalCount = await collection.countDocuments(filter)
-    
-    // Retrieve paginated third parties
-    const thirdParties = await collection
-      .find(filter)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .toArray()
-    
-    // Migrate old data structure to new structure
-    const migratedThirdParties = thirdParties.map(party => {
-      // If the party has the old informationAssetId field, migrate it
-      if (party.informationAssetId && !party.informationAssetIds) {
-        return {
-          ...party,
-          informationAssetIds: [party.informationAssetId],
-          informationAssetId: undefined // Remove old field
-        }
-      }
-      // If the party has neither field, provide empty array
-      if (!party.informationAssetIds) {
-        return {
-          ...party,
-          informationAssetIds: []
-        }
-      }
-      return party
-    })
-    
-    // Calculate pagination metadata
-    const totalPages = Math.ceil(totalCount / limit)
-    const hasNextPage = page < totalPages
-    const hasPrevPage = page > 1
-    
-    return NextResponse.json({
-      success: true,
-      data: migratedThirdParties,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages,
-        hasNextPage,
-        hasPrevPage
-      },
-      filters: {
-        search,
-        status,
-        functionalUnit,
-        sortBy,
-        sortOrder
-      }
-    })
+    // Verify insertion
+    const totalCount = await collection.countDocuments()
+    console.log(`Total third party records in database: ${totalCount}`)
+
   } catch (error) {
-    console.error('Error fetching third parties:', error)
-    
-    // Only return fake data in development environment
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch third parties',
-          data: fakeThirdParties.slice(0, 20), // Fallback to limited fake data
-          pagination: {
-            page: 1,
-            limit: 20,
-            totalCount: fakeThirdParties.length,
-            totalPages: Math.ceil(fakeThirdParties.length / 20),
-            hasNextPage: false,
-            hasPrevPage: false
-          }
-        },
-        { status: 500 }
-      )
-    }
-    
-    // In production, return proper error without fake data
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch third parties'
-      },
-      { status: 500 }
-    )
+    console.error('Error seeding third parties:', error)
+    process.exit(1)
+  } finally {
+    await client.close()
+    console.log('Disconnected from MongoDB')
   }
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const client = await clientPromise
-    const db = client.db('cycorgi')
-    const collection = db.collection('third-parties')
-    
-    // Add timestamp and ID
-    const newThirdParty = {
-      ...body,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    
-    const result = await collection.insertOne(newThirdParty)
-    
-    return NextResponse.json({
-      success: true,
-      data: { ...newThirdParty, _id: result.insertedId }
-    })
-  } catch (error) {
-    console.error('Error creating third party:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to create third party' },
-      { status: 500 }
-    )
-  }
-} 
+// Run the seed function
+seedThirdParties() 

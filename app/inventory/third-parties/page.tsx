@@ -5,6 +5,7 @@ import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
 import Tooltip from '@/app/components/Tooltip'
+import { formatDate, formatDateForCSV } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -35,19 +36,63 @@ export default function ThirdPartiesPage() {
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  
+  // Pagination and filtering state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalCount: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  })
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    functionalUnit: '',
+    sortBy: 'vendorName',
+    sortOrder: 'asc'
+  })
 
   useEffect(() => {
     fetchThirdParties()
     fetchInformationAssets()
   }, [])
 
-  const fetchThirdParties = async () => {
+  // Handle filter changes
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(prev => ({ ...prev, ...newFilters }))
+    fetchThirdParties(1, { ...filters, ...newFilters })
+  }
+
+  // Handle pagination
+  const handlePageChange = (newPage: number) => {
+    fetchThirdParties(newPage, filters)
+  }
+
+  const fetchThirdParties = async (page = 1, newFilters = filters) => {
     try {
-      const response = await fetch('/api/third-parties')
+      setLoading(true)
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+        sortBy: newFilters.sortBy,
+        sortOrder: newFilters.sortOrder
+      })
+      
+      if (newFilters.search) params.append('search', newFilters.search)
+      if (newFilters.status) params.append('status', newFilters.status)
+      if (newFilters.functionalUnit) params.append('functionalUnit', newFilters.functionalUnit)
+      
+      const response = await fetch(`/api/third-parties?${params}`)
       const result = await response.json()
       
       if (result.success) {
         setThirdParties(result.data)
+        setPagination(result.pagination)
+        setFilters(result.filters)
       } else {
         console.error('Failed to fetch third parties:', result.error)
       }
@@ -71,19 +116,7 @@ export default function ThirdPartiesPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch (error) {
-      return dateString
-    }
-  }
+
 
   const getInformationAssetName = (assetId: string) => {
     const asset = informationAssets.find(a => a.id === assetId)
@@ -168,12 +201,12 @@ export default function ThirdPartiesPage() {
         row.vendorContact,
         row.internalContact,
         row.entity,
-        formatDate(row.startDate),
-        formatDate(row.endDate),
+        formatDateForCSV(row.startDate),
+        formatDateForCSV(row.endDate),
         row.riskAssessmentJiraTicket,
         row.dataPrivacy,
         row.securityReviewJiraTicket,
-        formatDate(row.lastSecurityReviewDate),
+        formatDateForCSV(row.lastSecurityReviewDate),
         row.status
       ].join(','))
     ].join('\n')
@@ -364,19 +397,52 @@ export default function ThirdPartiesPage() {
         </div>
       </div>
 
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={thirdParties}
-        title="Third Party Inventory"
-        searchPlaceholder="Search third parties..."
-        onRowClick={handleRowClick}
-        selectable={true}
-        selectedRows={selectedRows}
-        onSelectionChange={setSelectedRows}
-        onExportCSV={handleExportCSV}
-        className="third-parties-table"
-      />
+             {/* DataTable */}
+       <DataTable
+         columns={columns}
+         data={thirdParties}
+         title="Third Party Inventory"
+         searchPlaceholder="Search third parties..."
+         onRowClick={handleRowClick}
+         selectable={true}
+         selectedRows={selectedRows}
+         onSelectionChange={setSelectedRows}
+         onExportCSV={handleExportCSV}
+         className="third-parties-table"
+       />
+
+       {/* Pagination Controls */}
+       {pagination.totalPages > 1 && (
+         <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-4">
+           <div className="text-sm text-gray-700">
+             Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+             {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of{' '}
+             {pagination.totalCount} results
+           </div>
+           
+           <div className="flex items-center space-x-2">
+             <button
+               onClick={() => handlePageChange(pagination.page - 1)}
+               disabled={!pagination.hasPrevPage}
+               className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+             >
+               Previous
+             </button>
+             
+             <span className="text-sm text-gray-700">
+               Page {pagination.page} of {pagination.totalPages}
+             </span>
+             
+             <button
+               onClick={() => handlePageChange(pagination.page + 1)}
+               disabled={!pagination.hasNextPage}
+               className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+             >
+               Next
+             </button>
+           </div>
+         </div>
+       )}
     </div>
   )
 } 

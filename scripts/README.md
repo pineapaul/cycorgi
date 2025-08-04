@@ -1,83 +1,79 @@
 # Database Seeding Scripts
 
-This directory contains scripts to populate your MongoDB database with fake data for development and testing.
+This directory contains scripts for populating the database with sample data for development and testing purposes.
 
-## Information Assets Seeding
+## ⚠️ Important Security Notice
 
-### Prerequisites
+**NEVER run these scripts in production environments!** These scripts are designed for development and testing only.
 
-1. **MongoDB Connection**: Make sure your MongoDB is running and accessible
-2. **Environment Variables**: The script automatically loads `MONGODB_URI` from your `.env.local` file
+## Available Scripts
 
-### Running the Seeding Script
+### `seed-third-parties-dev.js`
+Populates the `third-parties` collection with sample vendor data.
 
+**Usage:**
 ```bash
-# Using npm script (recommended)
+# Basic seeding (skips if data already exists)
+npm run seed-third-parties
+
+# Force overwrite existing data
+node scripts/seed-third-parties-dev.js --force
+```
+
+**Features:**
+- 15 sample third-party vendors with realistic data
+- Multiple information assets per vendor
+- Jira ticket references for risk assessments
+- Proper date formatting
+- Environment variable validation
+
+### `seed-information-assets.js`
+Populates the `information-assets` collection with sample asset data.
+
+**Usage:**
+```bash
 npm run seed
-
-# Or directly with node
-node scripts/seed-information-assets.js
 ```
 
-### What the Script Does
+### `seed-soa-controls.js`
+Populates the `soa-controls` collection with Statement of Applicability controls.
 
-- ✅ **Automatically loads** MongoDB URI from `.env.local`
-- ✅ **Connects to MongoDB** using your connection string
-- ✅ **Clears existing data** from the `information-assets` collection
-- ✅ **Inserts 15 fake assets** with realistic data
-- ✅ **Provides feedback** on the seeding process
-
-### Sample Data Includes
-
-- **Customer Database** (High confidentiality)
-- **Employee Records** (HR Data)
-- **Financial Reports** (Regulatory compliance)
-- **Source Code Repository** (Intellectual Property)
-- **Network Infrastructure** (Critical availability)
-- **API Keys** (Security credentials)
-- **Backup Systems** (Infrastructure)
-- **Marketing Materials** (Public data)
-- **Compliance Documentation** (Legal)
-- **Development Environment** (Non-production)
-- **Customer Support Tickets** (Customer data)
-- **System Logs** (Audit trails)
-- **Vendor Contracts** (Legal agreements)
-- **Mobile App Backend** (API services)
-- **Email Archive** (Communication)
-
-### Data Structure
-
-Each asset includes:
-- **Information Asset**: Asset name
-- **Category**: Data classification
-- **Type**: Asset type (Database, Documents, etc.)
-- **Description**: Detailed description
-- **Location**: Where stored
-- **Owner**: Asset owner
-- **SME**: Subject Matter Expert
-- **Administrator**: Technical administrator
-- **Agile Release Train**: ART designation
-- **Confidentiality**: High/Medium/Low
-- **Integrity**: High/Medium/Low
-- **Availability**: Critical/High/Medium/Low
-- **Additional Info**: Extra information
-
-### Environment Variables
-
-The script automatically loads your MongoDB connection string from `.env.local`:
-
-```
-MONGODB_URI=your_mongodb_connection_string
+**Usage:**
+```bash
+npm run seed-soa
 ```
 
-**Example:**
-```
-MONGODB_URI=mongodb://localhost:27017/cycorgi
-```
+## Environment Setup
 
-### Troubleshooting
+1. Ensure your `.env.local` file contains the `MONGODB_URI` variable
+2. Make sure MongoDB is running and accessible
+3. Run the scripts in development environment only
 
-If you get a "MONGODB_URI not found" error:
-1. ✅ Check that your `.env.local` file exists in the project root
-2. ✅ Verify the `MONGODB_URI` variable is set correctly
-3. ✅ Make sure there are no extra spaces or quotes around the URI 
+## Safety Features
+
+- **Environment Check**: Scripts validate `NODE_ENV` and `MONGODB_URI`
+- **Data Protection**: Won't overwrite existing data without `--force` flag
+- **Error Handling**: Proper error messages and graceful failures
+- **Connection Management**: Proper MongoDB connection cleanup
+
+## Production Considerations
+
+- API endpoints now use environment-based conditional seeding
+- Only development environment allows automatic fake data insertion
+- Production endpoints return proper errors without fake data
+- Seeding logic is completely separated from API logic
+
+## Troubleshooting
+
+**"MONGODB_URI environment variable is not set"**
+- Check your `.env.local` file
+- Ensure the variable name is exactly `MONGODB_URI`
+
+**"Collection already contains X documents"**
+- Use `--force` flag to overwrite existing data
+- Or manually clear the collection first
+
+**Connection errors**
+- Verify MongoDB is running
+- Check network connectivity
+- Validate connection string format 
