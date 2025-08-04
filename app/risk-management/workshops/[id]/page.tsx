@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { useToast } from '@/app/components/Toast'
+import { useModal } from '@/app/hooks/useModal'
 
 interface Risk {
   riskId: string
@@ -679,9 +680,10 @@ interface RiskCardProps {
   onUpdate: (field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
   onUpdateTreatment: (treatmentId: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
   onRequestExtension: (treatment: Treatment) => void
+  onCloseTreatment: (treatment: Treatment) => void
 }
 
-function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension }: RiskCardProps) {
+function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment }: RiskCardProps) {
   const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
   
   const getSectionColor = () => {
@@ -789,14 +791,25 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                           <h5 className="text-sm font-medium text-gray-900 mb-1">Owner</h5>
                           <p className="text-sm text-gray-700">{treatment.riskTreatmentOwner}</p>
                         </div>
-                        <button
-                          onClick={() => onRequestExtension(treatment)}
-                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
-                          title="Request due date extension"
-                        >
-                          <Icon name="calendar-plus" size={12} className="mr-1" />
-                          Request Extension
-                        </button>
+                        {sectionType === 'closure' ? (
+                          <button
+                            onClick={() => onCloseTreatment(treatment)}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+                            title="Close treatment"
+                          >
+                            <Icon name="check-circle" size={12} className="mr-1" />
+                            Close Treatment
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onRequestExtension(treatment)}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                            title="Request due date extension"
+                          >
+                            <Icon name="calendar-plus" size={12} className="mr-1" />
+                            Request Extension
+                          </button>
+                        )}
                       </div>
                     </div>
                     
@@ -855,7 +868,11 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
     extendedDueDate?: string
     justification?: string
   }>({})
-  const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
+
+  const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
+
+  // Memoize the errors check to avoid recalculating on every render
+  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
 
   useEffect(() => {
     if (isOpen) {
@@ -867,71 +884,6 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       setErrors({})
     }
   }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    // Focus management for modal
-    const timer = setTimeout(() => {
-      // Focus the first focusable element in the modal
-      const firstFocusableElement = modalRef?.querySelector(
-        'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-      ) as HTMLElement
-      firstFocusableElement?.focus()
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [isOpen, modalRef])
-
-  // Handle escape key to close modal
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
-    return () => document.removeEventListener('keydown', handleEscapeKey)
-  }, [isOpen, onClose])
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
-  // Handle tab key to trap focus within modal
-  const handleTabKey = (event: React.KeyboardEvent) => {
-    if (event.key !== 'Tab') return
-
-    if (!modalRef) return
-
-    const focusableElements = modalRef.querySelectorAll(
-      'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-    )
-    const firstElement = focusableElements[0] as HTMLElement
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
-
-    if (event.shiftKey) {
-      if (document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement.focus()
-      }
-    } else {
-      if (document.activeElement === lastElement) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-  }
 
   const validateForm = () => {
     const newErrors: { extendedDueDate?: string; justification?: string } = {}
@@ -1018,14 +970,10 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-      }}
+      onClick={handleBackdropClick}
     >
       <div 
-        ref={setModalRef}
+        ref={modalRef}
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onKeyDown={handleTabKey}
       >
@@ -1144,7 +1092,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || Object.keys(errors).length > 0}
+              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || hasErrors}
               aria-label="Submit extension request"
             >
               {submitting ? (
@@ -1154,6 +1102,224 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
                 </>
               ) : (
                 'Submit Request'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+interface CloseTreatmentModalProps {
+  isOpen: boolean
+  onClose: () => void
+  treatment: Treatment
+  onSubmit: (data: { approvedBy: string }) => Promise<void>
+  submitting: boolean
+}
+
+function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting }: CloseTreatmentModalProps) {
+  const [formData, setFormData] = useState({
+    approvedBy: ''
+  })
+  const [errors, setErrors] = useState<{
+    approvedBy?: string
+  }>({})
+
+  const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
+
+  // Memoize the errors check to avoid recalculating on every render
+  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form when modal opens
+      setFormData({
+        approvedBy: ''
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
+  const validateForm = () => {
+    const newErrors: { approvedBy?: string } = {}
+
+    // Validate approved by
+    const trimmedApprovedBy = formData.approvedBy.trim()
+    if (!trimmedApprovedBy) {
+      newErrors.approvedBy = 'Approved By is required'
+    } else if (trimmedApprovedBy.length < 2) {
+      newErrors.approvedBy = 'Approved By must be at least 2 characters long'
+    } else if (trimmedApprovedBy.length > 100) {
+      newErrors.approvedBy = 'Approved By must be less than 100 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (validateForm()) {
+      await onSubmit(formData)
+      onClose()
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }))
+    }
+
+    // Real-time validation for approved by field
+    if (field === 'approvedBy') {
+      const trimmedValue = value.trim()
+      if (trimmedValue && trimmedValue.length < 2) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: 'Approved By must be at least 2 characters long'
+        }))
+      } else if (trimmedValue && trimmedValue.length > 100) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: 'Approved By must be less than 100 characters'
+        }))
+      } else if (trimmedValue) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: undefined
+        }))
+      }
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div 
+      className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-modal-title"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalRef}
+        className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        onKeyDown={handleTabKey}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 id="close-modal-title" className="text-lg font-semibold text-gray-900">Close Treatment</h2>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Close"
+            aria-label="Close treatment form"
+          >
+            <Icon name="close" size={16} className="text-gray-500" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Treatment Details</h3>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Treatment ID:</span> {treatment.treatmentId}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Owner:</span> {treatment.riskTreatmentOwner}
+              </p>
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">Treatment:</span> {treatment.riskTreatment}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="approvedBy" className="block text-sm font-medium text-gray-700 mb-2">
+              Approved By <span className="text-red-500" aria-label="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="approvedBy"
+              name="approvedBy"
+              value={formData.approvedBy}
+              onChange={(e) => handleInputChange('approvedBy', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                errors.approvedBy 
+                  ? 'border-red-300 focus:ring-red-500' 
+                  : 'border-gray-300 focus:ring-green-500'
+              }`}
+              placeholder="Enter the name of the person approving this treatment closure..."
+              required
+              maxLength={100}
+              aria-invalid={errors.approvedBy ? 'true' : 'false'}
+              aria-describedby={errors.approvedBy ? 'approved-by-error' : 'approved-by-help'}
+              aria-required="true"
+              aria-label="Name of person approving treatment closure"
+            />
+            {errors.approvedBy ? (
+              <p id="approved-by-error" className="text-xs text-red-600 mt-1" role="alert">
+                {errors.approvedBy}
+              </p>
+            ) : (
+              <p id="approved-by-help" className="text-xs text-gray-500 mt-1">
+                Enter the full name of the person approving this treatment closure
+              </p>
+            )}
+          </div>
+
+          {/* Warning Message */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex">
+              <Icon name="exclamation-circle" size={16} className="text-yellow-400 mr-2 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-yellow-800">Important</h4>
+                <p className="text-sm text-yellow-700 mt-1">
+                  This action will permanently close the treatment and set its status to "Approved". 
+                  The completion date will be set to the workshop date.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              disabled={submitting}
+              aria-label="Cancel treatment closure"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={submitting || !formData.approvedBy.trim() || hasErrors}
+              aria-label="Close and approve treatment"
+            >
+              {submitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                  Closing...
+                </>
+              ) : (
+                'Close Treatment'
               )}
             </button>
           </div>
@@ -1179,6 +1345,10 @@ export default function WorkshopDetails() {
   const [showExtensionModal, setShowExtensionModal] = useState(false)
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null)
   const [submittingExtension, setSubmittingExtension] = useState(false)
+  // Close treatment modal state
+  const [showCloseTreatmentModal, setShowCloseTreatmentModal] = useState(false)
+  const [selectedCloseTreatment, setSelectedCloseTreatment] = useState<Treatment | null>(null)
+  const [submittingCloseTreatment, setSubmittingCloseTreatment] = useState(false)
 
   // Update risk-level meeting minutes
   const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
@@ -1458,6 +1628,90 @@ export default function WorkshopDetails() {
     }
   }
 
+  // Handle close treatment
+  // Open close treatment modal
+  const openCloseTreatmentModal = (treatment: Treatment) => {
+    setSelectedCloseTreatment(treatment)
+    setShowCloseTreatmentModal(true)
+  }
+
+  // Close close treatment modal
+  const closeCloseTreatmentModal = () => {
+    setShowCloseTreatmentModal(false)
+    setSelectedCloseTreatment(null)
+  }
+
+  const handleCloseTreatment = async (data: { approvedBy: string }) => {
+    if (!workshop || !selectedCloseTreatment) return
+
+    setSubmittingCloseTreatment(true)
+    try {
+      // Update treatment status to "Approved" and set completion date to workshop date
+      const response = await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          closureApproval: 'Approved',
+          completionDate: workshop.date,
+          closureApprovedBy: data.approvedBy
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        // Update the outcome field for the specific treatment
+        const outcomeMessage = `Risk treatment closed and approved on ${formatDate(workshop.date)} by ${data.approvedBy}`
+        
+        // Find the risk item in the closure section that contains this treatment
+        const closureSection = workshop.closure || []
+        const riskIndex = closureSection.findIndex(item => item.riskId === selectedCloseTreatment.riskId)
+        
+        if (riskIndex !== -1) {
+          // Get the current outcome text
+          const currentOutcome = getTreatmentMinutes(selectedCloseTreatment.treatmentId, closureSection[riskIndex].selectedTreatments)?.outcome || ''
+          
+          // Combine existing outcome with new closure message
+          const combinedOutcome = currentOutcome 
+            ? `${currentOutcome}\n\n${outcomeMessage}`
+            : outcomeMessage
+          
+          // Update the treatment's outcome field with combined text
+          try {
+            await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
+          } catch (updateError) {
+            console.error('Error updating treatment outcome:', updateError)
+            showToast({
+              type: 'error',
+              title: 'Partial Success',
+              message: 'Treatment was closed but failed to update outcome field. Please refresh and try again.'
+            })
+            return
+          }
+        }
+        
+        showToast({
+          type: 'success',
+          title: 'Treatment Closed',
+          message: 'Risk treatment has been closed and approved successfully'
+        })
+      } else {
+        throw new Error(result.error || 'Failed to close treatment')
+      }
+    } catch (error) {
+      console.error('Error closing treatment:', error)
+      showToast({
+        type: 'error',
+        title: 'Close Failed',
+        message: error instanceof Error ? error.message : 'Failed to close treatment'
+      })
+    } finally {
+      setSubmittingCloseTreatment(false)
+    }
+  }
+
   const updateTreatmentOutcomeAfterExtension = async (extendedDueDate: string, justification: string) => {
     if (!workshop || !selectedTreatment) return
 
@@ -1481,7 +1735,17 @@ export default function WorkshopDetails() {
         : outcomeMessage
       
       // Update the treatment's outcome field with combined text
-      await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
+      try {
+        await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
+      } catch (updateError) {
+        console.error('Error updating treatment outcome after extension:', updateError)
+        showToast({
+          type: 'error',
+          title: 'Partial Success',
+          message: 'Extension was approved but failed to update outcome field. Please refresh and try again.'
+        })
+        throw updateError // Re-throw to be caught by the calling function
+      }
     }
   }
 
@@ -1831,6 +2095,7 @@ export default function WorkshopDetails() {
                         onUpdate={(field, value) => updateRiskMinutes('extensions', index, field, value)}
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('extensions', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
+                        onCloseTreatment={openCloseTreatmentModal}
                       />
                     )
                   })}
@@ -1863,6 +2128,7 @@ export default function WorkshopDetails() {
                         onUpdate={(field, value) => updateRiskMinutes('closure', index, field, value)}
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('closure', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
+                        onCloseTreatment={openCloseTreatmentModal}
                       />
                     )
                   })}
@@ -1895,6 +2161,7 @@ export default function WorkshopDetails() {
                         onUpdate={(field, value) => updateRiskMinutes('newRisks', index, field, value)}
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('newRisks', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
+                        onCloseTreatment={openCloseTreatmentModal}
                       />
                     )
                   })}
@@ -1963,6 +2230,17 @@ export default function WorkshopDetails() {
           treatment={selectedTreatment}
           onSubmit={handleExtensionRequest}
           submitting={submittingExtension}
+        />
+      )}
+
+      {/* Close Treatment Modal */}
+      {selectedCloseTreatment && (
+        <CloseTreatmentModal
+          isOpen={showCloseTreatmentModal}
+          onClose={closeCloseTreatmentModal}
+          treatment={selectedCloseTreatment}
+          onSubmit={handleCloseTreatment}
+          submitting={submittingCloseTreatment}
         />
       )}
     </div>
