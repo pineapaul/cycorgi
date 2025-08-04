@@ -87,3 +87,43 @@ export function extractRiskNumber(riskId: string): string {
   // If no hyphen or no second part, return the original
   return riskId
 } 
+
+/**
+ * Formats a date string to "dd MMM yyyy" format
+ * @param dateString - The date string to format
+ * @returns Formatted date string or '-' if invalid/empty
+ */
+export function formatDate(dateString: string): string {
+  if (!dateString) return '-'
+  
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  } catch (error) {
+    return dateString
+  }
+}
+
+/**
+ * Formats a date string for CSV export (dd/MM/yyyy format)
+ * @param dateString - The date string to format
+ * @returns Formatted date string or empty string if invalid/empty
+ */
+export function formatDateForCSV(dateString: string): string {
+  if (!dateString) return ''
+  
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch (error) {
+    return dateString
+  }
+} 

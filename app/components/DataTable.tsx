@@ -37,6 +37,7 @@ export interface DataTableProps {
   phaseButtons?: PhaseButton[]
   selectedPhase?: string | null
   onPhaseSelect?: (phase: string | null) => void
+  className?: string
 }
 
 export default function DataTable({ 
@@ -51,7 +52,8 @@ export default function DataTable({
   onExportCSV,
   phaseButtons,
   selectedPhase,
-  onPhaseSelect
+  onPhaseSelect,
+  className
 }: DataTableProps) {
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -303,7 +305,7 @@ export default function DataTable({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`}>
       {/* Actions Bar */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
         {/* Left side - Options and Phase Buttons */}
@@ -740,7 +742,10 @@ export default function DataTable({
                         column.align === 'center' ? 'text-center' : 
                         column.align === 'right' ? 'text-right' : 'text-left'
                       }`}
-                      style={{ color: '#22223B' }}
+                      style={{ 
+                        color: '#22223B',
+                        width: column.width || 'auto'
+                      }}
                     >
                         <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
                           column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 

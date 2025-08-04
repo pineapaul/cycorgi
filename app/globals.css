@@ -114,3 +114,101 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   @apply text-gray-600;
   transform: translateX(2px);
 }
+
+/* Third Parties Table Date Column Styles */
+.third-parties-table .data-table-container table th[style*="width: 110px"],
+.third-parties-table .data-table-container table th[style*="width: 160px"] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.third-parties-table .data-table-container table td[style*="width: 110px"],
+.third-parties-table .data-table-container table td[style*="width: 160px"] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.third-parties-table .data-table-container table th[style*="width: 110px"] div,
+.third-parties-table .data-table-container table th[style*="width: 160px"] div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.third-parties-table .data-table-container table td[style*="width: 110px"] div,
+.third-parties-table .data-table-container table td[style*="width: 160px"] div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Override fixed table width for third parties table */
+.third-parties-table .data-table-container table {
+  min-width: auto !important;
+}
+
+/* Make Jira ticket columns responsive - only for data cells, not headers */
+.third-parties-table .data-table-container table td[style*="width: 200px"] {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 200px !important;
+  width: 200px !important;
+}
+
+/* Additional rules for Jira ticket data cells */
+.third-parties-table .data-table-container table td[style*="width: 200px"] div {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+/* Allow Jira ticket headers to wrap */
+.third-parties-table .data-table-container table th[style*="width: 200px"] {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  max-width: 200px !important;
+  width: 200px !important;
+}
+
+.third-parties-table .data-table-container table th[style*="width: 200px"] div {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+}
+
+/* Force table layout for better column control */
+.third-parties-table .data-table-container table {
+  table-layout: fixed !important;
+}
+
+/* Additional responsive rules for table cells - only values, not headers */
+.third-parties-table .data-table-container table td {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.third-parties-table .data-table-container table td div {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Allow headers to wrap */
+.third-parties-table .data-table-container table th {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+}
+
+.third-parties-table .data-table-container table th div {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: visible !important;
+}
