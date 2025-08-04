@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { useToast } from '@/app/components/Toast'
+import { useModal } from '@/app/hooks/useModal'
 
 interface Risk {
   riskId: string
@@ -867,7 +868,11 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
     extendedDueDate?: string
     justification?: string
   }>({})
-  const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
+
+  const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
+
+  // Memoize the errors check to avoid recalculating on every render
+  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
 
   useEffect(() => {
     if (isOpen) {
@@ -879,71 +884,6 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       setErrors({})
     }
   }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    // Focus management for modal
-    const timer = setTimeout(() => {
-      // Focus the first focusable element in the modal
-      const firstFocusableElement = modalRef?.querySelector(
-        'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-      ) as HTMLElement
-      firstFocusableElement?.focus()
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [isOpen, modalRef])
-
-  // Handle escape key to close modal
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
-    return () => document.removeEventListener('keydown', handleEscapeKey)
-  }, [isOpen, onClose])
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
-  // Handle tab key to trap focus within modal
-  const handleTabKey = (event: React.KeyboardEvent) => {
-    if (event.key !== 'Tab') return
-
-    if (!modalRef) return
-
-    const focusableElements = modalRef.querySelectorAll(
-      'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-    )
-    const firstElement = focusableElements[0] as HTMLElement
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
-
-    if (event.shiftKey) {
-      if (document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement.focus()
-      }
-    } else {
-      if (document.activeElement === lastElement) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-  }
 
   const validateForm = () => {
     const newErrors: { extendedDueDate?: string; justification?: string } = {}
@@ -1030,14 +970,10 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-      }}
+      onClick={handleBackdropClick}
     >
       <div 
-        ref={setModalRef}
+        ref={modalRef}
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onKeyDown={handleTabKey}
       >
@@ -1156,7 +1092,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || Object.keys(errors).length > 0}
+              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || hasErrors}
               aria-label="Submit extension request"
             >
               {submitting ? (
@@ -1190,7 +1126,11 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
   const [errors, setErrors] = useState<{
     approvedBy?: string
   }>({})
-  const [modalRef, setModalRef] = useState<HTMLDivElement | null>(null)
+
+  const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
+
+  // Memoize the errors check to avoid recalculating on every render
+  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
 
   useEffect(() => {
     if (isOpen) {
@@ -1201,71 +1141,6 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
       setErrors({})
     }
   }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    // Focus management for modal
-    const timer = setTimeout(() => {
-      // Focus the first focusable element in the modal
-      const firstFocusableElement = modalRef?.querySelector(
-        'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-      ) as HTMLElement
-      firstFocusableElement?.focus()
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [isOpen, modalRef])
-
-  // Handle escape key to close modal
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscapeKey)
-    return () => document.removeEventListener('keydown', handleEscapeKey)
-  }, [isOpen, onClose])
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
-
-  // Handle tab key to trap focus within modal
-  const handleTabKey = (event: React.KeyboardEvent) => {
-    if (event.key !== 'Tab') return
-
-    if (!modalRef) return
-
-    const focusableElements = modalRef.querySelectorAll(
-      'input, textarea, button, [tabindex]:not([tabindex="-1"])'
-    )
-    const firstElement = focusableElements[0] as HTMLElement
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
-
-    if (event.shiftKey) {
-      if (document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement.focus()
-      }
-    } else {
-      if (document.activeElement === lastElement) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-  }
 
   const validateForm = () => {
     const newErrors: { approvedBy?: string } = {}
@@ -1336,14 +1211,10 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
       role="dialog"
       aria-modal="true"
       aria-labelledby="close-modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-      }}
+      onClick={handleBackdropClick}
     >
       <div 
-        ref={setModalRef}
+        ref={modalRef}
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onKeyDown={handleTabKey}
       >
@@ -1439,7 +1310,7 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={submitting || !formData.approvedBy.trim() || Object.keys(errors).length > 0}
+              disabled={submitting || !formData.approvedBy.trim() || hasErrors}
               aria-label="Close and approve treatment"
             >
               {submitting ? (
@@ -1808,7 +1679,17 @@ export default function WorkshopDetails() {
             : outcomeMessage
           
           // Update the treatment's outcome field with combined text
-          await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
+          try {
+            await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
+          } catch (updateError) {
+            console.error('Error updating treatment outcome:', updateError)
+            showToast({
+              type: 'error',
+              title: 'Partial Success',
+              message: 'Treatment was closed but failed to update outcome field. Please refresh and try again.'
+            })
+            return
+          }
         }
         
         showToast({
@@ -1854,7 +1735,17 @@ export default function WorkshopDetails() {
         : outcomeMessage
       
       // Update the treatment's outcome field with combined text
-      await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
+      try {
+        await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
+      } catch (updateError) {
+        console.error('Error updating treatment outcome after extension:', updateError)
+        showToast({
+          type: 'error',
+          title: 'Partial Success',
+          message: 'Extension was approved but failed to update outcome field. Please refresh and try again.'
+        })
+        throw updateError // Re-throw to be caught by the calling function
+      }
     }
   }
 
