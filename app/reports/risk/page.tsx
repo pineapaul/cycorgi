@@ -6,6 +6,7 @@ import { ResponsivePie } from '@nivo/pie'
 import { ResponsiveLine } from '@nivo/line'
 
 import Icon from '@/app/components/Icon'
+import { formatInformationAssets } from '@/lib/utils'
 
 interface Risk {
   _id: string
@@ -694,10 +695,8 @@ export default function RiskReports() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.currentPhase}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {Array.isArray(risk.informationAsset) 
-                    ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                    : risk.informationAsset}
-                </td>
+                      {formatInformationAssets(risk.informationAsset)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {(getRatingValue(risk.likelihoodRating) * getRatingValue(risk.consequenceRating)).toFixed(1)}
                     </td>

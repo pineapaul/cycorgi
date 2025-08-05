@@ -7,11 +7,12 @@ import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { useToast } from '@/app/components/Toast'
 import { useModal } from '@/app/hooks/useModal'
+import { formatInformationAssets } from '@/lib/utils'
 
 interface Risk {
   riskId: string
   riskStatement: string
-  informationAsset: string
+  informationAsset: string | Array<{ id: string; name: string }> | string[]
   likelihood: string
   impact: string
   riskRating: string
@@ -354,9 +355,7 @@ const generatePDFHTML = (
               </div>
               <div>
                 <h5 style="font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 8px;">Information Asset</h5>
-                <p style="font-size: 14px; color: #374151;">${Array.isArray(risk.informationAsset) 
-                  ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                  : risk.informationAsset}</p>
+                <p style="font-size: 14px; color: #374151;">${formatInformationAssets(risk.informationAsset)}</p>
               </div>
             </div>
             
@@ -784,10 +783,8 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                 <div>
                   <h5 className="text-sm font-medium text-gray-900 mb-2">Information Asset</h5>
                   <p className="text-sm text-gray-700">
-                  {Array.isArray(risk.informationAsset) 
-                    ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                    : risk.informationAsset}
-                </p>
+                    {formatInformationAssets(risk.informationAsset)}
+                  </p>
                 </div>
               </div>
 
@@ -2627,9 +2624,7 @@ export default function WorkshopDetails() {
                 <span className="font-medium">Risk Statement:</span> {selectedCloseRisk.riskStatement}
               </p>
               <p className="text-sm text-gray-700">
-                <span className="font-medium">Information Asset:</span> {Array.isArray(selectedCloseRisk.informationAsset) 
-                  ? selectedCloseRisk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                  : selectedCloseRisk.informationAsset}
+                <span className="font-medium">Information Asset:</span> {formatInformationAssets(selectedCloseRisk.informationAsset)}
               </p>
             </>
           }

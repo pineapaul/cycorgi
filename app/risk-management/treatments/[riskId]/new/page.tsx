@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
 import { TREATMENT_STATUS } from '../../../../../lib/constants'
+import { formatInformationAssets } from '../../../../../lib/utils'
 
 interface TreatmentFormData {
   riskId: string
@@ -216,14 +217,12 @@ export default function AddTreatment() {
                 <span className="font-medium text-gray-700">Risk Statement:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.riskStatement}</p>
               </div>
-              <div>
-                <span className="font-medium text-gray-700">Information Asset:</span>
-                                    <p className="text-gray-600 mt-1">
-                      {Array.isArray(riskDetails.informationAsset) 
-                        ? riskDetails.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                        : riskDetails.informationAsset}
-                    </p>
-              </div>
+                              <div>
+                  <span className="font-medium text-gray-700">Information Asset:</span>
+                  <p className="text-gray-600 mt-1">
+                    {formatInformationAssets(riskDetails.informationAsset)}
+                  </p>
+                </div>
               <div>
                 <span className="font-medium text-gray-700">Risk Rating:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.riskRating}</p>

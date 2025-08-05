@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { validateRiskId, getCIAConfig } from '../../../../../lib/utils'
+import { validateRiskId, getCIAConfig, formatInformationAssets } from '../../../../../lib/utils'
 import DataTable from '../../../../components/DataTable'
 import { TREATMENT_STATUS, CIA_DELIMITERS } from '../../../../../lib/constants'
 import { useBackNavigation } from '../../../../hooks/useBackNavigation'
@@ -636,9 +636,7 @@ export default function TreatmentInformation() {
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
                       <p className="text-sm text-gray-900 mt-1">
-                        {Array.isArray(risk.informationAsset) 
-                          ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                          : risk.informationAsset}
+                        {formatInformationAssets(risk.informationAsset)}
                       </p>
                     </div>
                     <div>

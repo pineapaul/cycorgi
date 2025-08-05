@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
@@ -164,11 +164,13 @@ export default function RiskInformation() {
   const [commentCount, setCommentCount] = useState(0)
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
+  const [originalInformationAssetIds, setOriginalInformationAssetIds] = useState<string[]>([])
   
   // Modal state for information assets selection
   const [showAssetModal, setShowAssetModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
+  const [selectedLetter, setSelectedLetter] = useState<string>('')
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -228,6 +230,21 @@ export default function RiskInformation() {
         if (riskResult.success) {
           // Transform the data to match the expected format
           const risk = riskResult.data;
+          
+          // Store the original information asset IDs for proper initialization
+          let originalIds: string[] = []
+          if (Array.isArray(risk.informationAsset)) {
+            originalIds = risk.informationAsset.map((asset: any) => {
+              if (typeof asset === 'object' && asset !== null) {
+                return asset.id
+              }
+              return asset
+            }).filter(Boolean) // Remove any undefined/null values
+          } else if (typeof risk.informationAsset === 'string') {
+            originalIds = risk.informationAsset.split(',').map((id: string) => id.trim())
+          }
+          setOriginalInformationAssetIds(originalIds)
+          
           const transformedRisk = {
             riskId: risk.riskId,
             functionalUnit: risk.functionalUnit,
@@ -237,9 +254,7 @@ export default function RiskInformation() {
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-                          informationAssets: Array.isArray(risk.informationAsset) 
-                ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                : risk.informationAsset || '',
+                          informationAssets: formatInformationAssets(risk.informationAsset) || '',
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
@@ -773,21 +788,8 @@ export default function RiskInformation() {
     setOriginalRisk(riskDetails) // Store the original values when entering edit mode
     setEditedRisk(riskDetails)
     
-    // Initialize selected information assets from the current risk data
-    if (riskDetails?.informationAssets) {
-      // Parse the information assets string to extract IDs
-      // This assumes the string contains asset names separated by commas
-      const assetNames = riskDetails.informationAssets.split(',').map(name => name.trim())
-      const selectedIds = informationAssets
-        .filter(asset => assetNames.some(name => 
-          asset.informationAsset.toLowerCase().includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(asset.informationAsset.toLowerCase())
-        ))
-        .map(asset => asset.id)
-      setSelectedInformationAssets(selectedIds)
-    } else {
-      setSelectedInformationAssets([])
-    }
+    // Initialize selected information assets from the stored original IDs
+    setSelectedInformationAssets(originalInformationAssetIds)
   }
 
   const handleCancel = () => {
@@ -798,6 +800,7 @@ export default function RiskInformation() {
     setShowAssetModal(false) // Close modal if open
     setSearchTerm('')
     setTempSelectedAssets([])
+    setOriginalInformationAssetIds([]) // Reset original IDs
   }
 
   const handleSave = async () => {
@@ -845,10 +848,14 @@ export default function RiskInformation() {
           duration: 4000
         })
       } else {
+        // Show detailed validation errors if available
+        const errorMessage = result.details 
+          ? `Validation failed: ${result.details.join(', ')}`
+          : result.error || 'An unknown error occurred while updating the risk.'
         showToast({
           type: 'error',
           title: 'Update Failed',
-          message: result.error || 'An unknown error occurred while updating the risk.',
+          message: errorMessage,
           duration: 6000
         })
       }
@@ -916,6 +923,7 @@ export default function RiskInformation() {
   const openAssetModal = () => {
     setTempSelectedAssets([...selectedInformationAssets])
     setSearchTerm('')
+    setSelectedLetter('')
     setShowAssetModal(true)
   }
 
@@ -923,6 +931,7 @@ export default function RiskInformation() {
     setShowAssetModal(false)
     setSearchTerm('')
     setTempSelectedAssets([])
+    setSelectedLetter('')
   }
 
   const handleAssetSelection = (assetId: string, checked: boolean) => {
@@ -938,11 +947,17 @@ export default function RiskInformation() {
     closeAssetModal()
   }
 
-  // Filter assets based on search term
-  const filteredAssets = informationAssets.filter(asset =>
-    asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filter assets based on search term and sort alphabetically
+  const filteredAssets = informationAssets
+    .filter(asset =>
+      asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(asset => {
+      if (!selectedLetter) return true
+      return asset.informationAsset.toLowerCase().startsWith(selectedLetter.toLowerCase())
+    })
+    .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
 
   if (loading) {
     return (
@@ -1115,11 +1130,12 @@ export default function RiskInformation() {
                         onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
-                        <option value="identification">Identification</option>
-                        <option value="analysis">Analysis</option>
-                        <option value="evaluation">Evaluation</option>
-                        <option value="treatment">Treatment</option>
-                        <option value="monitoring">Monitoring</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Identification">Identification</option>
+                        <option value="Analysis">Analysis</option>
+                        <option value="Evaluation">Evaluation</option>
+                        <option value="Treatment">Treatment</option>
+                        <option value="Monitoring">Monitoring</option>
                       </select>
                     ) : (
                       <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
@@ -1456,7 +1472,22 @@ export default function RiskInformation() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.informationAssets}</p>
+                    <div className="mt-1">
+                      {riskDetails.informationAssets ? (
+                        <div className="flex flex-wrap gap-2">
+                          {riskDetails.informationAssets.split(', ').map((assetName, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                            >
+                              {assetName.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">No information assets specified</p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div>
@@ -1912,11 +1943,14 @@ export default function RiskInformation() {
 
       {/* Information Assets Selection Modal */}
       {showAssetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              <div className="flex items-center space-x-3">
+                <Icon name="file" size={20} className="text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              </div>
               <button onClick={closeAssetModal} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1924,7 +1958,7 @@ export default function RiskInformation() {
             {/* Search Input */}
             <div className="p-6 border-b border-gray-200">
               <div className="relative">
-                <Icon name="search" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search assets by name or category..."
@@ -1934,11 +1968,41 @@ export default function RiskInformation() {
                 />
               </div>
             </div>
+
+            {/* Alphabet Filter */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setSelectedLetter('')}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    selectedLetter === '' 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => setSelectedLetter(selectedLetter === letter ? '' : letter)}
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      selectedLetter === letter 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Assets List */}
             <div className="flex-1 overflow-y-auto p-6">
               {filteredAssets.length === 0 ? (
                 <div className="text-center py-8">
-                  <Icon name="search" size={48} className="mx-auto text-gray-300 mb-4" />
+                  <Icon name="magnifying-glass" size={48} className="mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-500">
                     {searchTerm ? 'No assets found matching your search.' : 'No information assets available.'}
                   </p>

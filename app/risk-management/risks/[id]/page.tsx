@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
-import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import { useToast } from '@/app/components/Toast'
 
@@ -17,12 +17,13 @@ interface InformationAsset {
 interface Risk {
   riskId: string
   functionalUnit: string
+  currentPhase: string
   jiraTicket: string
   dateRiskRaised: string
   raisedBy: string
   riskOwner: string
   affectedSites: string
-  informationAssets: string
+  informationAsset: string | Array<{ id: string; name: string }> | string[]
   threat: string
   vulnerability: string
   riskStatement: string
@@ -35,16 +36,13 @@ interface Risk {
   riskAction: string
   reasonForAcceptance: string
   dateOfSSCApproval: string
-  riskTreatments: string
   dateRiskTreatmentsApproved: string
-  riskTreatmentAssignedTo: string
   residualConsequence: string
   residualLikelihood: string
   residualRiskRating: string
   residualRiskAcceptedByOwner: string
   dateResidualRiskAccepted: string
-  dateRiskTreatmentCompleted: string
-  currentPhase: string
+  treatmentCount: number
 }
 
 export default function RiskInformationPage() {
@@ -65,6 +63,7 @@ export default function RiskInformationPage() {
   const [showAssetModal, setShowAssetModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
+  const [selectedLetter, setSelectedLetter] = useState<string>('')
 
   useEffect(() => {
     if (params.id) {
@@ -103,37 +102,34 @@ export default function RiskInformationPage() {
         const mappedRisk: Risk = {
           riskId: result.data.riskId || '',
           functionalUnit: result.data.functionalUnit || '',
-          jiraTicket: result.data.jiraTicket || `RISK-${extractRiskNumber(id)}`,
-          dateRiskRaised: result.data.dateRiskRaised || result.data.createdAt ? new Date(result.data.createdAt).toISOString().split('T')[0] : '',
-          raisedBy: result.data.raisedBy || result.data.riskOwner || '',
+          currentPhase: result.data.currentPhase || '',
+          jiraTicket: result.data.jiraTicket || '',
+          dateRiskRaised: result.data.dateRiskRaised || '',
+          raisedBy: result.data.raisedBy || '',
           riskOwner: result.data.riskOwner || '',
-          affectedSites: result.data.affectedSites || 'All Sites',
-                        informationAssets: Array.isArray(result.data.informationAsset) 
-                ? result.data.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
-                : result.data.informationAssets || result.data.informationAsset || '',
+          affectedSites: result.data.affectedSites || '',
+          informationAsset: result.data.informationAsset || '',
           threat: result.data.threat || '',
           vulnerability: result.data.vulnerability || '',
           riskStatement: result.data.riskStatement || '',
-          impactCIA: result.data.impactCIA || (result.data.impact ? (Array.isArray(result.data.impact) ? result.data.impact.join(', ') : 'Not specified') : ''),
+          impactCIA: result.data.impactCIA || '',
           currentControls: result.data.currentControls || '',
-          currentControlsReference: result.data.currentControlsReference || `CTRL-${extractRiskNumber(id)}`,
-          consequence: result.data.consequence || result.data.consequenceRating || '',
-          likelihood: result.data.likelihood || result.data.likelihoodRating || '',
-          currentRiskRating: result.data.currentRiskRating || result.data.riskRating || '',
-          riskAction: result.data.riskAction || 'Requires treatment',
+          currentControlsReference: result.data.currentControlsReference || '',
+          consequence: result.data.consequence || '',
+          likelihood: result.data.likelihood || '',
+          currentRiskRating: result.data.currentRiskRating || '',
+          riskAction: result.data.riskAction || '',
           reasonForAcceptance: result.data.reasonForAcceptance || '',
-          dateOfSSCApproval: result.data.dateOfSSCApproval ? new Date(result.data.dateOfSSCApproval).toISOString().split('T')[0] : '',
-          riskTreatments: result.data.riskTreatments || '',
-          dateRiskTreatmentsApproved: result.data.dateRiskTreatmentsApproved ? new Date(result.data.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
-          riskTreatmentAssignedTo: result.data.riskTreatmentAssignedTo || '',
+          dateOfSSCApproval: result.data.dateOfSSCApproval || '',
+          dateRiskTreatmentsApproved: result.data.dateRiskTreatmentsApproved || '',
           residualConsequence: result.data.residualConsequence || '',
           residualLikelihood: result.data.residualLikelihood || '',
           residualRiskRating: result.data.residualRiskRating || '',
           residualRiskAcceptedByOwner: result.data.residualRiskAcceptedByOwner || '',
-          dateResidualRiskAccepted: result.data.dateResidualRiskAccepted ? new Date(result.data.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
-          dateRiskTreatmentCompleted: result.data.dateRiskTreatmentCompleted ? new Date(result.data.dateRiskTreatmentCompleted).toISOString().split('T')[0] : '',
-          currentPhase: result.data.currentPhase || 'Identification',
+          dateResidualRiskAccepted: result.data.dateResidualRiskAccepted || '',
+          treatmentCount: result.data.treatmentCount || 0,
         }
+        
         setRisk(mappedRisk)
         setEditedRisk(mappedRisk)
       } else {
@@ -151,15 +147,22 @@ export default function RiskInformationPage() {
     setIsEditing(true)
     
     // Initialize selected information assets from the current risk data
-    if (risk?.informationAssets) {
-      // Parse the information assets string to extract IDs
-      const assetNames = risk.informationAssets.split(',').map(name => name.trim())
-      const selectedIds = informationAssets
-        .filter(asset => assetNames.some(name =>
-          asset.informationAsset.toLowerCase().includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(asset.informationAsset.toLowerCase())
-        ))
-        .map(asset => asset.id)
+    if (risk?.informationAsset) {
+      let selectedIds: string[] = []
+      
+      if (Array.isArray(risk.informationAsset)) {
+        // Handle array format - extract only the ID from objects
+        selectedIds = risk.informationAsset.map(asset => {
+          if (typeof asset === 'object' && asset !== null) {
+            return asset.id
+          }
+          return asset
+        }).filter(Boolean) // Remove any undefined/null values
+      } else if (typeof risk.informationAsset === 'string') {
+        // Handle old string format
+        selectedIds = risk.informationAsset.split(',').map(name => name.trim())
+      }
+      
       setSelectedInformationAssets(selectedIds)
     } else {
       setSelectedInformationAssets([])
@@ -178,38 +181,10 @@ export default function RiskInformationPage() {
     try {
       setSaving(true)
       
-      // Map the edited data back to the database format
+      // Prepare the data to save, including all necessary fields
       const updateData = {
-        riskId: editedRisk.riskId,
-        functionalUnit: editedRisk.functionalUnit,
-        currentPhase: editedRisk.currentPhase,
-        jiraTicket: editedRisk.jiraTicket,
-        dateRiskRaised: editedRisk.dateRiskRaised,
-        raisedBy: editedRisk.raisedBy,
-        riskOwner: editedRisk.riskOwner,
-        affectedSites: editedRisk.affectedSites,
-        informationAsset: selectedInformationAssets,
-        threat: editedRisk.threat,
-        vulnerability: editedRisk.vulnerability,
-        riskStatement: editedRisk.riskStatement,
-        impactCIA: editedRisk.impactCIA,
-        currentControls: editedRisk.currentControls,
-        currentControlsReference: editedRisk.currentControlsReference,
-        consequence: editedRisk.consequence,
-        likelihood: editedRisk.likelihood,
-        currentRiskRating: editedRisk.currentRiskRating,
-        riskAction: editedRisk.riskAction,
-        reasonForAcceptance: editedRisk.reasonForAcceptance,
-        dateOfSSCApproval: editedRisk.dateOfSSCApproval,
-        riskTreatments: editedRisk.riskTreatments,
-        dateRiskTreatmentsApproved: editedRisk.dateRiskTreatmentsApproved,
-        riskTreatmentAssignedTo: editedRisk.riskTreatmentAssignedTo,
-        residualConsequence: editedRisk.residualConsequence,
-        residualLikelihood: editedRisk.residualLikelihood,
-        residualRiskRating: editedRisk.residualRiskRating,
-        residualRiskAcceptedByOwner: editedRisk.residualRiskAcceptedByOwner,
-        dateResidualRiskAccepted: editedRisk.dateResidualRiskAccepted,
-        dateRiskTreatmentCompleted: editedRisk.dateRiskTreatmentCompleted,
+        ...editedRisk,
+        informationAsset: selectedInformationAssets
       }
 
       const response = await fetch(`/api/risks/${params.id}`, {
@@ -226,7 +201,11 @@ export default function RiskInformationPage() {
         setRisk(editedRisk)
         setIsEditing(false)
       } else {
-        setError(result.error || 'Failed to update risk')
+        // Show detailed validation errors if available
+        const errorMessage = result.details 
+          ? `Validation failed: ${result.details.join(', ')}`
+          : result.error || 'Failed to update risk'
+        setError(errorMessage)
       }
     } catch (err) {
       setError('Failed to update risk')
@@ -296,6 +275,7 @@ export default function RiskInformationPage() {
   const openAssetModal = () => {
     setTempSelectedAssets([...selectedInformationAssets])
     setSearchTerm('')
+    setSelectedLetter('')
     setShowAssetModal(true)
   }
 
@@ -303,6 +283,7 @@ export default function RiskInformationPage() {
     setShowAssetModal(false)
     setSearchTerm('')
     setTempSelectedAssets([])
+    setSelectedLetter('')
   }
 
   const handleAssetSelection = (assetId: string, checked: boolean) => {
@@ -318,15 +299,23 @@ export default function RiskInformationPage() {
     closeAssetModal()
   }
 
-  const filteredAssets = informationAssets.filter(asset =>
-    asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredAssets = informationAssets
+    .filter(asset =>
+      asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(asset => {
+      if (!selectedLetter) return true
+      return asset.informationAsset.toLowerCase().startsWith(selectedLetter.toLowerCase())
+    })
+    .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
 
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
     
     switch (status.toLowerCase()) {
+      case 'draft':
+        return 'bg-gray-100 text-gray-800'
       case 'identification':
         return 'bg-blue-100 text-blue-800'
       case 'analysis':
@@ -504,6 +493,7 @@ export default function RiskInformationPage() {
                     onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
+                    <option value="Draft">Draft</option>
                     <option value="Identification">Identification</option>
                     <option value="Analysis">Analysis</option>
                     <option value="Evaluation">Evaluation</option>
@@ -956,7 +946,7 @@ export default function RiskInformationPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-gray-900">{risk.informationAssets}</p>
+                <p className="text-gray-900">{formatInformationAssets(risk.informationAsset)}</p>
               )}
             </div>
 
@@ -1132,11 +1122,14 @@ export default function RiskInformationPage() {
 
       {/* Information Assets Selection Modal */}
       {showAssetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              <div className="flex items-center space-x-3">
+                <Icon name="file" size={20} className="text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              </div>
               <button
                 onClick={closeAssetModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1148,7 +1141,7 @@ export default function RiskInformationPage() {
             {/* Search Input */}
             <div className="p-6 border-b border-gray-200">
               <div className="relative">
-                <Icon name="search" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search assets by name or category..."
@@ -1156,6 +1149,35 @@ export default function RiskInformationPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+            </div>
+
+            {/* Alphabet Filter */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setSelectedLetter('')}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    selectedLetter === '' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => setSelectedLetter(selectedLetter === letter ? '' : letter)}
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      selectedLetter === letter 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
               </div>
             </div>
 

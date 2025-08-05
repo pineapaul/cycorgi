@@ -98,14 +98,38 @@ export function formatDate(dateString: string): string {
   
   try {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-GB', {
+    if (isNaN(date.getTime())) return '-'
+    
+    return date.toLocaleDateString('en-AU', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     })
-  } catch (error) {
-    return dateString
+  } catch {
+    return '-'
   }
+}
+
+/**
+ * Formats information assets for display, handling both array and single value formats
+ * Supports both new format (objects with id/name) and old format (strings)
+ * @param informationAsset - The information asset value which can be a string, array of strings, or array of objects
+ * @returns Formatted string representation of the information assets
+ */
+export function formatInformationAssets(informationAsset: string | Array<{ id: string; name: string }> | string[] | undefined): string {
+  if (!informationAsset) return '-'
+  
+  if (Array.isArray(informationAsset)) {
+    return informationAsset.map((asset: any) => {
+      // Handle both new format (objects with id/name) and old format (strings)
+      if (typeof asset === 'object' && asset !== null) {
+        return asset.name || asset.id || JSON.stringify(asset)
+      }
+      return asset
+    }).join(', ')
+  }
+  
+  return String(informationAsset)
 }
 
 /**

@@ -59,6 +59,12 @@ export default function NewRisk() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<RiskFormErrors>({})
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
+  
+  // Modal states
+  const [showAssetModal, setShowAssetModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
+  const [selectedLetter, setSelectedLetter] = useState('')
 
   const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'impact']
 
@@ -81,6 +87,46 @@ export default function NewRisk() {
 
     fetchInformationAssets()
   }, [])
+
+  // Modal functions
+  const openAssetModal = () => {
+    setTempSelectedAssets([...formData.informationAssets])
+    setSearchTerm('')
+    setSelectedLetter('')
+    setShowAssetModal(true)
+  }
+
+  const closeAssetModal = () => {
+    setShowAssetModal(false)
+    setSearchTerm('')
+    setTempSelectedAssets([])
+    setSelectedLetter('')
+  }
+
+  const handleAssetSelection = (assetId: string, checked: boolean) => {
+    setTempSelectedAssets(prev => 
+      checked 
+        ? [...prev, assetId]
+        : prev.filter(id => id !== assetId)
+    )
+  }
+
+  const applyAssetSelection = () => {
+    setFormData(prev => ({
+      ...prev,
+      informationAssets: tempSelectedAssets
+    }))
+    
+    // Clear error when information asset is selected
+    if (errors.informationAssets) {
+      setErrors(prev => ({
+        ...prev,
+        informationAssets: undefined
+      }))
+    }
+    
+    closeAssetModal()
+  }
 
   const validateForm = (): boolean => {
     const newErrors: RiskFormErrors = {}
@@ -136,23 +182,6 @@ export default function NewRisk() {
           riskId: 'Risk ID must be in format RISK-XXX (where XXX is numeric)'
         }))
       }
-    }
-  }
-
-  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      informationAssets: checked 
-        ? [...prev.informationAssets, assetId]
-        : prev.informationAssets.filter(id => id !== assetId)
-    }))
-    
-    // Clear error when information asset is selected
-    if (errors.informationAssets) {
-      setErrors(prev => ({
-        ...prev,
-        informationAssets: undefined
-      }))
     }
   }
 
@@ -236,6 +265,24 @@ export default function NewRisk() {
     router.push('/risk-management/register')
   }
 
+  // Filter and sort assets for modal
+  const filteredAssets = informationAssets
+    .filter(asset =>
+      asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(asset => {
+      if (!selectedLetter) return true
+      return asset.informationAsset.toLowerCase().startsWith(selectedLetter.toLowerCase())
+    })
+    .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
+
+  // Get selected asset names for display
+  const selectedAssetNames = formData.informationAssets.map(assetId => {
+    const asset = informationAssets.find(a => a.id === assetId)
+    return asset ? asset.informationAsset : assetId
+  })
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -310,43 +357,47 @@ export default function NewRisk() {
                   )}
                 </div>
 
-                {/* Information Assets - Multi-select */}
+                {/* Information Assets - Modal Button */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Information Assets <span className="text-red-500">*</span>
                   </label>
-                  <div className={`border rounded-md shadow-sm p-4 max-h-48 overflow-y-auto ${
-                    errors.informationAssets 
-                      ? 'border-red-300 focus-within:border-red-500 focus-within:ring-red-500' 
-                      : 'border-gray-300 focus-within:border-purple-500 focus-within:ring-purple-500'
-                  }`}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {informationAssets.map((asset) => (
-                        <label key={asset.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                          <input
-                            type="checkbox"
-                            checked={formData.informationAssets.includes(asset.id)}
-                            onChange={(e) => handleInformationAssetsChange(asset.id, e.target.checked)}
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
-                            <div className="text-xs text-gray-500">{asset.category}</div>
-                          </div>
-                        </label>
+                  <button
+                    type="button"
+                    onClick={openAssetModal}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors text-left ${
+                      errors.informationAssets 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500 hover:border-purple-400'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={formData.informationAssets.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                        {formData.informationAssets.length > 0 
+                          ? `${formData.informationAssets.length} asset${formData.informationAssets.length !== 1 ? 's' : ''} selected`
+                          : 'Click to select information assets'
+                        }
+                      </span>
+                      <Icon name="chevron-down" size={16} className="text-gray-400" />
+                    </div>
+                  </button>
+                  
+                  {/* Display selected assets as tags */}
+                  {formData.informationAssets.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedAssetNames.map((assetName, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                          {assetName}
+                        </span>
                       ))}
                     </div>
-                    {informationAssets.length === 0 && (
-                      <p className="text-sm text-gray-500 italic">Loading information assets...</p>
-                    )}
-                  </div>
+                  )}
+                  
                   {errors.informationAssets && (
                     <p className="mt-1 text-sm text-red-600">{errors.informationAssets}</p>
-                  )}
-                  {formData.informationAssets.length > 0 && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Selected: {formData.informationAssets.length} asset{formData.informationAssets.length !== 1 ? 's' : ''}
-                    </p>
                   )}
                 </div>
 
@@ -620,6 +671,123 @@ export default function NewRisk() {
           </form>
         </div>
       </div>
+
+      {/* Information Assets Selection Modal */}
+      {showAssetModal && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <Icon name="file" size={20} className="text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              </div>
+              <button
+                onClick={closeAssetModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="relative">
+                <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search assets by name or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Alphabet Filter */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setSelectedLetter('')}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    selectedLetter === ''
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => setSelectedLetter(selectedLetter === letter ? '' : letter)}
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      selectedLetter === letter
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Assets List */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredAssets.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icon name="magnifying-glass" size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500">No assets found matching your search criteria.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredAssets.map((asset) => (
+                    <label
+                      key={asset.id}
+                      className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={tempSelectedAssets.includes(asset.id)}
+                        onChange={(e) => handleAssetSelection(asset.id, e.target.checked)}
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
+                        <div className="text-xs text-gray-500">{asset.category}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                {tempSelectedAssets.length} asset{tempSelectedAssets.length !== 1 ? 's' : ''} selected
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={closeAssetModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={applyAssetSelection}
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                >
+                  Apply Selection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
