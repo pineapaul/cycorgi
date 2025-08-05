@@ -14,7 +14,7 @@ interface Risk {
   informationAsset: string
   likelihood: string
   impact: string
-  riskLevel: string
+  riskRating: string
 }
 
 interface Treatment {
@@ -317,8 +317,8 @@ const generatePDFHTML = (
     }
   }
 
-  const getRiskLevelColor = (riskLevel: string) => {
-    switch (riskLevel.toLowerCase()) {
+  const getRiskLevelColor = (riskRating: string) => {
+    switch (riskRating.toLowerCase()) {
       case 'high': return '#fecaca'
       case 'medium': return '#fef3c7'
       case 'low': return '#dcfce7'
@@ -340,7 +340,7 @@ const generatePDFHTML = (
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
             <span style="font-size: 14px; font-weight: 500; color: #111827;">Risk ID: ${item.riskId}</span>
-            ${risk.riskLevel ? `<span style="padding: 4px 8px; font-size: 12px; font-weight: 500; border-radius: 9999px; background-color: ${getRiskLevelColor(risk.riskLevel)}; color: #111827;">${risk.riskLevel}</span>` : ''}
+            ${risk.riskRating ? `<span style="padding: 4px 8px; font-size: 12px; font-weight: 500; border-radius: 9999px; background-color: ${getRiskLevelColor(risk.riskRating)}; color: #111827;">${risk.riskRating}</span>` : ''}
           </div>
         </div>
 
@@ -682,10 +682,17 @@ interface RiskCardProps {
   onRequestExtension: (treatment: Treatment) => void
   onCloseTreatment: (treatment: Treatment) => void
   onCloseRisk: (risk: Risk) => void
+  allCardsCollapsed: boolean
 }
 
-function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk }: RiskCardProps) {
+function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk, allCardsCollapsed }: RiskCardProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
+  
+  // Synchronize individual collapse state with global state when it changes
+  useEffect(() => {
+    setIsCollapsed(allCardsCollapsed)
+  }, [allCardsCollapsed])
   
   const getSectionColor = () => {
     switch (sectionType) {
@@ -697,13 +704,17 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
   }
 
   const getRiskLevelColor = () => {
-    if (!risk?.riskLevel) return 'bg-gray-100 text-gray-800'
-    switch (risk.riskLevel.toLowerCase()) {
+    if (!risk?.riskRating) return 'bg-gray-100 text-gray-800'
+    switch (risk.riskRating.toLowerCase()) {
       case 'high': return 'bg-red-100 text-red-800'
       case 'medium': return 'bg-yellow-100 text-yellow-800'
       case 'low': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+  
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed)
   }
 
   return (
@@ -711,31 +722,55 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
       <div className="p-6">
         {/* Risk Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
-              <span className="text-sm font-medium text-gray-900">Risk ID: {item.riskId}</span>
-              {risk?.riskLevel && (
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
-                  {risk.riskLevel}
-                </span>
-              )}
+              <button
+                onClick={toggleCollapse}
+                className="flex items-center space-x-2 text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors"
+                title={isCollapsed ? "Expand risk details" : "Collapse risk details"}
+              >
+                <Icon
+                  name={isCollapsed ? "chevron-right" : "chevron-up"}
+                  size={16}
+                  className="transition-transform duration-200"
+                />
+                <span className="font-semibold">{item.riskId}</span>
+                {risk?.riskRating && (
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskLevelColor()}`}>
+                    {risk.riskRating}
+                  </span>
+                )}
+              </button>
             </div>
+            {/* Collapsed Summary */}
+            {isCollapsed && risk && (
+              <div className="mt-2 text-sm text-gray-600 min-w-0">
+                <p className="truncate overflow-hidden text-ellipsis whitespace-nowrap">{risk.riskStatement}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {riskTreatments.length} treatment{riskTreatments.length !== 1 ? 's' : ''} • 
+                  {item.actionsTaken ? ' Has actions' : ' No actions'} • 
+                  {item.toDo ? ' Has to-do items' : ' No to-do items'}
+                </p>
+              </div>
+            )}
           </div>
-          {sectionType === 'closure' && risk && (
-            <button
-              onClick={() => onCloseRisk(risk)}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
-              title="Close risk"
-            >
-              <Icon name="check-circle" size={12} className="mr-1" />
-              Close Risk
-            </button>
-          )}
+          <div className="flex items-center space-x-2">
+            {sectionType === 'closure' && risk && (
+              <button
+                onClick={() => onCloseRisk(risk)}
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+                title="Close risk"
+              >
+                <Icon name="check-circle" size={12} className="mr-1" />
+                Close Risk
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Risk Details and Meeting Minutes Section */}
-        {risk && (
-          <div className="mb-6">
+                    {!isCollapsed && risk && (
+          <div className="mb-6 overflow-hidden transition-all duration-300 ease-in-out max-h-screen">
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Details & Meeting Minutes</h4>
             <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
               {/* Risk Information */}
@@ -784,8 +819,8 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
         )}
 
         {/* Risk Treatments */}
-        {riskTreatments.length > 0 && (
-          <div>
+                    {!isCollapsed && riskTreatments.length > 0 && (
+          <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-screen">
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Treatments</h4>
             <div className="space-y-4">
               {riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
@@ -1423,6 +1458,13 @@ export default function WorkshopDetails() {
   const [showCloseRiskModal, setShowCloseRiskModal] = useState(false)
   const [selectedCloseRisk, setSelectedCloseRisk] = useState<Risk | null>(null)
   const [submittingCloseRisk, setSubmittingCloseRisk] = useState(false)
+  // Global collapse state for all risk cards
+  const [allCardsCollapsed, setAllCardsCollapsed] = useState(false)
+
+  // Toggle all risk cards collapse state
+  const toggleAllCards = () => {
+    setAllCardsCollapsed(!allCardsCollapsed)
+  }
 
   // Update risk-level meeting minutes
   const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
@@ -2340,9 +2382,23 @@ export default function WorkshopDetails() {
 
         {/* Meeting Minutes Section */}
         <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Meeting Minutes</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
+              <h3 className="text-lg font-semibold text-gray-900">Meeting Minutes</h3>
+            </div>
+            <button
+              onClick={toggleAllCards}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              title={allCardsCollapsed ? "Expand all risk cards" : "Collapse all risk cards"}
+            >
+              <Icon 
+                name={allCardsCollapsed ? "chevron-down" : "chevron-up"} 
+                size={16} 
+                className="mr-2" 
+              />
+              {allCardsCollapsed ? "Expand All" : "Collapse All"}
+            </button>
           </div>
           
           <div className="space-y-8">
@@ -2369,6 +2425,7 @@ export default function WorkshopDetails() {
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
+                        allCardsCollapsed={allCardsCollapsed}
                       />
                     )
                   })}
@@ -2403,6 +2460,7 @@ export default function WorkshopDetails() {
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
+                        allCardsCollapsed={allCardsCollapsed}
                       />
                     )
                   })}
@@ -2437,6 +2495,7 @@ export default function WorkshopDetails() {
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
+                        allCardsCollapsed={allCardsCollapsed}
                       />
                     )
                   })}
