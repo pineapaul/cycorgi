@@ -154,15 +154,20 @@ export default function NewWorkshop() {
     }
   }
 
+  // Helper function to normalize risk phase for consistent comparison
+  const getNormalizedPhase = (risk: Risk): string => {
+    return risk.currentPhase?.toLowerCase() || ''
+  }
+
   // Helper function to check if risk is new (not in treatment or monitoring phases)
   const isRiskNew = (risk: Risk): boolean => {
-    const phase = risk.currentPhase?.toLowerCase()
+    const phase = getNormalizedPhase(risk)
     return phase !== 'treatment' && phase !== 'monitoring'
   }
 
   // Helper function to check if risk can be extended or closed (must be in treatment phase)
   const canRiskBeExtendedOrClosed = (risk: Risk): boolean => {
-    const phase = risk.currentPhase?.toLowerCase()
+    const phase = getNormalizedPhase(risk)
     return phase === 'treatment'
   }
 
