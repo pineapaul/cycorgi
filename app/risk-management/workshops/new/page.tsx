@@ -154,9 +154,21 @@ export default function NewWorkshop() {
     }
   }
 
+  // Helper function to normalize risk phase for consistent comparison
+  const getNormalizedPhase = (risk: Risk): string => {
+    return risk.currentPhase?.toLowerCase() || ''
+  }
+
   // Helper function to check if risk is new (not in treatment or monitoring phases)
   const isRiskNew = (risk: Risk): boolean => {
-    return risk.currentPhase !== 'treatment' && risk.currentPhase !== 'monitoring'
+    const phase = getNormalizedPhase(risk)
+    return phase !== 'treatment' && phase !== 'monitoring'
+  }
+
+  // Helper function to check if risk can be extended or closed (must be in treatment phase)
+  const canRiskBeExtendedOrClosed = (risk: Risk): boolean => {
+    const phase = getNormalizedPhase(risk)
+    return phase === 'treatment'
   }
 
   // Memoized risk lookup object for O(1) access
@@ -325,8 +337,18 @@ export default function NewWorkshop() {
   const handleRiskSelection = (riskId: string) => {
     setSelectedRiskId(riskId)
     setSelectedTreatments([])
-    // Reset category to default when selecting a new risk
-    setSelectedCategory('extensions')
+    
+    // Set appropriate category based on risk phase
+    const selectedRisk = riskLookup[riskId]
+    if (selectedRisk) {
+      if (canRiskBeExtendedOrClosed(selectedRisk)) {
+        setSelectedCategory('extensions')
+      } else {
+        setSelectedCategory('newRisk')
+      }
+    } else {
+      setSelectedCategory('extensions')
+    }
   }
 
   const handleTreatmentSelection = (treatmentId: string, checked: boolean) => {
@@ -704,33 +726,53 @@ export default function NewWorkshop() {
                     {/* Category Selection */}
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Category for this risk:
+                        Topic for this risk:
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(['extensions', 'closure', 'newRisk'] as RiskCategory[]).map((category) => (
-                          <button
-                            key={category}
-                            type="button"
-                            onClick={() => setSelectedCategory(category)}
-                            className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
-                              selectedCategory === category
-                                ? getCategoryColor(category)
-                                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            <Icon name={getCategoryIcon(category)} size={14} className="mr-2" />
-                            {getCategoryDisplayName(category)}
-                          </button>
-                        ))}
-                      </div>
+                                             <div className="grid grid-cols-3 gap-2">
+                         {(['extensions', 'closure', 'newRisk'] as RiskCategory[]).map((category) => {
+                           const selectedRisk = riskLookup[selectedRiskId]
+                           let isDisabled = false
+                           let tooltipMessage = ''
+                           
+                           if (selectedRisk) {
+                             if (category === 'extensions' || category === 'closure') {
+                               isDisabled = !canRiskBeExtendedOrClosed(selectedRisk)
+                               tooltipMessage = isDisabled ? 'Only risks in Treatment phase can be extended or closed' : ''
+                             } else if (category === 'newRisk') {
+                               isDisabled = canRiskBeExtendedOrClosed(selectedRisk)
+                               tooltipMessage = isDisabled ? 'This risk is in Treatment phase and cannot be marked as new' : ''
+                             }
+                           }
+                           
+                           return (
+                             <button
+                               key={category}
+                               type="button"
+                               onClick={() => !isDisabled && setSelectedCategory(category)}
+                               disabled={isDisabled}
+                               className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border transition-colors ${
+                                 isDisabled
+                                   ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                   : selectedCategory === category
+                                     ? getCategoryColor(category)
+                                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                               }`}
+                               title={tooltipMessage}
+                             >
+                               <Icon name={getCategoryIcon(category)} size={14} className="mr-2" />
+                               {getCategoryDisplayName(category)}
+                             </button>
+                           )
+                         })}
+                       </div>
                     </div>
                     
-                    <button
-                      type="button"
-                      onClick={addSelectedRiskToWorkshop}
-                      disabled={selectedTreatments.length === 0}
-                      className="mt-4 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
+                                         <button
+                       type="button"
+                       onClick={addSelectedRiskToWorkshop}
+                       disabled={selectedTreatments.length === 0 && (selectedCategory === 'extensions' || selectedCategory === 'closure')}
+                       className="mt-4 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                     >
                       <Icon name="plus" size={14} className="mr-2" />
                       Add Risk to Workshop
                     </button>
@@ -747,22 +789,14 @@ export default function NewWorkshop() {
                       {getSelectedRiskData().map((risk, index) => (
                         <div key={`${risk.riskId}-${risk.originalIndex}`} className="flex items-start justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex-1">
-                            <div className="flex items-center mb-1">
-                              <span className="text-sm font-medium text-gray-900">{risk.riskId}</span>
-                              <span className="ml-2 text-xs text-gray-500">({risk.treatments.length} treatments)</span>
-                              <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(risk.category)}`}>
-                                <Icon name={getCategoryIcon(risk.category)} size={10} className="mr-1" />
-                                {getCategoryDisplayName(risk.category)}
-                              </span>
-                                                             {(() => {
-                                 const originalRisk = riskLookup[risk.riskId]
-                                 return originalRisk && isRiskNew(originalRisk) ? (
-                                   <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                     NEW
-                                   </span>
-                                 ) : null
-                               })()}
-                            </div>
+                                                         <div className="flex items-center mb-1">
+                               <span className="text-sm font-medium text-gray-900">{risk.riskId}</span>
+                               <span className="ml-2 text-xs text-gray-500">({risk.treatments.length} treatments)</span>
+                               <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(risk.category)}`}>
+                                 <Icon name={getCategoryIcon(risk.category)} size={10} className="mr-1" />
+                                 {getCategoryDisplayName(risk.category)}
+                               </span>
+                             </div>
                             <p className="text-sm text-gray-700">{risk.riskStatement}</p>
                           </div>
                           <button
@@ -881,11 +915,12 @@ export default function NewWorkshop() {
                              }`}>
                                {risk.riskRating}
                              </span>
-                             {isRiskNew(risk) && (
-                               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                 NEW
-                               </span>
-                             )}
+                                                           {isRiskNew(risk) && (
+                                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                  <Icon name="exclamation-triangle" size={10} className="mr-1" />
+                                  New Risk
+                                </span>
+                              )}
                            </div>
                            <Tooltip content={risk.riskStatement}>
                              <p className="text-sm text-gray-700 mb-2">
