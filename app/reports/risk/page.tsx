@@ -79,19 +79,19 @@ export default function RiskReports() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      
+
       // Fetch risks
       const risksResponse = await fetch('/api/risks')
       const risksData = await risksResponse.json()
-      
+
       // Fetch treatments
       const treatmentsResponse = await fetch('/api/treatments')
       const treatmentsData = await treatmentsResponse.json()
-      
+
       if (risksData.success) {
         setRisks(risksData.data)
       }
-      
+
       if (treatmentsData.success) {
         setTreatments(treatmentsData.data)
       }
@@ -137,21 +137,21 @@ export default function RiskReports() {
     const monthlyData = risks.reduce((acc, risk) => {
       const date = new Date(risk.createdAt)
       const month = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-      
+
       if (!acc[month]) {
         acc[month] = { high: 0, medium: 0, low: 0 }
       }
-      
+
       const rating = risk.riskRating?.toLowerCase() || 'low'
       if (rating.includes('high')) acc[month].high++
       else if (rating.includes('medium')) acc[month].medium++
       else acc[month].low++
-      
+
       return acc
     }, {} as Record<string, { high: number; medium: number; low: number }>)
 
     const months = Object.keys(monthlyData).sort()
-    
+
     return [
       {
         id: 'High Risk',
@@ -255,8 +255,8 @@ export default function RiskReports() {
             <p className="text-gray-600 mt-1">Comprehensive risk analytics and insights</p>
           </div>
           <div className="flex items-center space-x-3">
-            <select 
-              value={selectedPeriod} 
+            <select
+              value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             >
@@ -362,11 +362,10 @@ export default function RiskReports() {
                 <button
                   key={tab.id}
                   onClick={() => setSelectedView(tab.id)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
-                    selectedView === tab.id
+                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${selectedView === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <Icon name={tab.icon} size={16} />
                   <span>{tab.name}</span>
@@ -619,17 +618,17 @@ export default function RiskReports() {
 
             {selectedView === 'heatmap' && (
               <div className="bg-gray-50 rounded-lg p-4">
-                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Matrix (Likelihood vs Consequence)</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Matrix (Likelihood vs Consequence)</h3>
                 <div className="h-80">
-                                     <ResponsiveBar
-                     data={getRiskHeatmapData().map(risk => ({
-                       riskId: risk.id,
-                       score: risk.likelihood * risk.consequence,
-                       likelihood: risk.likelihood,
-                       consequence: risk.consequence
-                     }))}
-                     keys={['score']}
-                     indexBy="riskId"
+                  <ResponsiveBar
+                    data={getRiskHeatmapData().map(risk => ({
+                      riskId: risk.id,
+                      score: risk.likelihood * risk.consequence,
+                      likelihood: risk.likelihood,
+                      consequence: risk.consequence
+                    }))}
+                    keys={['score']}
+                    indexBy="riskId"
                     margin={{ top: 20, right: 80, bottom: 80, left: 60 }}
                     padding={0.3}
                     valueScale={{ type: 'linear' }}
@@ -650,7 +649,7 @@ export default function RiskReports() {
                       tickSize: 5,
                       tickPadding: 5,
                       tickRotation: 0,
-                                             legend: 'Risk Score (Likelihood × Consequence)',
+                      legend: 'Risk Score (Likelihood × Consequence)',
                       legendPosition: 'middle',
                       legendOffset: -40,
                     }}
@@ -686,19 +685,18 @@ export default function RiskReports() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{risk.riskId}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{risk.riskStatement}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        risk.riskRating?.toLowerCase().includes('high') ? 'bg-red-100 text-red-800' :
-                        risk.riskRating?.toLowerCase().includes('medium') ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${risk.riskRating?.toLowerCase().includes('high') ? 'bg-red-100 text-red-800' :
+                          risk.riskRating?.toLowerCase().includes('medium') ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                        }`}>
                         {risk.riskRating}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.currentPhase}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.informationAsset}</td>
-                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                       {(getRatingValue(risk.likelihoodRating) * getRatingValue(risk.consequenceRating)).toFixed(1)}
-                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(getRatingValue(risk.likelihoodRating) * getRatingValue(risk.consequenceRating)).toFixed(1)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

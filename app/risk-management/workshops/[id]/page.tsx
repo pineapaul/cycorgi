@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
@@ -837,25 +837,35 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                           <h5 className="text-sm font-medium text-gray-900 mb-1">Owner</h5>
                           <p className="text-sm text-gray-700">{treatment.riskTreatmentOwner}</p>
                         </div>
-                        {sectionType === 'closure' ? (
-                          <button
-                            onClick={() => onCloseTreatment(treatment)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
-                            title="Close treatment"
-                          >
-                            <Icon name="check-circle" size={12} className="mr-1" />
-                            Close Treatment
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => onRequestExtension(treatment)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
-                            title="Request due date extension"
-                          >
-                            <Icon name="calendar-plus" size={12} className="mr-1" />
-                            Request Extension
-                          </button>
-                        )}
+                        <div className="flex items-center space-x-2">
+                                                <Link
+                        href={`/risk-management/treatments/${treatment.riskId}/${treatment.treatmentId}`}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                        title="View treatment profile"
+                      >
+                        <Icon name="link" size={12} className="mr-1" />
+                        {treatment.treatmentId}
+                      </Link>
+                          {sectionType === 'closure' ? (
+                            <button
+                              onClick={() => onCloseTreatment(treatment)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+                              title="Close treatment"
+                            >
+                              <Icon name="check-circle" size={12} className="mr-1" />
+                              Close Treatment
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onRequestExtension(treatment)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                              title="Request due date extension"
+                            >
+                              <Icon name="calendar-plus" size={12} className="mr-1" />
+                              Request Extension
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
@@ -905,14 +915,14 @@ function useApprovalForm() {
     approvedBy?: string
   }>({})
 
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some(error => error !== undefined), [errors])
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({ approvedBy: '' })
     setErrors({})
-  }
+  }, [])
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: { approvedBy?: string } = {}
 
     // Validate approved by
@@ -927,9 +937,9 @@ function useApprovalForm() {
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }
+  }, [formData.approvedBy])
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -963,7 +973,7 @@ function useApprovalForm() {
         }))
       }
     }
-  }
+  }, [errors])
 
   return {
     formData,
@@ -1056,7 +1066,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
   const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
 
   // Memoize the errors check to avoid recalculating on every render
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some(error => error !== undefined), [errors])
 
   useEffect(() => {
     if (isOpen) {
@@ -1946,7 +1956,7 @@ export default function WorkshopDetails() {
       const getRiskResponse = await fetch(`/api/risks/${selectedCloseRisk.riskId}`)
       const riskData = await getRiskResponse.json()
       if (riskData.success) {
-        originalRiskStatus = riskData.risk.currentPhase
+        originalRiskStatus = riskData.data.currentPhase
       }
       
       // Update risk status to "Monitoring"
