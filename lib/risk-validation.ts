@@ -153,7 +153,7 @@ export function validateAndTransformRiskData(
   }
 
   // Validate phases
-  const validPhases = ['Identification', 'Analysis', 'Evaluation', 'Treatment', 'Monitoring']
+  const validPhases = ['Draft', 'Identification', 'Analysis', 'Evaluation', 'Treatment', 'Monitoring']
   if (data.currentPhase && !validPhases.includes(data.currentPhase)) {
     errors.push(`Invalid current phase: ${data.currentPhase}. Must be one of: ${validPhases.join(', ')}`)
   }

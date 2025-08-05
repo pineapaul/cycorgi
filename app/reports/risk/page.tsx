@@ -695,7 +695,13 @@ export default function RiskReports() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.currentPhase}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {Array.isArray(risk.informationAsset) 
-                    ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                    ? risk.informationAsset.map((asset: any) => {
+                        // Handle both new format (objects with id/name) and old format (strings)
+                        if (typeof asset === 'object' && asset !== null) {
+                          return asset.name || asset.id || JSON.stringify(asset)
+                        }
+                        return asset
+                      }).join(', ')
                     : risk.informationAsset}
                 </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

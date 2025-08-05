@@ -92,7 +92,13 @@ export default function Treatments() {
                riskId: treatment.riskId,
                riskStatement: treatment.riskStatement || 'Not specified',
                informationAsset: Array.isArray(treatment.informationAsset) 
-                ? treatment.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                ? treatment.informationAsset.map((asset: any) => {
+                        // Handle both new format (objects with id/name) and old format (strings)
+                        if (typeof asset === 'object' && asset !== null) {
+                          return asset.name || asset.id || JSON.stringify(asset)
+                        }
+                        return asset
+                      }).join(', ')
                 : treatment.informationAsset || 'Not specified',
                treatmentType: treatment.riskTreatment || 'Not specified',
                treatmentDescription: treatment.riskTreatment || 'Not specified',

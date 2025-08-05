@@ -319,7 +319,13 @@ export default function RiskRegister() {
               riskOwner: risk.riskOwner, // Add this for the riskOwner column
               affectedSites: 'All Sites',
               informationAssets: Array.isArray(risk.informationAsset) 
-                ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                ? risk.informationAsset.map((asset: any) => {
+                    // Handle both new format (objects with id/name) and old format (strings)
+                    if (typeof asset === 'object' && asset !== null) {
+                      return asset.name || asset.id || JSON.stringify(asset)
+                    }
+                    return asset
+                  }).join(', ')
                 : risk.informationAsset || '',
               threat: risk.threat,
               vulnerability: risk.vulnerability,

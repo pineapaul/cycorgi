@@ -220,7 +220,13 @@ export default function AddTreatment() {
                 <span className="font-medium text-gray-700">Information Asset:</span>
                                     <p className="text-gray-600 mt-1">
                       {Array.isArray(riskDetails.informationAsset) 
-                        ? riskDetails.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                        ? riskDetails.informationAsset.map((asset: any) => {
+                        // Handle both new format (objects with id/name) and old format (strings)
+                        if (typeof asset === 'object' && asset !== null) {
+                          return asset.name || asset.id || JSON.stringify(asset)
+                        }
+                        return asset
+                      }).join(', ')
                         : riskDetails.informationAsset}
                     </p>
               </div>

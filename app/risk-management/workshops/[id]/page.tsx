@@ -11,7 +11,7 @@ import { useModal } from '@/app/hooks/useModal'
 interface Risk {
   riskId: string
   riskStatement: string
-  informationAsset: string
+  informationAsset: string | Array<{ id: string; name: string }> | string[]
   likelihood: string
   impact: string
   riskRating: string
@@ -355,7 +355,13 @@ const generatePDFHTML = (
               <div>
                 <h5 style="font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 8px;">Information Asset</h5>
                 <p style="font-size: 14px; color: #374151;">${Array.isArray(risk.informationAsset) 
-                  ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                  ? risk.informationAsset.map((asset: any) => {
+                      // Handle both new format (objects with id/name) and old format (strings)
+                      if (typeof asset === 'object' && asset !== null) {
+                        return asset.name || asset.id || JSON.stringify(asset)
+                      }
+                      return asset
+                    }).join(', ')
                   : risk.informationAsset}</p>
               </div>
             </div>
@@ -785,7 +791,13 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                   <h5 className="text-sm font-medium text-gray-900 mb-2">Information Asset</h5>
                   <p className="text-sm text-gray-700">
                   {Array.isArray(risk.informationAsset) 
-                    ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                    ? risk.informationAsset.map((asset: any) => {
+                        // Handle both new format (objects with id/name) and old format (strings)
+                        if (typeof asset === 'object' && asset !== null) {
+                          return asset.name || asset.id || JSON.stringify(asset)
+                        }
+                        return asset
+                      }).join(', ')
                     : risk.informationAsset}
                 </p>
                 </div>
@@ -2628,7 +2640,13 @@ export default function WorkshopDetails() {
               </p>
               <p className="text-sm text-gray-700">
                 <span className="font-medium">Information Asset:</span> {Array.isArray(selectedCloseRisk.informationAsset) 
-                  ? selectedCloseRisk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                  ? selectedCloseRisk.informationAsset.map((asset: any) => {
+                      // Handle both new format (objects with id/name) and old format (strings)
+                      if (typeof asset === 'object' && asset !== null) {
+                        return asset.name || asset.id || JSON.stringify(asset)
+                      }
+                      return asset
+                    }).join(', ')
                   : selectedCloseRisk.informationAsset}
               </p>
             </>
