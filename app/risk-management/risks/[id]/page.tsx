@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
-import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import { useToast } from '@/app/components/Toast'
 
@@ -946,14 +946,7 @@ export default function RiskInformationPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-gray-900">{Array.isArray(risk.informationAsset) 
-                  ? risk.informationAsset.map((asset: any) => {
-                      if (typeof asset === 'object' && asset !== null) {
-                        return asset.name || asset.id || JSON.stringify(asset)
-                      }
-                      return asset
-                    }).join(', ')
-                  : risk.informationAsset}</p>
+                <p className="text-gray-900">{formatInformationAssets(risk.informationAsset)}</p>
               )}
             </div>
 

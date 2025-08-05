@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
@@ -254,15 +254,7 @@ export default function RiskInformation() {
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-                          informationAssets: Array.isArray(risk.informationAsset) 
-                ? risk.informationAsset.map((asset: any) => {
-                        // Handle both new format (objects with id/name) and old format (strings)
-                        if (typeof asset === 'object' && asset !== null) {
-                          return asset.name || asset.id || JSON.stringify(asset)
-                        }
-                        return asset
-                      }).join(', ')
-                : risk.informationAsset || '',
+                          informationAssets: formatInformationAssets(risk.informationAsset) || '',
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
@@ -834,10 +826,6 @@ export default function RiskInformation() {
         ...editedRisk,
         informationAsset: selectedInformationAssets
       }
-
-      // Debug: Log what we're sending
-      console.log('Sending update data:', dataToSave)
-      console.log('Selected information assets:', selectedInformationAssets)
       
       const response = await fetch(riskApiUrl, {
         method: 'PUT',

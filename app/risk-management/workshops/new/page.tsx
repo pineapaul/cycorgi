@@ -7,6 +7,7 @@ import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 import Tooltip from '@/app/components/Tooltip'
 import { MeetingMinutesItem } from '@/lib/workshop-validation'
+import { formatInformationAssets } from '@/lib/utils'
 
 interface Risk {
   riskId: string
@@ -892,15 +893,7 @@ export default function NewWorkshop() {
                              </p>
                            </Tooltip>
                            <div className="flex items-center text-xs text-gray-500 space-x-4">
-                             <span>Asset: {Array.isArray(risk.informationAsset) 
-                  ? risk.informationAsset.map((asset: any) => {
-                        // Handle both new format (objects with id/name) and old format (strings)
-                        if (typeof asset === 'object' && asset !== null) {
-                          return asset.name || asset.id || JSON.stringify(asset)
-                        }
-                        return asset
-                      }).join(', ')
-                  : risk.informationAsset}</span>
+                             <span>Asset: {formatInformationAssets(risk.informationAsset)}</span>
                              <span>Likelihood: {risk.likelihood}</span>
                              <span>Impact: {risk.impact}</span>
                            </div>
