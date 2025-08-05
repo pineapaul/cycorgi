@@ -10,16 +10,13 @@ const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
   // Program menu will be inserted here
   { name: 'Compliance', href: '/compliance', icon: 'compliance' },
-  { name: 'ISMS Operations', href: '/dashboard/isms-operations', icon: 'settings' },
-  { name: 'Reports', href: '/dashboard/reports', icon: 'reports' },
-  { name: 'Settings', href: '/dashboard/settings', icon: 'settings' },
 ]
 
 const programItems = [
-  { name: 'Scope', href: '/dashboard/program/scope' },
-  { name: 'Issues', href: '/dashboard/program/issues' },
-  { name: 'Objectives', href: '/dashboard/program/objectives' },
-  { name: 'Roles', href: '/dashboard/program/roles' },
+  { name: 'Scope', href: '/program/scope' },
+  { name: 'Issues', href: '/program/issues' },
+  { name: 'Objectives', href: '/program/objectives' },
+  { name: 'Roles', href: '/program/roles' },
 ]
 
 const inventoryManagementItems = [
@@ -45,11 +42,24 @@ const complianceItems = [
 ]
 
 const ismsOperationsItems = [
-  { name: 'Security Calendar', href: '/dashboard/isms-operations/calendar' },
-  { name: 'Information Security Incidents', href: '/dashboard/isms-operations/incidents' },
-  { name: 'Document Review Schedule', href: '/dashboard/isms-operations/document-review' },
-  { name: 'DR Drill Schedule', href: '/dashboard/isms-operations/dr-drill' },
-  { name: 'Measurements & Metrics', href: '/dashboard/isms-operations/measurements' },
+  { name: 'Security Calendar', href: '/isms-operations/calendar' },
+  { name: 'Information Security Incidents', href: '/isms-operations/incidents' },
+  { name: 'Document Review Schedule', href: '/isms-operations/document-review' },
+  { name: 'DR Drill Schedule', href: '/isms-operations/dr-drill' },
+  { name: 'Measurements & Metrics', href: '/isms-operations/measurements' },
+  { name: 'Training and Awareness', href: '/isms-operations/training' },
+]
+
+const reportsItems = [
+  { name: 'Risk Reports', href: '/reports/risk' },
+  { name: 'Compliance Reports', href: '/reports/compliance' },
+  { name: 'Audit Reports', href: '/reports/audit' },
+]
+
+const settingsItems = [
+  { name: 'User Management', href: '/settings/users' },
+  { name: 'System Configuration', href: '/settings/system' },
+  { name: 'Preferences', href: '/settings/preferences' },
 ]
 
 export default function Sidebar() {
@@ -342,25 +352,88 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Other nav items */}
-        {navItems.slice(4).map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
+        {/* Reports Menu */}
+        <div className="relative group">
+          <button
             className={cn(
-              'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-              pathname === item.href
-                ? 'text-white shadow-lg'
-                : 'text-white hover:text-white'
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              openMenu === 'reports' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
             )}
-            style={{
-              backgroundColor: pathname === item.href ? '#A2AADB' : 'transparent'
-            }}
+            style={{ backgroundColor: openMenu === 'reports' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('reports')}
           >
-            <Icon name={item.icon} size={20} />
-            <span>{item.name}</span>
-          </Link>
-        ))}
+            <Icon name="chart-bar" size={20} />
+            <span>Reports</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                openMenu === 'reports' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {openMenu === 'reports' ? '▲' : '▼'}
+            </span>
+          </button>
+          {openMenu === 'reports' && (
+            <div className="ml-7 mt-1 space-y-1">
+              {reportsItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Settings Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              openMenu === 'settings' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: openMenu === 'settings' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('settings')}
+          >
+            <Icon name="cog" size={20} />
+            <span>Settings</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                openMenu === 'settings' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {openMenu === 'settings' ? '▲' : '▼'}
+            </span>
+          </button>
+          {openMenu === 'settings' && (
+            <div className="ml-7 mt-1 space-y-1">
+              {settingsItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-3 py-1 rounded text-sm transition-all',
+                    pathname === item.href
+                      ? 'bg-white text-[#898AC4] font-semibold'
+                      : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
       </nav>
 
       {/* User Info */}

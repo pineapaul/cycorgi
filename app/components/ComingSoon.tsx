@@ -17,7 +17,7 @@ export default function ComingSoon({
   backHref = "/dashboard"
 }: ComingSoonProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-auto text-center">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Icon */}
