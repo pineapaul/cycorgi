@@ -165,21 +165,21 @@ function generateRisks() {
     const currentControlsValue = currentControls[i - 1];
 
     // Generate risk rating based on index
-    let riskRating, consequenceRating, likelihoodRating;
+    let riskLevel, consequenceRating, likelihoodRating;
     if (i <= 5) {
-      riskRating = 'High';
+      riskLevel = 'High';
       consequenceRating = 'High';
       likelihoodRating = 'Medium';
     } else if (i <= 10) {
-      riskRating = 'Medium';
+      riskLevel = 'Medium';
       consequenceRating = 'Medium';
       likelihoodRating = 'Medium';
     } else if (i <= 15) {
-      riskRating = 'High';
+      riskLevel = 'High';
       consequenceRating = 'High';
       likelihoodRating = 'Low';
     } else {
-      riskRating = 'Medium';
+      riskLevel = 'Medium';
       consequenceRating = 'Low';
       likelihoodRating = 'High';
     }
@@ -205,7 +205,7 @@ function generateRisks() {
       functionalUnit,
       informationAsset,
       riskStatement,
-      riskRating,
+      riskLevel,
       consequenceRating,
       likelihoodRating,
       impact,
