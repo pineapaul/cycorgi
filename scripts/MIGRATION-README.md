@@ -2,7 +2,7 @@
 
 ## Overview
 
-This migration updates the `informationAsset` field in the `risks` collection from a string format to an array of objects that reference the `information-assets` collection by ID. This change enables proper one-to-many relationships between risks and information assets.
+This migration updates the `informationAsset` field in the `risks` collection from a string format to an array of ID strings that reference the `information-assets` collection. The API layer transforms these IDs into objects with `id` and `name` properties for frontend consumption. This change enables proper one-to-many relationships between risks and information assets.
 
 ## What Changed
 
@@ -17,12 +17,18 @@ This migration updates the `informationAsset` field in the `risks` collection fr
 
 ### After Migration
 ```javascript
-// New format - array of objects with ID references
+// New format - array of ID strings (database storage)
+{
+  riskId: "RISK-001",
+  informationAsset: ["110", "Payment Systems"]
+}
+
+// API response format (for frontend consumption)
 {
   riskId: "RISK-001",
   informationAsset: [
-    { id: "1", name: "Customer Database" },
-    { id: "2", name: "Payment Systems" }
+    { id: "110", name: "Customer Database" },
+    { id: "Payment Systems", name: "Payment Systems" }
   ]
 }
 ```
@@ -54,7 +60,7 @@ node scripts/migrate-information-assets.js
 - Connects to MongoDB using environment variables
 - Fetches all information assets to create lookup maps
 - Processes each risk record
-- Converts string values to array of objects with proper ID references
+- Converts string values to array of ID strings
 - Handles both old string format and partially migrated array formats
 - Provides detailed logging and summary statistics
 
@@ -87,10 +93,7 @@ informationAsset: "Customer Database, Payment Systems"
 ```
 **Converts to**:
 ```javascript
-informationAsset: [
-  { id: "1", name: "Customer Database" },
-  { id: "2", name: "Payment Systems" }
-]
+informationAsset: ["110", "Payment Systems"]
 ```
 
 ### 2. Array of Strings (Partial Migration)
@@ -99,18 +102,12 @@ informationAsset: ["Customer Database", "Payment Systems"]
 ```
 **Converts to**:
 ```javascript
-informationAsset: [
-  { id: "1", name: "Customer Database" },
-  { id: "2", name: "Payment Systems" }
-]
+informationAsset: ["110", "Payment Systems"]
 ```
 
-### 3. Array of Objects (Already Correct)
+### 3. Array of ID Strings (Already Correct)
 ```javascript
-informationAsset: [
-  { id: "1", name: "Customer Database" },
-  { id: "2", name: "Payment Systems" }
-]
+informationAsset: ["110", "Payment Systems"]
 ```
 **Skipped** - No changes needed
 
@@ -121,6 +118,27 @@ informationAsset: null
 informationAsset: undefined
 ```
 **Skipped** - No changes needed
+
+## Data Flow Architecture
+
+### Database Storage
+The `informationAsset` field in the database stores an array of ID strings:
+```javascript
+informationAsset: ["110", "Payment Systems"]
+```
+
+### API Layer Transformation
+The API endpoints fetch information asset names from the `information-assets` collection and return objects with `id` and `name` properties:
+```javascript
+// GET /api/risks response
+informationAsset: [
+  { id: "110", name: "Customer Database" },
+  { id: "Payment Systems", name: "Payment Systems" }
+]
+```
+
+### Frontend Consumption
+The frontend receives the API response and displays the `name` properties while working with the `id` properties for operations.
 
 ## Asset Matching Logic
 
@@ -146,7 +164,7 @@ If the migration needs to be rolled back:
    const rollbackData = risks.map(risk => ({
      ...risk,
      informationAsset: Array.isArray(risk.informationAsset) 
-       ? risk.informationAsset.map(asset => asset.name || asset.id).join(', ')
+       ? risk.informationAsset.join(', ')  // Array of ID strings
        : risk.informationAsset
    }));
    ```
