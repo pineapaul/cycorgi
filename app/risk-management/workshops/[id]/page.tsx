@@ -681,9 +681,10 @@ interface RiskCardProps {
   onUpdateTreatment: (treatmentId: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => Promise<void>
   onRequestExtension: (treatment: Treatment) => void
   onCloseTreatment: (treatment: Treatment) => void
+  onCloseRisk: (risk: Risk) => void
 }
 
-function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment }: RiskCardProps) {
+function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk }: RiskCardProps) {
   const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
   
   const getSectionColor = () => {
@@ -720,6 +721,16 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
               )}
             </div>
           </div>
+          {sectionType === 'closure' && risk && (
+            <button
+              onClick={() => onCloseRisk(risk)}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+              title="Close risk"
+            >
+              <Icon name="check-circle" size={12} className="mr-1" />
+              Close Risk
+            </button>
+          )}
         </div>
 
         {/* Risk Details and Meeting Minutes Section */}
@@ -846,6 +857,144 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Reusable hook for approval form validation
+function useApprovalForm() {
+  const [formData, setFormData] = useState({
+    approvedBy: ''
+  })
+  const [errors, setErrors] = useState<{
+    approvedBy?: string
+  }>({})
+
+  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+
+  const resetForm = () => {
+    setFormData({ approvedBy: '' })
+    setErrors({})
+  }
+
+  const validateForm = () => {
+    const newErrors: { approvedBy?: string } = {}
+
+    // Validate approved by
+    const trimmedApprovedBy = formData.approvedBy.trim()
+    if (!trimmedApprovedBy) {
+      newErrors.approvedBy = 'Approved By is required'
+    } else if (trimmedApprovedBy.length < 2) {
+      newErrors.approvedBy = 'Approved By must be at least 2 characters long'
+    } else if (trimmedApprovedBy.length > 100) {
+      newErrors.approvedBy = 'Approved By must be less than 100 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Clear error when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }))
+    }
+
+    // Real-time validation for approved by field
+    if (field === 'approvedBy') {
+      const trimmedValue = value.trim()
+      if (trimmedValue && trimmedValue.length < 2) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: 'Approved By must be at least 2 characters long'
+        }))
+      } else if (trimmedValue && trimmedValue.length > 100) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: 'Approved By must be less than 100 characters'
+        }))
+      } else if (trimmedValue) {
+        setErrors(prev => ({
+          ...prev,
+          approvedBy: undefined
+        }))
+      }
+    }
+  }
+
+  return {
+    formData,
+    errors,
+    hasErrors,
+    resetForm,
+    validateForm,
+    handleInputChange
+  }
+}
+
+// Reusable approval input field component
+interface ApprovalInputFieldProps {
+  id: string
+  name: string
+  value: string
+  onChange: (value: string) => void
+  error?: string
+  placeholder: string
+  label: string
+  helpText: string
+}
+
+function ApprovalInputField({ 
+  id, 
+  name, 
+  value, 
+  onChange, 
+  error, 
+  placeholder, 
+  label, 
+  helpText 
+}: ApprovalInputFieldProps) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        {label} <span className="text-red-500" aria-label="required">*</span>
+      </label>
+      <input
+        type="text"
+        id={id}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+          error 
+            ? 'border-red-300 focus:ring-red-500' 
+            : 'border-gray-300 focus:ring-green-500'
+        }`}
+        placeholder={placeholder}
+        required
+        maxLength={100}
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={error ? `${id}-error` : `${id}-help`}
+        aria-required="true"
+        aria-label={label}
+      />
+      {error ? (
+        <p id={`${id}-error`} className="text-xs text-red-600 mt-1" role="alert">
+          {error}
+        </p>
+      ) : (
+        <p id={`${id}-help`} className="text-xs text-gray-500 mt-1">
+          {helpText}
+        </p>
+      )}
     </div>
   )
 }
@@ -1111,95 +1260,48 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
   )
 }
 
-interface CloseTreatmentModalProps {
+// Reusable approval modal component
+interface ApprovalModalProps {
   isOpen: boolean
   onClose: () => void
-  treatment: Treatment
   onSubmit: (data: { approvedBy: string }) => Promise<void>
   submitting: boolean
+  title: string
+  detailsTitle: string
+  detailsContent: React.ReactNode
+  warningMessage: string
+  submitButtonText: string
+  submitButtonLoadingText: string
+  modalId: string
 }
 
-function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting }: CloseTreatmentModalProps) {
-  const [formData, setFormData] = useState({
-    approvedBy: ''
-  })
-  const [errors, setErrors] = useState<{
-    approvedBy?: string
-  }>({})
-
+function ApprovalModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  submitting,
+  title,
+  detailsTitle,
+  detailsContent,
+  warningMessage,
+  submitButtonText,
+  submitButtonLoadingText,
+  modalId
+}: ApprovalModalProps) {
+  const { formData, errors, hasErrors, resetForm, validateForm, handleInputChange } = useApprovalForm()
   const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
-
-  // Memoize the errors check to avoid recalculating on every render
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
 
   useEffect(() => {
     if (isOpen) {
-      // Reset form when modal opens
-      setFormData({
-        approvedBy: ''
-      })
-      setErrors({})
+      resetForm()
     }
-  }, [isOpen])
-
-  const validateForm = () => {
-    const newErrors: { approvedBy?: string } = {}
-
-    // Validate approved by
-    const trimmedApprovedBy = formData.approvedBy.trim()
-    if (!trimmedApprovedBy) {
-      newErrors.approvedBy = 'Approved By is required'
-    } else if (trimmedApprovedBy.length < 2) {
-      newErrors.approvedBy = 'Approved By must be at least 2 characters long'
-    } else if (trimmedApprovedBy.length > 100) {
-      newErrors.approvedBy = 'Approved By must be less than 100 characters'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  }, [isOpen, resetForm])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (validateForm()) {
       await onSubmit(formData)
       onClose()
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-    
-    // Clear error when user starts typing
-    if (errors[field as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: undefined
-      }))
-    }
-
-    // Real-time validation for approved by field
-    if (field === 'approvedBy') {
-      const trimmedValue = value.trim()
-      if (trimmedValue && trimmedValue.length < 2) {
-        setErrors(prev => ({
-          ...prev,
-          approvedBy: 'Approved By must be at least 2 characters long'
-        }))
-      } else if (trimmedValue && trimmedValue.length > 100) {
-        setErrors(prev => ({
-          ...prev,
-          approvedBy: 'Approved By must be less than 100 characters'
-        }))
-      } else if (trimmedValue) {
-        setErrors(prev => ({
-          ...prev,
-          approvedBy: undefined
-        }))
-      }
     }
   }
 
@@ -1210,7 +1312,7 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
       className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="close-modal-title"
+      aria-labelledby={`${modalId}-title`}
       onClick={handleBackdropClick}
     >
       <div 
@@ -1220,12 +1322,12 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 id="close-modal-title" className="text-lg font-semibold text-gray-900">Close Treatment</h2>
+          <h2 id={`${modalId}-title`} className="text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors"
             title="Close"
-            aria-label="Close treatment form"
+            aria-label={`Close ${title.toLowerCase()} form`}
           >
             <Icon name="close" size={16} className="text-gray-500" />
           </button>
@@ -1234,53 +1336,22 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Treatment Details</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">{detailsTitle}</h3>
             <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm text-gray-700 mb-1">
-                <span className="font-medium">Treatment ID:</span> {treatment.treatmentId}
-              </p>
-              <p className="text-sm text-gray-700 mb-1">
-                <span className="font-medium">Owner:</span> {treatment.riskTreatmentOwner}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-medium">Treatment:</span> {treatment.riskTreatment}
-              </p>
+              {detailsContent}
             </div>
           </div>
 
-          <div>
-            <label htmlFor="approvedBy" className="block text-sm font-medium text-gray-700 mb-2">
-              Approved By <span className="text-red-500" aria-label="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="approvedBy"
-              name="approvedBy"
-              value={formData.approvedBy}
-              onChange={(e) => handleInputChange('approvedBy', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                errors.approvedBy 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-green-500'
-              }`}
-              placeholder="Enter the name of the person approving this treatment closure..."
-              required
-              maxLength={100}
-              aria-invalid={errors.approvedBy ? 'true' : 'false'}
-              aria-describedby={errors.approvedBy ? 'approved-by-error' : 'approved-by-help'}
-              aria-required="true"
-              aria-label="Name of person approving treatment closure"
-            />
-            {errors.approvedBy ? (
-              <p id="approved-by-error" className="text-xs text-red-600 mt-1" role="alert">
-                {errors.approvedBy}
-              </p>
-            ) : (
-              <p id="approved-by-help" className="text-xs text-gray-500 mt-1">
-                Enter the full name of the person approving this treatment closure
-              </p>
-            )}
-          </div>
+          <ApprovalInputField
+            id={`${modalId}-approved-by`}
+            name={`${modalId}-approved-by`}
+            value={formData.approvedBy}
+            onChange={(value) => handleInputChange('approvedBy', value)}
+            error={errors.approvedBy}
+            placeholder={`Enter the name of the person approving this ${title.toLowerCase()}...`}
+            label="Approved By"
+            helpText={`Enter the full name of the person approving this ${title.toLowerCase()}`}
+          />
 
           {/* Warning Message */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -1289,8 +1360,7 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
               <div>
                 <h4 className="text-sm font-medium text-yellow-800">Important</h4>
                 <p className="text-sm text-yellow-700 mt-1">
-                  This action will permanently close the treatment and set its status to "Approved". 
-                  The completion date will be set to the workshop date.
+                  {warningMessage}
                 </p>
               </div>
             </div>
@@ -1303,7 +1373,7 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={submitting}
-              aria-label="Cancel treatment closure"
+              aria-label={`Cancel ${title.toLowerCase()}`}
             >
               Cancel
             </button>
@@ -1311,15 +1381,15 @@ function CloseTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting 
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={submitting || !formData.approvedBy.trim() || hasErrors}
-              aria-label="Close and approve treatment"
+              aria-label={`${submitButtonText}`}
             >
               {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                  Closing...
+                  {submitButtonLoadingText}
                 </>
               ) : (
-                'Close Treatment'
+                submitButtonText
               )}
             </button>
           </div>
@@ -1349,6 +1419,10 @@ export default function WorkshopDetails() {
   const [showCloseTreatmentModal, setShowCloseTreatmentModal] = useState(false)
   const [selectedCloseTreatment, setSelectedCloseTreatment] = useState<Treatment | null>(null)
   const [submittingCloseTreatment, setSubmittingCloseTreatment] = useState(false)
+  // Close risk modal state
+  const [showCloseRiskModal, setShowCloseRiskModal] = useState(false)
+  const [selectedCloseRisk, setSelectedCloseRisk] = useState<Risk | null>(null)
+  const [submittingCloseRisk, setSubmittingCloseRisk] = useState(false)
 
   // Update risk-level meeting minutes
   const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
@@ -1592,7 +1666,23 @@ export default function WorkshopDetails() {
     if (!selectedTreatment) return
 
     setSubmittingExtension(true)
+    
+    // Store original treatment data for potential rollback
+    let originalTreatmentData: any = null
+    let extensionApproved = false
+    
     try {
+      // First, get the current treatment data for potential rollback
+      const getTreatmentResponse = await fetch(`/api/treatments/treatment/${selectedTreatment._id}`)
+      const treatmentData = await getTreatmentResponse.json()
+      if (treatmentData.success) {
+        originalTreatmentData = {
+          extendedDueDate: treatmentData.treatment.extendedDueDate,
+          numberOfExtensions: treatmentData.treatment.numberOfExtensions,
+          extensions: treatmentData.treatment.extensions
+        }
+      }
+      
       const response = await fetch(`/api/treatments/${selectedTreatment.riskId}/${selectedTreatment.treatmentId}/extensions?directApproval=true`, {
         method: 'POST',
         headers: {
@@ -1604,6 +1694,8 @@ export default function WorkshopDetails() {
       const result = await response.json()
       
       if (result.success) {
+        extensionApproved = true
+        
         // Update the outcome field for the specific treatment
         await updateTreatmentOutcomeAfterExtension(data.extendedDueDate, data.justification)
         
@@ -1618,14 +1710,47 @@ export default function WorkshopDetails() {
       }
     } catch (error) {
       console.error('Error submitting extension request:', error)
-      showToast({
-        type: 'error',
-        title: 'Request Failed',
-        message: error instanceof Error ? error.message : 'Failed to submit extension request'
-      })
-    } finally {
-      setSubmittingExtension(false)
+      
+      // If extension was approved but outcome update failed, rollback the extension
+      if (extensionApproved && originalTreatmentData) {
+        try {
+          console.log('Rolling back extension to:', originalTreatmentData)
+          await fetch(`/api/treatments/treatment/${selectedTreatment._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              extendedDueDate: originalTreatmentData.extendedDueDate,
+              numberOfExtensions: originalTreatmentData.numberOfExtensions,
+              extensions: originalTreatmentData.extensions
+            }),
+          })
+          
+          showToast({
+            type: 'error',
+            title: 'Extension Failed',
+            message: 'Failed to update outcome field. Extension has been rolled back to maintain data consistency.'
+          })
+        } catch (rollbackError) {
+          console.error('Error rolling back extension:', rollbackError)
+          showToast({
+            type: 'error',
+            title: 'Extension Failed',
+            message: 'Failed to process extension and rollback failed. Please contact support to resolve data inconsistency.'
+          })
+        }
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Request Failed',
+          message: error instanceof Error ? error.message : 'Failed to submit extension request'
+        })
+      }
     }
+    
+    // Always reset submitting state, regardless of success or failure
+    setSubmittingExtension(false)
   }
 
   // Handle close treatment
@@ -1641,11 +1766,39 @@ export default function WorkshopDetails() {
     setSelectedCloseTreatment(null)
   }
 
+  // Open close risk modal
+  const openCloseRiskModal = (risk: Risk) => {
+    setSelectedCloseRisk(risk)
+    setShowCloseRiskModal(true)
+  }
+
+  // Close close risk modal
+  const closeCloseRiskModal = () => {
+    setShowCloseRiskModal(false)
+    setSelectedCloseRisk(null)
+  }
+
   const handleCloseTreatment = async (data: { approvedBy: string }) => {
     if (!workshop || !selectedCloseTreatment) return
 
     setSubmittingCloseTreatment(true)
+    
+    // Store original treatment data for potential rollback
+    let originalTreatmentData: any = null
+    let treatmentStatusUpdated = false
+    
     try {
+      // First, get the current treatment data for potential rollback
+      const getTreatmentResponse = await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`)
+      const treatmentData = await getTreatmentResponse.json()
+      if (treatmentData.success) {
+        originalTreatmentData = {
+          closureApproval: treatmentData.treatment.closureApproval,
+          completionDate: treatmentData.treatment.completionDate,
+          closureApprovedBy: treatmentData.treatment.closureApprovedBy
+        }
+      }
+      
       // Update treatment status to "Approved" and set completion date to workshop date
       const response = await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`, {
         method: 'PUT',
@@ -1662,6 +1815,8 @@ export default function WorkshopDetails() {
       const result = await response.json()
       
       if (result.success) {
+        treatmentStatusUpdated = true
+        
         // Update the outcome field for the specific treatment
         const outcomeMessage = `Risk treatment closed and approved on ${formatDate(workshop.date)} by ${data.approvedBy}`
         
@@ -1679,17 +1834,7 @@ export default function WorkshopDetails() {
             : outcomeMessage
           
           // Update the treatment's outcome field with combined text
-          try {
-            await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
-          } catch (updateError) {
-            console.error('Error updating treatment outcome:', updateError)
-            showToast({
-              type: 'error',
-              title: 'Partial Success',
-              message: 'Treatment was closed but failed to update outcome field. Please refresh and try again.'
-            })
-            return
-          }
+          await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
         }
         
         showToast({
@@ -1702,14 +1847,151 @@ export default function WorkshopDetails() {
       }
     } catch (error) {
       console.error('Error closing treatment:', error)
-      showToast({
-        type: 'error',
-        title: 'Close Failed',
-        message: error instanceof Error ? error.message : 'Failed to close treatment'
-      })
-    } finally {
-      setSubmittingCloseTreatment(false)
+      
+      // If treatment status was updated but outcome update failed, rollback the status change
+      if (treatmentStatusUpdated && originalTreatmentData) {
+        try {
+          console.log('Rolling back treatment status to:', originalTreatmentData)
+          await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              closureApproval: originalTreatmentData.closureApproval,
+              completionDate: originalTreatmentData.completionDate,
+              closureApprovedBy: originalTreatmentData.closureApprovedBy
+            }),
+          })
+          
+          showToast({
+            type: 'error',
+            title: 'Close Failed',
+            message: 'Failed to update outcome field. Treatment status has been rolled back to maintain data consistency.'
+          })
+        } catch (rollbackError) {
+          console.error('Error rolling back treatment status:', rollbackError)
+          showToast({
+            type: 'error',
+            title: 'Close Failed',
+            message: 'Failed to close treatment and rollback failed. Please contact support to resolve data inconsistency.'
+          })
+        }
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Close Failed',
+          message: error instanceof Error ? error.message : 'Failed to close treatment'
+        })
+      }
     }
+    
+    // Always reset submitting state, regardless of success or failure
+    setSubmittingCloseTreatment(false)
+  }
+
+  const handleCloseRisk = async (data: { approvedBy: string }) => {
+    if (!workshop || !selectedCloseRisk) return
+
+    setSubmittingCloseRisk(true)
+    
+    // Store original risk status for potential rollback
+    let originalRiskStatus: string | null = null
+    let riskStatusUpdated = false
+    
+    try {
+      // First, get the current risk status for potential rollback
+      const getRiskResponse = await fetch(`/api/risks/${selectedCloseRisk.riskId}`)
+      const riskData = await getRiskResponse.json()
+      if (riskData.success) {
+        originalRiskStatus = riskData.risk.currentPhase
+      }
+      
+      // Update risk status to "Monitoring"
+      const response = await fetch(`/api/risks/${selectedCloseRisk.riskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPhase: 'Monitoring'
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        riskStatusUpdated = true
+        
+        // Update the outcome field for the risk in the closure section
+        const outcomeMessage = `Risk approved for closure by ${data.approvedBy} on ${formatDate(workshop.date)}`
+        
+        // Find the risk item in the closure section
+        const closureSection = workshop.closure || []
+        const riskIndex = closureSection.findIndex(item => item.riskId === selectedCloseRisk.riskId)
+        
+        if (riskIndex !== -1) {
+          // Get the current outcome text
+          const currentOutcome = closureSection[riskIndex].outcome || ''
+          
+          // Combine existing outcome with new closure message
+          const combinedOutcome = currentOutcome 
+            ? `${currentOutcome}\n\n${outcomeMessage}`
+            : outcomeMessage
+          
+          // Update the risk's outcome field with combined text
+          await updateRiskMinutes('closure', riskIndex, 'outcome', combinedOutcome)
+        }
+        
+        showToast({
+          type: 'success',
+          title: 'Risk Closed',
+          message: 'Risk has been closed and moved to Monitoring status successfully'
+        })
+      } else {
+        throw new Error(result.error || 'Failed to close risk')
+      }
+    } catch (error) {
+      console.error('Error closing risk:', error)
+      
+      // If risk status was updated but outcome update failed, rollback the status change
+      if (riskStatusUpdated && originalRiskStatus) {
+        try {
+          console.log('Rolling back risk status to:', originalRiskStatus)
+          await fetch(`/api/risks/${selectedCloseRisk.riskId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              currentPhase: originalRiskStatus
+            }),
+          })
+          
+          showToast({
+            type: 'error',
+            title: 'Close Failed',
+            message: 'Failed to update outcome field. Risk status has been rolled back to maintain data consistency.'
+          })
+        } catch (rollbackError) {
+          console.error('Error rolling back risk status:', rollbackError)
+          showToast({
+            type: 'error',
+            title: 'Close Failed',
+            message: 'Failed to close risk and rollback failed. Please contact support to resolve data inconsistency.'
+          })
+        }
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Close Failed',
+          message: error instanceof Error ? error.message : 'Failed to close risk'
+        })
+      }
+    }
+    
+    // Always reset submitting state, regardless of success or failure
+    setSubmittingCloseRisk(false)
   }
 
   const updateTreatmentOutcomeAfterExtension = async (extendedDueDate: string, justification: string) => {
@@ -1735,17 +2017,7 @@ export default function WorkshopDetails() {
         : outcomeMessage
       
       // Update the treatment's outcome field with combined text
-      try {
-        await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
-      } catch (updateError) {
-        console.error('Error updating treatment outcome after extension:', updateError)
-        showToast({
-          type: 'error',
-          title: 'Partial Success',
-          message: 'Extension was approved but failed to update outcome field. Please refresh and try again.'
-        })
-        throw updateError // Re-throw to be caught by the calling function
-      }
+      await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
     }
   }
 
@@ -2096,6 +2368,7 @@ export default function WorkshopDetails() {
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('extensions', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
+                        onCloseRisk={openCloseRiskModal}
                       />
                     )
                   })}
@@ -2129,6 +2402,7 @@ export default function WorkshopDetails() {
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('closure', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
+                        onCloseRisk={openCloseRiskModal}
                       />
                     )
                   })}
@@ -2162,6 +2436,7 @@ export default function WorkshopDetails() {
                         onUpdateTreatment={(treatmentId, field, value) => updateTreatmentMinutes('newRisks', index, treatmentId, field, value)}
                         onRequestExtension={openExtensionModal}
                         onCloseTreatment={openCloseTreatmentModal}
+                        onCloseRisk={openCloseRiskModal}
                       />
                     )
                   })}
@@ -2222,25 +2497,72 @@ export default function WorkshopDetails() {
         </div>
       </div>
 
-      {/* Extension Modal */}
-      {selectedTreatment && (
-        <ExtensionModal
-          isOpen={showExtensionModal}
-          onClose={closeExtensionModal}
-          treatment={selectedTreatment}
-          onSubmit={handleExtensionRequest}
-          submitting={submittingExtension}
-        />
-      )}
+              {/* Extension Modal */}
+        {selectedTreatment && (
+          <ExtensionModal
+            isOpen={showExtensionModal}
+            onClose={closeExtensionModal}
+            treatment={selectedTreatment}
+            onSubmit={handleExtensionRequest}
+            submitting={submittingExtension}
+          />
+        )}
 
       {/* Close Treatment Modal */}
       {selectedCloseTreatment && (
-        <CloseTreatmentModal
+        <ApprovalModal
           isOpen={showCloseTreatmentModal}
           onClose={closeCloseTreatmentModal}
-          treatment={selectedCloseTreatment}
           onSubmit={handleCloseTreatment}
           submitting={submittingCloseTreatment}
+          title="Close Treatment"
+          detailsTitle="Treatment Details"
+          detailsContent={
+            <>
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Treatment ID:</span> {selectedCloseTreatment.treatmentId}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Owner:</span> {selectedCloseTreatment.riskTreatmentOwner}
+              </p>
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">Treatment:</span> {selectedCloseTreatment.riskTreatment}
+              </p>
+            </>
+          }
+          warningMessage="This action will permanently close the treatment and set its status to 'Approved'. The completion date will be set to the workshop date."
+          submitButtonText="Close Treatment"
+          submitButtonLoadingText="Closing..."
+          modalId="close-treatment"
+        />
+      )}
+
+      {/* Close Risk Modal */}
+      {selectedCloseRisk && (
+        <ApprovalModal
+          isOpen={showCloseRiskModal}
+          onClose={closeCloseRiskModal}
+          onSubmit={handleCloseRisk}
+          submitting={submittingCloseRisk}
+          title="Close Risk"
+          detailsTitle="Risk Details"
+          detailsContent={
+            <>
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Risk ID:</span> {selectedCloseRisk.riskId}
+              </p>
+              <p className="text-sm text-gray-700 mb-1">
+                <span className="font-medium">Risk Statement:</span> {selectedCloseRisk.riskStatement}
+              </p>
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">Information Asset:</span> {selectedCloseRisk.informationAsset}
+              </p>
+            </>
+          }
+          warningMessage="This action will move the risk status to 'Monitoring' and update the outcome field with the closure approval information."
+          submitButtonText="Close Risk"
+          submitButtonLoadingText="Closing..."
+          modalId="close-risk"
         />
       )}
     </div>
