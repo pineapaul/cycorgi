@@ -30,7 +30,7 @@ interface Risk {
   informationAsset: string
   likelihood: string
   impact: string
-  riskLevel: string
+  riskRating: string
 }
 
 interface TreatmentExtension {
@@ -229,7 +229,7 @@ export default function EditWorkshop() {
                   return `${p.name}${p.position ? `, ${p.position}` : ''}`
                 }
                 return ''
-              }).filter(p => p.length > 0)
+              }).filter((p: string) => p.length > 0)
             : []
           
           setFormData({
@@ -1111,11 +1111,11 @@ export default function EditWorkshop() {
                           <div className="flex items-center mb-2">
                             <span className="text-sm font-semibold text-gray-900 mr-3">{risk.riskId}</span>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              risk.riskLevel === 'High' ? 'bg-red-100 text-red-800' :
-                              risk.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                              risk.riskRating === 'High' ? 'bg-red-100 text-red-800' :
+                              risk.riskRating === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-green-100 text-green-800'
                             }`}>
-                              {risk.riskLevel}
+                              {risk.riskRating}
                             </span>
                           </div>
                           <Tooltip content={risk.riskStatement}>

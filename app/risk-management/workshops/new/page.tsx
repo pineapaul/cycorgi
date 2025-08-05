@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
@@ -14,7 +14,8 @@ interface Risk {
   informationAsset: string
   likelihood: string
   impact: string
-  riskLevel: string
+  riskRating: string
+  currentPhase: string
 }
 
 interface TreatmentExtension {
@@ -151,6 +152,20 @@ export default function NewWorkshop() {
         return 'exclamation-circle'
     }
   }
+
+  // Helper function to check if risk is new (not in treatment or monitoring phases)
+  const isRiskNew = (risk: Risk): boolean => {
+    return risk.currentPhase !== 'treatment' && risk.currentPhase !== 'monitoring'
+  }
+
+  // Memoized risk lookup object for O(1) access
+  const riskLookup = useMemo(() => {
+    const lookup: Record<string, Risk> = {}
+    risks.forEach(risk => {
+      lookup[risk.riskId] = risk
+    })
+    return lookup
+  }, [risks])
 
   // Fetch existing workshops to determine next ID
   useEffect(() => {
@@ -324,7 +339,7 @@ export default function NewWorkshop() {
   const addSelectedRiskToWorkshop = () => {
     if (!selectedRiskId) return
 
-    const selectedRisk = risks.find(risk => risk.riskId === selectedRiskId)
+    const selectedRisk = riskLookup[selectedRiskId]
     if (!selectedRisk) return
 
     // Add the risk and its selected treatments to the form data with category
@@ -629,13 +644,13 @@ export default function NewWorkshop() {
                      onClick={() => setShowRiskModal(true)}
                      className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-left focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-purple-500 focus:ring-purple-500 transition-colors hover:bg-gray-50"
                    >
-                     {selectedRiskId ? (
-                       <div className="flex items-center justify-between">
-                         <span className="text-gray-900">
-                           {risks.find(r => r.riskId === selectedRiskId)?.riskId} - {truncateText(risks.find(r => r.riskId === selectedRiskId)?.riskStatement || '')}
-                         </span>
-                         <Icon name="chevron-right" size={16} className="text-gray-400" />
-                       </div>
+                                           {selectedRiskId ? (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-900">
+                            {riskLookup[selectedRiskId]?.riskId} - {truncateText(riskLookup[selectedRiskId]?.riskStatement || '')}
+                          </span>
+                          <Icon name="chevron-right" size={16} className="text-gray-400" />
+                        </div>
                      ) : (
                        <div className="flex items-center justify-between">
                          <span className="text-gray-500">Choose a risk...</span>
@@ -738,6 +753,14 @@ export default function NewWorkshop() {
                                 <Icon name={getCategoryIcon(risk.category)} size={10} className="mr-1" />
                                 {getCategoryDisplayName(risk.category)}
                               </span>
+                                                             {(() => {
+                                 const originalRisk = riskLookup[risk.riskId]
+                                 return originalRisk && isRiskNew(originalRisk) ? (
+                                   <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                     NEW
+                                   </span>
+                                 ) : null
+                               })()}
                             </div>
                             <p className="text-sm text-gray-700">{risk.riskStatement}</p>
                           </div>
@@ -851,12 +874,17 @@ export default function NewWorkshop() {
                            <div className="flex items-center mb-2">
                              <span className="text-sm font-semibold text-gray-900 mr-3">{risk.riskId}</span>
                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                               risk.riskLevel === 'High' ? 'bg-red-100 text-red-800' :
-                               risk.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                               risk.riskRating === 'High' ? 'bg-red-100 text-red-800' :
+                               risk.riskRating === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
                                'bg-green-100 text-green-800'
                              }`}>
-                               {risk.riskLevel}
+                               {risk.riskRating}
                              </span>
+                             {isRiskNew(risk) && (
+                               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                 NEW
+                               </span>
+                             )}
                            </div>
                            <Tooltip content={risk.riskStatement}>
                              <p className="text-sm text-gray-700 mb-2">
