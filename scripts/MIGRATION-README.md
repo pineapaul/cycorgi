@@ -35,6 +35,8 @@ This migration updates the `informationAsset` field in the `risks` collection fr
 
 ## Migration Scripts
 
+> **Note**: This migration has been completed. The scripts below are kept for documentation and future reference.
+
 ### 1. Backup Script (`backup-risks.js`)
 **Purpose**: Creates a safe backup of the current risks collection before migration.
 
@@ -48,12 +50,12 @@ node scripts/backup-risks.js
 - Provides a summary of current `informationAsset` field types
 - Safe to run multiple times
 
-### 2. Migration Script (`migrate-information-assets.js`)
+### 2. Migration Script (`migrate-information-assets-corrected.js`)
 **Purpose**: Converts the `informationAsset` field from string to array format.
 
 **Usage**:
 ```bash
-node scripts/migrate-information-assets.js
+node scripts/migrate-information-assets-corrected.js
 ```
 
 **What it does**:
@@ -73,7 +75,7 @@ node scripts/backup-risks.js
 
 ### Step 2: Run Migration
 ```bash
-node scripts/migrate-information-assets.js
+node scripts/migrate-information-assets-corrected.js
 ```
 
 ### Step 3: Verify Results
