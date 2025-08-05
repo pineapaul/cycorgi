@@ -152,7 +152,9 @@ export default function DraftRisks() {
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner,
               affectedSites: 'All Sites',
-              informationAssets: risk.informationAsset,
+              informationAssets: Array.isArray(risk.informationAsset) 
+                ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                : risk.informationAsset || '',
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,

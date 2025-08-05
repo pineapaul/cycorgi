@@ -91,7 +91,9 @@ export default function Treatments() {
                treatmentId: treatment.treatmentId,
                riskId: treatment.riskId,
                riskStatement: treatment.riskStatement || 'Not specified',
-               informationAsset: treatment.informationAsset || 'Not specified',
+               informationAsset: Array.isArray(treatment.informationAsset) 
+                ? treatment.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                : treatment.informationAsset || 'Not specified',
                treatmentType: treatment.riskTreatment || 'Not specified',
                treatmentDescription: treatment.riskTreatment || 'Not specified',
                treatmentOwner: treatment.riskTreatmentOwner || 'Not assigned',

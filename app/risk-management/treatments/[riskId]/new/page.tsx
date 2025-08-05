@@ -218,7 +218,11 @@ export default function AddTreatment() {
               </div>
               <div>
                 <span className="font-medium text-gray-700">Information Asset:</span>
-                <p className="text-gray-600 mt-1">{riskDetails.informationAsset}</p>
+                                    <p className="text-gray-600 mt-1">
+                      {Array.isArray(riskDetails.informationAsset) 
+                        ? riskDetails.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                        : riskDetails.informationAsset}
+                    </p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Risk Rating:</span>

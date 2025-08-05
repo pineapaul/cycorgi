@@ -1,15 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 
+interface InformationAsset {
+  id: string
+  informationAsset: string
+  category: string
+}
+
 interface RiskFormData {
   riskId: string
   raisedBy: string
-  informationAssets: string
+  informationAssets: string[]
   threat: string
   vulnerability: string
   riskStatement: string
@@ -35,7 +41,7 @@ export default function NewRisk() {
   const [formData, setFormData] = useState<RiskFormData>({
     riskId: '',
     raisedBy: '',
-    informationAssets: '',
+    informationAssets: [],
     threat: '',
     vulnerability: '',
     riskStatement: '',
@@ -52,15 +58,40 @@ export default function NewRisk() {
 
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<RiskFormErrors>({})
+  const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
 
   const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'impact']
+
+  // Fetch information assets on component mount
+  useEffect(() => {
+    const fetchInformationAssets = async () => {
+      try {
+        const response = await fetch('/api/information-assets')
+        const result = await response.json()
+        
+        if (result.success) {
+          setInformationAssets(result.data)
+        } else {
+          console.error('Failed to fetch information assets:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching information assets:', error)
+      }
+    }
+
+    fetchInformationAssets()
+  }, [])
 
   const validateForm = (): boolean => {
     const newErrors: RiskFormErrors = {}
 
     mandatoryFields.forEach(field => {
       const value = formData[field as keyof RiskFormData]
-      if (typeof value === 'string' && !value.trim()) {
+      if (field === 'informationAssets') {
+        if (!Array.isArray(value) || value.length === 0) {
+          newErrors[field as keyof RiskFormData] = 'Please select at least one information asset'
+        }
+      } else if (typeof value === 'string' && !value.trim()) {
         newErrors[field as keyof RiskFormData] = 'This field is required'
       }
     })
@@ -105,6 +136,23 @@ export default function NewRisk() {
           riskId: 'Risk ID must be in format RISK-XXX (where XXX is numeric)'
         }))
       }
+    }
+  }
+
+  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      informationAssets: checked 
+        ? [...prev.informationAssets, assetId]
+        : prev.informationAssets.filter(id => id !== assetId)
+    }))
+    
+    // Clear error when information asset is selected
+    if (errors.informationAssets) {
+      setErrors(prev => ({
+        ...prev,
+        informationAssets: undefined
+      }))
     }
   }
 
@@ -262,25 +310,43 @@ export default function NewRisk() {
                   )}
                 </div>
 
-                {/* Information Assets */}
-                <div>
-                  <label htmlFor="informationAssets" className="block text-sm font-medium text-gray-700 mb-2">
+                {/* Information Assets - Multi-select */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Information Assets <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    id="informationAssets"
-                    value={formData.informationAssets}
-                    onChange={(e) => handleInputChange('informationAssets', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.informationAssets 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                    placeholder="e.g., Customer Database, Financial Records"
-                  />
+                  <div className={`border rounded-md shadow-sm p-4 max-h-48 overflow-y-auto ${
+                    errors.informationAssets 
+                      ? 'border-red-300 focus-within:border-red-500 focus-within:ring-red-500' 
+                      : 'border-gray-300 focus-within:border-purple-500 focus-within:ring-purple-500'
+                  }`}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {informationAssets.map((asset) => (
+                        <label key={asset.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.informationAssets.includes(asset.id)}
+                            onChange={(e) => handleInformationAssetsChange(asset.id, e.target.checked)}
+                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
+                            <div className="text-xs text-gray-500">{asset.category}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {informationAssets.length === 0 && (
+                      <p className="text-sm text-gray-500 italic">Loading information assets...</p>
+                    )}
+                  </div>
                   {errors.informationAssets && (
                     <p className="mt-1 text-sm text-red-600">{errors.informationAssets}</p>
+                  )}
+                  {formData.informationAssets.length > 0 && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Selected: {formData.informationAssets.length} asset{formData.informationAssets.length !== 1 ? 's' : ''}
+                    </p>
                   )}
                 </div>
 
