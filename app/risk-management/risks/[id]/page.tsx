@@ -8,6 +8,12 @@ import { getCIAConfig, extractRiskNumber } from '@/lib/utils'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import { useToast } from '@/app/components/Toast'
 
+interface InformationAsset {
+  id: string
+  informationAsset: string
+  category: string
+}
+
 interface Risk {
   riskId: string
   functionalUnit: string
@@ -54,12 +60,34 @@ export default function RiskInformationPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editedRisk, setEditedRisk] = useState<Risk | null>(null)
   const [saving, setSaving] = useState(false)
+  const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
+  const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
 
   useEffect(() => {
     if (params.id) {
       fetchRisk(params.id as string)
     }
   }, [params.id])
+
+  // Fetch information assets for the multi-select
+  useEffect(() => {
+    const fetchInformationAssets = async () => {
+      try {
+        const response = await fetch('/api/information-assets')
+        const result = await response.json()
+
+        if (result.success) {
+          setInformationAssets(result.data)
+        } else {
+          console.error('Failed to fetch information assets:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching information assets:', error)
+      }
+    }
+
+    fetchInformationAssets()
+  }, [])
 
   const fetchRisk = async (id: string) => {
     try {
@@ -118,11 +146,27 @@ export default function RiskInformationPage() {
 
   const handleEdit = () => {
     setIsEditing(true)
+    
+    // Initialize selected information assets from the current risk data
+    if (risk?.informationAssets) {
+      // Parse the information assets string to extract IDs
+      const assetNames = risk.informationAssets.split(',').map(name => name.trim())
+      const selectedIds = informationAssets
+        .filter(asset => assetNames.some(name =>
+          asset.informationAsset.toLowerCase().includes(name.toLowerCase()) ||
+          name.toLowerCase().includes(asset.informationAsset.toLowerCase())
+        ))
+        .map(asset => asset.id)
+      setSelectedInformationAssets(selectedIds)
+    } else {
+      setSelectedInformationAssets([])
+    }
   }
 
   const handleCancel = () => {
     setIsEditing(false)
     setEditedRisk(risk)
+    setSelectedInformationAssets([])
   }
 
   const handleSave = async () => {
@@ -141,7 +185,7 @@ export default function RiskInformationPage() {
         raisedBy: editedRisk.raisedBy,
         riskOwner: editedRisk.riskOwner,
         affectedSites: editedRisk.affectedSites,
-        informationAssets: editedRisk.informationAssets,
+        informationAsset: selectedInformationAssets,
         threat: editedRisk.threat,
         vulnerability: editedRisk.vulnerability,
         riskStatement: editedRisk.riskStatement,
@@ -236,6 +280,14 @@ export default function RiskInformationPage() {
       ...editedRisk,
       [field]: value
     })
+  }
+
+  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
+    setSelectedInformationAssets(prev => 
+      checked 
+        ? [...prev, assetId]
+        : prev.filter(id => id !== assetId)
+    )
   }
 
   const getStatusColor = (status: string) => {
@@ -832,15 +884,34 @@ export default function RiskInformationPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Information Assets</label>
               {isEditing ? (
-                <textarea
-                                      value={editedRisk?.informationAssets || ''}
-                    onChange={(e) => handleFieldChange('informationAssets', e.target.value)}
-                    disabled
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {informationAssets.map((asset) => (
+                      <label key={asset.id} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={selectedInformationAssets.includes(asset.id)}
+                          onChange={(e) => handleInformationAssetsChange(asset.id, e.target.checked)}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
+                          <div className="text-xs text-gray-500">{asset.category}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {informationAssets.length === 0 && (
+                    <p className="text-sm text-gray-500 italic">Loading information assets...</p>
+                  )}
+                </div>
               ) : (
                 <p className="text-gray-900">{risk.informationAssets}</p>
+              )}
+              {isEditing && selectedInformationAssets.length > 0 && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Selected: {selectedInformationAssets.length} asset{selectedInformationAssets.length !== 1 ? 's' : ''}
+                </p>
               )}
             </div>
 
