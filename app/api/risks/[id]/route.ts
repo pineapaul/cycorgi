@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '../../../../lib/mongodb'
+import { 
+  validateAndTransformRiskData, 
+  transformRiskForResponse, 
+  createAssetIdMap,
+  type InformationAsset 
+} from '../../../../lib/risk-validation'
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +16,7 @@ export async function GET(
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
+    const informationAssetsCollection = db.collection('information-assets')
     
     const risk = await collection.findOne({ riskId: id })
     
@@ -20,9 +27,16 @@ export async function GET(
       }, { status: 404 })
     }
     
+    // Fetch information assets for transformation
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const assetMap = new Map(informationAssets.map(asset => [asset.id, asset]))
+    
+    // Transform the risk data for response
+    const transformedRisk = transformRiskForResponse(risk, assetMap)
+    
     return NextResponse.json({
       success: true,
-      data: risk
+      data: transformedRisk
     })
   } catch (error) {
     console.error('Error fetching risk:', error)
@@ -43,6 +57,11 @@ export async function PUT(
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
+    const informationAssetsCollection = db.collection('information-assets')
+    
+    // Fetch available information assets for validation
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const availableAssetIds = createAssetIdMap(informationAssets)
     
     // Convert impactCIA string back to impact array for database storage
     const updateData = { ...body }
@@ -52,9 +71,22 @@ export async function PUT(
       delete updateData.impactCIA // Remove the string version as it's not stored in DB
     }
     
+    // Validate and transform the update data
+    const validation = validateAndTransformRiskData({ riskId: id, ...updateData }, availableAssetIds)
+    
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: 'Validation failed',
+        details: validation.errors
+      }, { status: 400 })
+    }
+    
+    const { riskId: validatedRiskId, ...validatedUpdateData } = validation.transformedData!
+    
     const result = await collection.updateOne(
-      { riskId: id },
-      { $set: updateData }
+      { riskId: validatedRiskId },
+      { $set: validatedUpdateData }
     )
     
     if (result.matchedCount === 0) {
@@ -66,7 +98,7 @@ export async function PUT(
     
     return NextResponse.json({
       success: true,
-      data: { ...updateData, riskId: id }
+      data: { ...validatedUpdateData, riskId: validatedRiskId }
     })
   } catch (error) {
     console.error('Error updating risk:', error)
