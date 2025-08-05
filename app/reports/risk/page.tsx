@@ -693,7 +693,11 @@ export default function RiskReports() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.currentPhase}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{risk.informationAsset}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {Array.isArray(risk.informationAsset) 
+                    ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                    : risk.informationAsset}
+                </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {(getRatingValue(risk.likelihoodRating) * getRatingValue(risk.consequenceRating)).toFixed(1)}
                     </td>

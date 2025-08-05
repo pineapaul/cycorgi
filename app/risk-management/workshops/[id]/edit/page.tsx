@@ -1124,7 +1124,9 @@ export default function EditWorkshop() {
                             </p>
                           </Tooltip>
                           <div className="flex items-center text-xs text-gray-500 space-x-4">
-                            <span>Asset: {risk.informationAsset}</span>
+                            <span>Asset: {Array.isArray(risk.informationAsset) 
+                  ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                  : risk.informationAsset}</span>
                             <span>Likelihood: {risk.likelihood}</span>
                             <span>Impact: {risk.impact}</span>
                           </div>

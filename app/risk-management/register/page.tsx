@@ -318,7 +318,9 @@ export default function RiskRegister() {
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner, // Add this for the riskOwner column
               affectedSites: 'All Sites',
-              informationAssets: risk.informationAsset,
+              informationAssets: Array.isArray(risk.informationAsset) 
+                ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                : risk.informationAsset || '',
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,

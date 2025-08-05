@@ -635,7 +635,11 @@ export default function TreatmentInformation() {
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                      <p className="text-sm text-gray-900 mt-1">{risk.informationAsset}</p>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {Array.isArray(risk.informationAsset) 
+                          ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                          : risk.informationAsset}
+                      </p>
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>

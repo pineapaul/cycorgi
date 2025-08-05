@@ -11,6 +11,12 @@ import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import CommentSidebar from '@/app/components/CommentSidebar'
 
+interface InformationAsset {
+  id: string
+  informationAsset: string
+  category: string
+}
+
 interface RiskDetails {
   riskId: string
   functionalUnit: string
@@ -156,6 +162,8 @@ export default function RiskInformation() {
   const [floatingButtonPosition, setFloatingButtonPosition] = useState({ x: 0, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
   const [commentCount, setCommentCount] = useState(0)
+  const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
+  const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -200,6 +208,13 @@ export default function RiskInformation() {
           setLoading(false)
           return
         }
+
+        // Fetch information assets
+        const informationAssetsResponse = await fetch('/api/information-assets')
+        const informationAssetsResult = await informationAssetsResponse.json()
+        if (informationAssetsResult.success) {
+          setInformationAssets(informationAssetsResult.data)
+        }
         
         // Fetch risk details
         const riskResponse = await fetch(riskApiUrl)
@@ -217,7 +232,9 @@ export default function RiskInformation() {
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-            informationAssets: risk.informationAsset,
+                          informationAssets: Array.isArray(risk.informationAsset) 
+                ? risk.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                : risk.informationAsset || '',
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
@@ -750,12 +767,29 @@ export default function RiskInformation() {
     setIsEditing(true)
     setOriginalRisk(riskDetails) // Store the original values when entering edit mode
     setEditedRisk(riskDetails)
+    
+    // Initialize selected information assets from the current risk data
+    if (riskDetails?.informationAssets) {
+      // Parse the information assets string to extract IDs
+      // This assumes the string contains asset names separated by commas
+      const assetNames = riskDetails.informationAssets.split(',').map(name => name.trim())
+      const selectedIds = informationAssets
+        .filter(asset => assetNames.some(name => 
+          asset.informationAsset.toLowerCase().includes(name.toLowerCase()) ||
+          name.toLowerCase().includes(asset.informationAsset.toLowerCase())
+        ))
+        .map(asset => asset.id)
+      setSelectedInformationAssets(selectedIds)
+    } else {
+      setSelectedInformationAssets([])
+    }
   }
 
   const handleCancel = () => {
     setIsEditing(false)
     setEditedRisk(originalRisk) // Reset to the original values when canceling
     setOriginalRisk(null) // Clear the original values
+    setSelectedInformationAssets([]) // Reset selected information assets
   }
 
   const handleSave = async () => {
@@ -775,12 +809,19 @@ export default function RiskInformation() {
 
     try {
       setSaving(true)
+      
+      // Prepare the data to save, including the selected information assets
+      const dataToSave = {
+        ...editedRisk,
+        informationAsset: selectedInformationAssets.map(id => ({ id }))
+      }
+      
       const response = await fetch(riskApiUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedRisk),
+        body: JSON.stringify(dataToSave),
       })
 
       const result = await response.json()
@@ -852,6 +893,15 @@ export default function RiskInformation() {
     // Ensure date is in proper format for storage
     const formattedDate = value ? value : ''
     handleFieldChange(field, formattedDate)
+  }
+
+  // Handle information assets selection
+  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
+    setSelectedInformationAssets(prev => 
+      checked 
+        ? [...prev, assetId]
+        : prev.filter(id => id !== assetId)
+    )
   }
 
   if (loading) {
@@ -1327,13 +1377,34 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Information Assets</span>
                   {isEditing ? (
-                    <textarea
-                      value={editedRisk?.informationAssets || ''}
-                      onChange={(e) => handleFieldChange('informationAssets', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter information assets..."
-                    />
+                    <div className="mt-2">
+                      <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {informationAssets.map((asset) => (
+                            <label key={asset.id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                              <input
+                                type="checkbox"
+                                checked={selectedInformationAssets.includes(asset.id)}
+                                onChange={(e) => handleInformationAssetsChange(asset.id, e.target.checked)}
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
+                                <div className="text-xs text-gray-500">{asset.category}</div>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                        {informationAssets.length === 0 && (
+                          <p className="text-sm text-gray-500 italic">Loading information assets...</p>
+                        )}
+                      </div>
+                      {selectedInformationAssets.length > 0 && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {selectedInformationAssets.length} asset{selectedInformationAssets.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-sm text-gray-900 mt-1">{riskDetails.informationAssets}</p>
                   )}

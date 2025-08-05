@@ -77,7 +77,9 @@ export default function RiskInformationPage() {
           raisedBy: result.data.raisedBy || result.data.riskOwner || '',
           riskOwner: result.data.riskOwner || '',
           affectedSites: result.data.affectedSites || 'All Sites',
-          informationAssets: result.data.informationAssets || result.data.informationAsset || '',
+                        informationAssets: Array.isArray(result.data.informationAsset) 
+                ? result.data.informationAsset.map((asset: any) => asset.name || asset.id || asset).join(', ')
+                : result.data.informationAssets || result.data.informationAsset || '',
           threat: result.data.threat || '',
           vulnerability: result.data.vulnerability || '',
           riskStatement: result.data.riskStatement || '',
@@ -831,8 +833,9 @@ export default function RiskInformationPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Information Assets</label>
               {isEditing ? (
                 <textarea
-                  value={editedRisk?.informationAssets || ''}
-                  onChange={(e) => handleFieldChange('informationAssets', e.target.value)}
+                                      value={editedRisk?.informationAssets || ''}
+                    onChange={(e) => handleFieldChange('informationAssets', e.target.value)}
+                    disabled
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
