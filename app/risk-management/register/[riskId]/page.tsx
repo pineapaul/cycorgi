@@ -164,6 +164,11 @@ export default function RiskInformation() {
   const [commentCount, setCommentCount] = useState(0)
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
+  
+  // Modal state for information assets selection
+  const [showAssetModal, setShowAssetModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -790,6 +795,9 @@ export default function RiskInformation() {
     setEditedRisk(originalRisk) // Reset to the original values when canceling
     setOriginalRisk(null) // Clear the original values
     setSelectedInformationAssets([]) // Reset selected information assets
+    setShowAssetModal(false) // Close modal if open
+    setSearchTerm('')
+    setTempSelectedAssets([])
   }
 
   const handleSave = async () => {
@@ -813,7 +821,7 @@ export default function RiskInformation() {
       // Prepare the data to save, including the selected information assets
       const dataToSave = {
         ...editedRisk,
-        informationAsset: selectedInformationAssets.map(id => ({ id }))
+        informationAsset: selectedInformationAssets
       }
       
       const response = await fetch(riskApiUrl, {
@@ -903,6 +911,38 @@ export default function RiskInformation() {
         : prev.filter(id => id !== assetId)
     )
   }
+
+  // Modal functions for information assets selection
+  const openAssetModal = () => {
+    setTempSelectedAssets([...selectedInformationAssets])
+    setSearchTerm('')
+    setShowAssetModal(true)
+  }
+
+  const closeAssetModal = () => {
+    setShowAssetModal(false)
+    setSearchTerm('')
+    setTempSelectedAssets([])
+  }
+
+  const handleAssetSelection = (assetId: string, checked: boolean) => {
+    setTempSelectedAssets(prev => 
+      checked 
+        ? [...prev, assetId]
+        : prev.filter(id => id !== assetId)
+    )
+  }
+
+  const applyAssetSelection = () => {
+    setSelectedInformationAssets([...tempSelectedAssets])
+    closeAssetModal()
+  }
+
+  // Filter assets based on search term
+  const filteredAssets = informationAssets.filter(asset =>
+    asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.category.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   if (loading) {
     return (
@@ -1377,32 +1417,42 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Information Assets</span>
                   {isEditing ? (
-                    <div className="mt-2">
-                      <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {informationAssets.map((asset) => (
-                            <label key={asset.id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                              <input
-                                type="checkbox"
-                                checked={selectedInformationAssets.includes(asset.id)}
-                                onChange={(e) => handleInformationAssetsChange(asset.id, e.target.checked)}
-                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                              />
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
-                                <div className="text-xs text-gray-500">{asset.category}</div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={openAssetModal}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left hover:bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {selectedInformationAssets.length > 0 ? (
+                              <div className="text-sm text-gray-900">
+                                {selectedInformationAssets.length} asset{selectedInformationAssets.length !== 1 ? 's' : ''} selected
                               </div>
-                            </label>
-                          ))}
+                            ) : (
+                              <div className="text-sm text-gray-500">Click to select information assets</div>
+                            )}
+                          </div>
+                          <Icon name="chevron-right" size={16} className="text-gray-400" />
                         </div>
-                        {informationAssets.length === 0 && (
-                          <p className="text-sm text-gray-500 italic">Loading information assets...</p>
-                        )}
-                      </div>
+                      </button>
                       {selectedInformationAssets.length > 0 && (
-                        <p className="mt-2 text-sm text-gray-600">
-                          Selected: {selectedInformationAssets.length} asset{selectedInformationAssets.length !== 1 ? 's' : ''}
-                        </p>
+                        <div className="mt-2">
+                          <div className="text-xs text-gray-600 mb-1">Selected assets:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedInformationAssets.map(assetId => {
+                              const asset = informationAssets.find(a => a.id === assetId)
+                              return (
+                                <span
+                                  key={assetId}
+                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-purple-100 text-purple-800"
+                                >
+                                  {asset?.informationAsset || assetId}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -1856,6 +1906,79 @@ export default function RiskInformation() {
                 {commentCount > 99 ? '99+' : commentCount}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Information Assets Selection Modal */}
+      {showAssetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Select Information Assets</h3>
+              <button onClick={closeAssetModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+            {/* Search Input */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="relative">
+                <Icon name="search" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search assets by name or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            {/* Assets List */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredAssets.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icon name="search" size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500">
+                    {searchTerm ? 'No assets found matching your search.' : 'No information assets available.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredAssets.map((asset) => (
+                    <label
+                      key={asset.id}
+                      className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={tempSelectedAssets.includes(asset.id)}
+                        onChange={(e) => handleAssetSelection(asset.id, e.target.checked)}
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{asset.informationAsset}</div>
+                        <div className="text-xs text-gray-500">{asset.category}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                {tempSelectedAssets.length} asset{tempSelectedAssets.length !== 1 ? 's' : ''} selected
+              </div>
+              <div className="flex space-x-3">
+                <button onClick={closeAssetModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={applyAssetSelection} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                  Apply Selection
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
