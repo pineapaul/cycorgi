@@ -98,10 +98,6 @@ export default function RiskInformationPage() {
       const result = await response.json()
       
       if (result.success) {
-        // Debug: Log the raw API response
-        console.log('Raw API response:', result.data)
-        console.log('Current phase from API:', result.data.currentPhase)
-        
         // Map the API data to our expected format
         const mappedRisk: Risk = {
           riskId: result.data.riskId || '',
@@ -133,10 +129,6 @@ export default function RiskInformationPage() {
           dateResidualRiskAccepted: result.data.dateResidualRiskAccepted || '',
           treatmentCount: result.data.treatmentCount || 0,
         }
-        
-        // Debug: Log the mapped risk
-        console.log('Mapped risk:', mappedRisk)
-        console.log('Mapped current phase:', mappedRisk.currentPhase)
         
         setRisk(mappedRisk)
         setEditedRisk(mappedRisk)
@@ -194,10 +186,6 @@ export default function RiskInformationPage() {
         ...editedRisk,
         informationAsset: selectedInformationAssets
       }
-
-      // Debug: Log what we're sending
-      console.log('Sending update data:', updateData)
-      console.log('Selected information assets:', selectedInformationAssets)
 
       const response = await fetch(`/api/risks/${params.id}`, {
         method: 'PUT',
@@ -357,10 +345,6 @@ export default function RiskInformationPage() {
         return 'bg-gray-100 text-gray-800'
     }
   }
-
-  // Debug: Log current phase values
-  console.log('Risk currentPhase:', risk?.currentPhase)
-  console.log('EditedRisk currentPhase:', editedRisk?.currentPhase)
 
   if (loading) {
     return (
