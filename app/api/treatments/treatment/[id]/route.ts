@@ -2,6 +2,38 @@ import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '../../../../../lib/mongodb'
 import { ObjectId } from 'mongodb'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const client = await clientPromise
+    const db = client.db('cycorgi')
+    const collection = db.collection('treatments')
+    
+    const treatment = await collection.findOne({ _id: new ObjectId(id) })
+    
+    if (!treatment) {
+      return NextResponse.json({
+        success: false,
+        error: 'Treatment not found'
+      }, { status: 404 })
+    }
+    
+    return NextResponse.json({
+      success: true,
+      treatment
+    })
+  } catch (error) {
+    console.error('Error fetching treatment:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to fetch treatment'
+    }, { status: 500 })
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

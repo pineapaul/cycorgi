@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
@@ -53,18 +53,18 @@ type SelectedTreatments = string[] | TreatmentMinutes[]
 
 // Type guards for discriminated union
 const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
-  return selectedTreatments.length > 0 && 
-         selectedTreatments[0] !== undefined && 
-         selectedTreatments[0] !== null &&
-         typeof selectedTreatments[0] === 'string'
+  return selectedTreatments.length > 0 &&
+    selectedTreatments[0] !== undefined &&
+    selectedTreatments[0] !== null &&
+    typeof selectedTreatments[0] === 'string'
 }
 
 const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
-  return selectedTreatments.length > 0 && 
-         selectedTreatments[0] !== undefined && 
-         selectedTreatments[0] !== null &&
-         typeof selectedTreatments[0] === 'object' && 
-         'treatmentId' in selectedTreatments[0]
+  return selectedTreatments.length > 0 &&
+    selectedTreatments[0] !== undefined &&
+    selectedTreatments[0] !== null &&
+    typeof selectedTreatments[0] === 'object' &&
+    'treatmentId' in selectedTreatments[0]
 }
 
 // Helper function to safely check if array is empty or can be treated as TreatmentMinutes
@@ -216,7 +216,7 @@ function EditableField({ value, placeholder, onSave, className = '' }: EditableF
   }
 
   return (
-    <div 
+    <div
       className={`group cursor-pointer p-2 rounded-md hover:bg-gray-50 transition-colors ${className}`}
       onClick={() => setIsEditing(true)}
     >
@@ -237,13 +237,13 @@ const getFilteredTreatments = (allRiskTreatments: Treatment[], selectedTreatment
   }
 
   if (isStringArray(selectedTreatments)) {
-    return allRiskTreatments.filter(treatment => 
+    return allRiskTreatments.filter(treatment =>
       selectedTreatments.includes(treatment.treatmentId)
     )
   }
 
   if (isTreatmentMinutesArray(selectedTreatments)) {
-    return allRiskTreatments.filter(treatment => 
+    return allRiskTreatments.filter(treatment =>
       selectedTreatments.some(st => st.treatmentId === treatment.treatmentId)
     )
   }
@@ -256,11 +256,11 @@ const getTreatmentMinutes = (
   selectedTreatments?: SelectedTreatments
 ): TreatmentMinutes | undefined => {
   if (!selectedTreatments || selectedTreatments.length === 0) return undefined
-  
+
   if (isTreatmentMinutesArray(selectedTreatments)) {
     return selectedTreatments.find(st => st.treatmentId === treatmentId)
   }
-  
+
   return undefined
 }
 
@@ -274,7 +274,7 @@ const generatePDFHTML = (
     if (!dateString) return '-'
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return dateString
-    
+
     const day = date.getDate().toString().padStart(2, '0')
     const month = date.toLocaleDateString('en-US', { month: 'short' })
     const year = date.getFullYear()
@@ -285,14 +285,14 @@ const generatePDFHTML = (
     if (!dateString) return '-'
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return dateString
-    
+
     const day = date.getDate().toString().padStart(2, '0')
     const month = date.toLocaleDateString('en-US', { month: 'short' })
     const year = date.getFullYear()
-    const time = date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    const time = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     })
     return `${day} ${month} ${year} at ${time}`
   }
@@ -332,7 +332,7 @@ const generatePDFHTML = (
   ) => {
     const risk = risks[item.riskId]
     const riskTreatments = getFilteredTreatments(treatments[item.riskId] || [], item.selectedTreatments)
-    
+
     if (!risk) return ''
 
     return `
@@ -381,8 +381,8 @@ const generatePDFHTML = (
           <div>
             <h4 style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 12px;">Risk Treatments</h4>
             ${riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
-              const treatmentMinutes = getTreatmentMinutes(treatment.treatmentId, item.selectedTreatments)
-              return `
+      const treatmentMinutes = getTreatmentMinutes(treatment.treatmentId, item.selectedTreatments)
+      return `
                 <div style="background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px;">
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
@@ -411,7 +411,7 @@ const generatePDFHTML = (
                   </div>
                 </div>
               `
-            }).join('')}
+    }).join('')}
           </div>
         ` : ''}
       </div>
@@ -588,19 +588,19 @@ const generatePDFHTML = (
                 <h4>Facilitator</h4>
                 <p>${workshop.facilitator}${workshop.facilitatorPosition ? ` (${workshop.facilitatorPosition})` : ''}</p>
                 <h4 style="margin-top: 16px;">Participants</h4>
-                ${workshop.participants.length > 0 ? 
-                  workshop.participants.map((participant: any) => {
-                    if (typeof participant === 'string') {
-                      const parts = participant.split(', ')
-                      const name = parts[0]
-                      const position = parts[1]
-                      return `<div class="participant">${name}${position ? `<span class="participant-position">(${position})</span>` : ''}</div>`
-                    } else {
-                      return `<div class="participant">${participant.name}${participant.position ? `<span class="participant-position">(${participant.position})</span>` : ''}</div>`
-                    }
-                  }).join('') : 
-                  '<div class="participant">No participants listed</div>'
-                }
+                ${workshop.participants.length > 0 ?
+      workshop.participants.map((participant: any) => {
+        if (typeof participant === 'string') {
+          const parts = participant.split(', ')
+          const name = parts[0]
+          const position = parts[1]
+          return `<div class="participant">${name}${position ? `<span class="participant-position">(${position})</span>` : ''}</div>`
+        } else {
+          return `<div class="participant">${participant.name}${participant.position ? `<span class="participant-position">(${participant.position})</span>` : ''}</div>`
+        }
+      }).join('') :
+      '<div class="participant">No participants listed</div>'
+    }
               </div>
               
               <div class="overview-card">
@@ -622,26 +622,26 @@ const generatePDFHTML = (
             
             <div class="subsection">
               <h4>Extensions</h4>
-              ${workshop.extensions && workshop.extensions.length > 0 ? 
-                workshop.extensions.map((item: any) => generateRiskCardHTML(item, 'extensions')).join('') :
-                '<div class="empty-state">No extensions recorded</div>'
-              }
+              ${workshop.extensions && workshop.extensions.length > 0 ?
+      workshop.extensions.map((item: any) => generateRiskCardHTML(item, 'extensions')).join('') :
+      '<div class="empty-state">No extensions recorded</div>'
+    }
             </div>
 
             <div class="subsection">
               <h4>Closure</h4>
-              ${workshop.closure && workshop.closure.length > 0 ? 
-                workshop.closure.map((item: any) => generateRiskCardHTML(item, 'closure')).join('') :
-                '<div class="empty-state">No closures recorded</div>'
-              }
+              ${workshop.closure && workshop.closure.length > 0 ?
+      workshop.closure.map((item: any) => generateRiskCardHTML(item, 'closure')).join('') :
+      '<div class="empty-state">No closures recorded</div>'
+    }
             </div>
 
             <div class="subsection">
               <h4>New Risks</h4>
-              ${workshop.newRisks && workshop.newRisks.length > 0 ? 
-                workshop.newRisks.map((item: any) => generateRiskCardHTML(item, 'newRisks')).join('') :
-                '<div class="empty-state">No new risks recorded</div>'
-              }
+              ${workshop.newRisks && workshop.newRisks.length > 0 ?
+      workshop.newRisks.map((item: any) => generateRiskCardHTML(item, 'newRisks')).join('') :
+      '<div class="empty-state">No new risks recorded</div>'
+    }
             </div>
           </div>
 
@@ -688,12 +688,12 @@ interface RiskCardProps {
 function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk, allCardsCollapsed }: RiskCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
-  
+
   // Synchronize individual collapse state with global state when it changes
   useEffect(() => {
     setIsCollapsed(allCardsCollapsed)
   }, [allCardsCollapsed])
-  
+
   const getSectionColor = () => {
     switch (sectionType) {
       case 'extensions': return 'border-l-blue-500 bg-blue-50'
@@ -712,7 +712,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
       default: return 'bg-gray-100 text-gray-800'
     }
   }
-  
+
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed)
   }
@@ -747,8 +747,8 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
               <div className="mt-2 text-sm text-gray-600 min-w-0">
                 <p className="truncate overflow-hidden text-ellipsis whitespace-nowrap">{risk.riskStatement}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {riskTreatments.length} treatment{riskTreatments.length !== 1 ? 's' : ''} • 
-                  {item.actionsTaken ? ' Has actions' : ' No actions'} • 
+                  {riskTreatments.length} treatment{riskTreatments.length !== 1 ? 's' : ''} •
+                  {item.actionsTaken ? ' Has actions' : ' No actions'} •
                   {item.toDo ? ' Has to-do items' : ' No to-do items'}
                 </p>
               </div>
@@ -769,7 +769,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
         </div>
 
         {/* Risk Details and Meeting Minutes Section */}
-                    {!isCollapsed && risk && (
+        {!isCollapsed && risk && (
           <div className="mb-6 overflow-hidden transition-all duration-300 ease-in-out max-h-screen">
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Details & Meeting Minutes</h4>
             <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
@@ -784,10 +784,10 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                   <p className="text-sm text-gray-700">{risk.informationAsset}</p>
                 </div>
               </div>
-              
-                             {/* Risk-level Meeting Minutes */}
-               <div className="border-t border-gray-100 pt-4">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              {/* Risk-level Meeting Minutes */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Actions Taken</h6>
                     <EditableField
@@ -819,8 +819,8 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
         )}
 
         {/* Risk Treatments */}
-                    {!isCollapsed && riskTreatments.length > 0 && (
-          <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-screen">
+        {!isCollapsed && riskTreatments.length > 0 && (
+          <div className="mb-6">
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Risk Treatments</h4>
             <div className="space-y-4">
               {riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
@@ -837,28 +837,38 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                           <h5 className="text-sm font-medium text-gray-900 mb-1">Owner</h5>
                           <p className="text-sm text-gray-700">{treatment.riskTreatmentOwner}</p>
                         </div>
-                        {sectionType === 'closure' ? (
-                          <button
-                            onClick={() => onCloseTreatment(treatment)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
-                            title="Close treatment"
+                        <div className="flex items-center space-x-2">
+                          <Link
+                            href={`/risk-management/treatments/${treatment.riskId}/${treatment.treatmentId}`}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                            title="View treatment profile"
                           >
-                            <Icon name="check-circle" size={12} className="mr-1" />
-                            Close Treatment
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => onRequestExtension(treatment)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
-                            title="Request due date extension"
-                          >
-                            <Icon name="calendar-plus" size={12} className="mr-1" />
-                            Request Extension
-                          </button>
-                        )}
+                            <Icon name="link" size={12} className="mr-1" />
+                            {treatment.treatmentId}
+                          </Link>
+                          {sectionType === 'closure' ? (
+                            <button
+                              onClick={() => onCloseTreatment(treatment)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-colors"
+                              title="Close treatment"
+                            >
+                              <Icon name="check-circle" size={12} className="mr-1" />
+                              Close Treatment
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onRequestExtension(treatment)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                              title="Request due date extension"
+                            >
+                              <Icon name="calendar-plus" size={12} className="mr-1" />
+                              Request Extension
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
                       <div>
                         <h6 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-2">Actions Taken</h6>
@@ -905,14 +915,14 @@ function useApprovalForm() {
     approvedBy?: string
   }>({})
 
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some(error => error !== undefined), [errors])
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({ approvedBy: '' })
     setErrors({})
-  }
+  }, [])
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: { approvedBy?: string } = {}
 
     // Validate approved by
@@ -927,14 +937,14 @@ function useApprovalForm() {
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }
+  }, [formData.approvedBy])
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
-    
+
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({
@@ -963,7 +973,7 @@ function useApprovalForm() {
         }))
       }
     }
-  }
+  }, [errors])
 
   return {
     formData,
@@ -987,15 +997,15 @@ interface ApprovalInputFieldProps {
   helpText: string
 }
 
-function ApprovalInputField({ 
-  id, 
-  name, 
-  value, 
-  onChange, 
-  error, 
-  placeholder, 
-  label, 
-  helpText 
+function ApprovalInputField({
+  id,
+  name,
+  value,
+  onChange,
+  error,
+  placeholder,
+  label,
+  helpText
 }: ApprovalInputFieldProps) {
   return (
     <div>
@@ -1008,11 +1018,10 @@ function ApprovalInputField({
         name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-          error 
-            ? 'border-red-300 focus:ring-red-500' 
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${error
+            ? 'border-red-300 focus:ring-red-500'
             : 'border-gray-300 focus:ring-green-500'
-        }`}
+          }`}
         placeholder={placeholder}
         required
         maxLength={100}
@@ -1056,7 +1065,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
   const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
 
   // Memoize the errors check to avoid recalculating on every render
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some(error => error !== undefined), [errors])
 
   useEffect(() => {
     if (isOpen) {
@@ -1080,7 +1089,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       selectedDate.setHours(0, 0, 0, 0)
-      
+
       if (isNaN(selectedDate.getTime())) {
         newErrors.extendedDueDate = 'Please enter a valid date'
       } else if (selectedDate < today) {
@@ -1115,7 +1124,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       ...prev,
       [field]: value
     }))
-    
+
     // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({
@@ -1149,14 +1158,14 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         ref={modalRef}
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onKeyDown={handleTabKey}
@@ -1201,11 +1210,10 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
               name="extendedDueDate"
               value={formData.extendedDueDate}
               onChange={(e) => handleInputChange('extendedDueDate', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.extendedDueDate 
-                  ? 'border-red-300 focus:ring-red-500' 
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${errors.extendedDueDate
+                  ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-purple-500'
-              }`}
+                }`}
               required
               min={new Date().toISOString().split('T')[0]}
               aria-invalid={errors.extendedDueDate ? 'true' : 'false'}
@@ -1234,11 +1242,10 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
               onChange={(e) => handleInputChange('justification', e.target.value)}
               rows={4}
               maxLength={1000}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
-                errors.justification 
-                  ? 'border-red-300 focus:ring-red-500' 
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${errors.justification
+                  ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-purple-500'
-              }`}
+                }`}
               placeholder="Please provide a detailed justification for the extension request..."
               required
               aria-invalid={errors.justification ? 'true' : 'false'}
@@ -1343,14 +1350,14 @@ function ApprovalModal({
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${modalId}-title`}
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         ref={modalRef}
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onKeyDown={handleTabKey}
@@ -1472,7 +1479,7 @@ export default function WorkshopDetails() {
 
     const fieldKey = `${section}-${index}-${field}`
     setSavingFields(prev => new Set(prev).add(fieldKey))
-    
+
     try {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
@@ -1535,17 +1542,17 @@ export default function WorkshopDetails() {
 
     const fieldKey = `${section}-${index}-treatment-${treatmentId}-${field}`
     setSavingFields(prev => new Set(prev).add(fieldKey))
-    
+
     try {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
         const item = updatedWorkshop[section]![index]
-        
+
         // Initialize selectedTreatments as TreatmentMinutes array if it doesn't exist
         if (!item.selectedTreatments) {
           item.selectedTreatments = []
         }
-        
+
         // Convert string array to TreatmentMinutes array if needed
         if (isStringArray(item.selectedTreatments)) {
           item.selectedTreatments = item.selectedTreatments.map(treatmentIdStr => ({
@@ -1556,19 +1563,19 @@ export default function WorkshopDetails() {
             outcome: ''
           }))
         }
-        
+
         // Ensure we have a TreatmentMinutes array
         if (!isTreatmentMinutesArray(item.selectedTreatments)) {
           // If it's not a TreatmentMinutes array, initialize it
           item.selectedTreatments = [] as TreatmentMinutes[]
         }
-        
+
         // At this point, TypeScript knows it's a TreatmentMinutes array
         const treatmentsArray = item.selectedTreatments as TreatmentMinutes[]
-        
+
         // Find the treatment in the array
         let treatmentIndex = treatmentsArray.findIndex(t => t.treatmentId === treatmentId)
-        
+
         // If treatment not found, add it
         if (treatmentIndex === -1) {
           treatmentsArray.push({
@@ -1580,7 +1587,7 @@ export default function WorkshopDetails() {
           })
           treatmentIndex = treatmentsArray.length - 1
         }
-        
+
         // Update the treatment
         treatmentsArray[treatmentIndex] = {
           ...treatmentsArray[treatmentIndex],
@@ -1600,7 +1607,7 @@ export default function WorkshopDetails() {
 
       const result = await response.json()
       console.log('Update response:', result)
-      
+
       if (result.success) {
         setWorkshop(updatedWorkshop)
         showToast({
@@ -1632,7 +1639,7 @@ export default function WorkshopDetails() {
       try {
         const response = await fetch(`/api/workshops/${params.id}`)
         const result = await response.json()
-        
+
         if (result.success) {
           setWorkshop(result.data)
         } else {
@@ -1658,16 +1665,16 @@ export default function WorkshopDetails() {
     try {
       // Get all unique risk IDs from meeting minutes
       const riskIds = new Set<string>()
-      ;(workshop.extensions || []).forEach(item => riskIds.add(item.riskId))
-      ;(workshop.closure || []).forEach(item => riskIds.add(item.riskId))
-      ;(workshop.newRisks || []).forEach(item => riskIds.add(item.riskId))
+        ; (workshop.extensions || []).forEach(item => riskIds.add(item.riskId))
+        ; (workshop.closure || []).forEach(item => riskIds.add(item.riskId))
+        ; (workshop.newRisks || []).forEach(item => riskIds.add(item.riskId))
 
       if (riskIds.size === 0) return
 
       // Fetch risks data
       const risksResponse = await fetch('/api/risks')
       const risksResult = await risksResponse.json()
-      
+
       if (risksResult.success) {
         const risksMap: Record<string, Risk> = {}
         risksResult.data.forEach((risk: Risk) => {
@@ -1681,7 +1688,7 @@ export default function WorkshopDetails() {
       // Fetch treatments data
       const treatmentsResponse = await fetch('/api/treatments')
       const treatmentsResult = await treatmentsResponse.json()
-      
+
       if (treatmentsResult.success) {
         const treatmentsMap: Record<string, Treatment[]> = {}
         treatmentsResult.data.forEach((treatment: Treatment) => {
@@ -1708,11 +1715,11 @@ export default function WorkshopDetails() {
     if (!selectedTreatment) return
 
     setSubmittingExtension(true)
-    
+
     // Store original treatment data for potential rollback
     let originalTreatmentData: any = null
     let extensionApproved = false
-    
+
     try {
       // First, get the current treatment data for potential rollback
       const getTreatmentResponse = await fetch(`/api/treatments/treatment/${selectedTreatment._id}`)
@@ -1724,7 +1731,7 @@ export default function WorkshopDetails() {
           extensions: treatmentData.treatment.extensions
         }
       }
-      
+
       const response = await fetch(`/api/treatments/${selectedTreatment.riskId}/${selectedTreatment.treatmentId}/extensions?directApproval=true`, {
         method: 'POST',
         headers: {
@@ -1734,13 +1741,13 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         extensionApproved = true
-        
+
         // Update the outcome field for the specific treatment
         await updateTreatmentOutcomeAfterExtension(data.extendedDueDate, data.justification)
-        
+
         showToast({
           type: 'success',
           title: 'Extension Approved',
@@ -1752,7 +1759,7 @@ export default function WorkshopDetails() {
       }
     } catch (error) {
       console.error('Error submitting extension request:', error)
-      
+
       // If extension was approved but outcome update failed, rollback the extension
       if (extensionApproved && originalTreatmentData) {
         try {
@@ -1768,7 +1775,7 @@ export default function WorkshopDetails() {
               extensions: originalTreatmentData.extensions
             }),
           })
-          
+
           showToast({
             type: 'error',
             title: 'Extension Failed',
@@ -1790,7 +1797,7 @@ export default function WorkshopDetails() {
         })
       }
     }
-    
+
     // Always reset submitting state, regardless of success or failure
     setSubmittingExtension(false)
   }
@@ -1824,11 +1831,11 @@ export default function WorkshopDetails() {
     if (!workshop || !selectedCloseTreatment) return
 
     setSubmittingCloseTreatment(true)
-    
+
     // Store original treatment data for potential rollback
     let originalTreatmentData: any = null
     let treatmentStatusUpdated = false
-    
+
     try {
       // First, get the current treatment data for potential rollback
       const getTreatmentResponse = await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`)
@@ -1840,7 +1847,7 @@ export default function WorkshopDetails() {
           closureApprovedBy: treatmentData.treatment.closureApprovedBy
         }
       }
-      
+
       // Update treatment status to "Approved" and set completion date to workshop date
       const response = await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`, {
         method: 'PUT',
@@ -1855,30 +1862,30 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         treatmentStatusUpdated = true
-        
+
         // Update the outcome field for the specific treatment
         const outcomeMessage = `Risk treatment closed and approved on ${formatDate(workshop.date)} by ${data.approvedBy}`
-        
+
         // Find the risk item in the closure section that contains this treatment
         const closureSection = workshop.closure || []
         const riskIndex = closureSection.findIndex(item => item.riskId === selectedCloseTreatment.riskId)
-        
+
         if (riskIndex !== -1) {
           // Get the current outcome text
           const currentOutcome = getTreatmentMinutes(selectedCloseTreatment.treatmentId, closureSection[riskIndex].selectedTreatments)?.outcome || ''
-          
+
           // Combine existing outcome with new closure message
-          const combinedOutcome = currentOutcome 
+          const combinedOutcome = currentOutcome
             ? `${currentOutcome}\n\n${outcomeMessage}`
             : outcomeMessage
-          
+
           // Update the treatment's outcome field with combined text
           await updateTreatmentMinutes('closure', riskIndex, selectedCloseTreatment.treatmentId, 'outcome', combinedOutcome)
         }
-        
+
         showToast({
           type: 'success',
           title: 'Treatment Closed',
@@ -1889,7 +1896,7 @@ export default function WorkshopDetails() {
       }
     } catch (error) {
       console.error('Error closing treatment:', error)
-      
+
       // If treatment status was updated but outcome update failed, rollback the status change
       if (treatmentStatusUpdated && originalTreatmentData) {
         try {
@@ -1905,7 +1912,7 @@ export default function WorkshopDetails() {
               closureApprovedBy: originalTreatmentData.closureApprovedBy
             }),
           })
-          
+
           showToast({
             type: 'error',
             title: 'Close Failed',
@@ -1927,7 +1934,7 @@ export default function WorkshopDetails() {
         })
       }
     }
-    
+
     // Always reset submitting state, regardless of success or failure
     setSubmittingCloseTreatment(false)
   }
@@ -1936,19 +1943,19 @@ export default function WorkshopDetails() {
     if (!workshop || !selectedCloseRisk) return
 
     setSubmittingCloseRisk(true)
-    
+
     // Store original risk status for potential rollback
     let originalRiskStatus: string | null = null
     let riskStatusUpdated = false
-    
+
     try {
       // First, get the current risk status for potential rollback
       const getRiskResponse = await fetch(`/api/risks/${selectedCloseRisk.riskId}`)
       const riskData = await getRiskResponse.json()
       if (riskData.success) {
-        originalRiskStatus = riskData.risk.currentPhase
+        originalRiskStatus = riskData.data.currentPhase
       }
-      
+
       // Update risk status to "Monitoring"
       const response = await fetch(`/api/risks/${selectedCloseRisk.riskId}`, {
         method: 'PUT',
@@ -1961,30 +1968,30 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         riskStatusUpdated = true
-        
+
         // Update the outcome field for the risk in the closure section
         const outcomeMessage = `Risk approved for closure by ${data.approvedBy} on ${formatDate(workshop.date)}`
-        
+
         // Find the risk item in the closure section
         const closureSection = workshop.closure || []
         const riskIndex = closureSection.findIndex(item => item.riskId === selectedCloseRisk.riskId)
-        
+
         if (riskIndex !== -1) {
           // Get the current outcome text
           const currentOutcome = closureSection[riskIndex].outcome || ''
-          
+
           // Combine existing outcome with new closure message
-          const combinedOutcome = currentOutcome 
+          const combinedOutcome = currentOutcome
             ? `${currentOutcome}\n\n${outcomeMessage}`
             : outcomeMessage
-          
+
           // Update the risk's outcome field with combined text
           await updateRiskMinutes('closure', riskIndex, 'outcome', combinedOutcome)
         }
-        
+
         showToast({
           type: 'success',
           title: 'Risk Closed',
@@ -1995,7 +2002,7 @@ export default function WorkshopDetails() {
       }
     } catch (error) {
       console.error('Error closing risk:', error)
-      
+
       // If risk status was updated but outcome update failed, rollback the status change
       if (riskStatusUpdated && originalRiskStatus) {
         try {
@@ -2009,7 +2016,7 @@ export default function WorkshopDetails() {
               currentPhase: originalRiskStatus
             }),
           })
-          
+
           showToast({
             type: 'error',
             title: 'Close Failed',
@@ -2031,7 +2038,7 @@ export default function WorkshopDetails() {
         })
       }
     }
-    
+
     // Always reset submitting state, regardless of success or failure
     setSubmittingCloseRisk(false)
   }
@@ -2041,23 +2048,23 @@ export default function WorkshopDetails() {
 
     // Format the extended due date for display
     const formattedDate = formatDate(extendedDueDate)
-    
+
     // Create the outcome message
     const outcomeMessage = `Risk treatment due date extended until ${formattedDate} due to ${justification}`
-    
+
     // Find the risk item in the extensions section that contains this treatment
     const extensionsSection = workshop.extensions || []
     const riskIndex = extensionsSection.findIndex(item => item.riskId === selectedTreatment.riskId)
-    
+
     if (riskIndex !== -1) {
       // Get the current outcome text
       const currentOutcome = getTreatmentMinutes(selectedTreatment.treatmentId, extensionsSection[riskIndex].selectedTreatments)?.outcome || ''
-      
+
       // Combine existing outcome with new extension message
-      const combinedOutcome = currentOutcome 
+      const combinedOutcome = currentOutcome
         ? `${currentOutcome}\n\n${outcomeMessage}`
         : outcomeMessage
-      
+
       // Update the treatment's outcome field with combined text
       await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
     }
@@ -2084,7 +2091,7 @@ export default function WorkshopDetails() {
     if (!dateString) return '-'
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return dateString
-    
+
     const day = date.getDate().toString().padStart(2, '0')
     const month = date.toLocaleDateString('en-US', { month: 'short' })
     const year = date.getFullYear()
@@ -2095,21 +2102,21 @@ export default function WorkshopDetails() {
     if (!dateString) return '-'
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return dateString
-    
+
     const day = date.getDate().toString().padStart(2, '0')
     const month = date.toLocaleDateString('en-US', { month: 'short' })
     const year = date.getFullYear()
-    const time = date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    const time = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     })
     return `${day} ${month} ${year} at ${time}`
   }
 
   const handleCopyLink = async () => {
     const url = `${window.location.origin}/risk-management/workshops/${workshop?.id}`
-    
+
     try {
       // Check if clipboard API is available
       if (!navigator.clipboard) {
@@ -2153,10 +2160,10 @@ export default function WorkshopDetails() {
 
     try {
       setExportingPDF(true)
-      
+
       // Generate HTML content for PDF
       const htmlContent = generatePDFHTML(workshop, risks, treatments)
-      
+
       // Call the PDF generation API
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -2260,45 +2267,45 @@ export default function WorkshopDetails() {
               </p>
             </div>
           </div>
-          
-                     <div className="flex items-center space-x-2">
-             <button
-               onClick={handleCopyLink}
-               className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-               title="Copy link to workshop"
-             >
-               <Icon name="link" size={16} className="mr-2" />
-               Copy Link
-             </button>
-                             <button
-                  onClick={handleExportPDF}
-                  disabled={exportingPDF}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#4C1D95' }}
-                  title="Export to PDF"
-                >
-                  {exportingPDF ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Exporting...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="file-pdf" size={16} className="mr-2" />
-                      Export PDF
-                    </>
-                  )}
-                </button>
-             <button
-               onClick={handleEdit}
-               className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-               style={{ backgroundColor: '#4C1D95' }}
-               title="Edit workshop"
-             >
-               <Icon name="pencil" size={16} className="mr-2" />
-               Edit
-             </button>
-           </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              title="Copy link to workshop"
+            >
+              <Icon name="link" size={16} className="mr-2" />
+              Copy Link
+            </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={exportingPDF}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
+              style={{ backgroundColor: '#4C1D95' }}
+              title="Export to PDF"
+            >
+              {exportingPDF ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Icon name="file-pdf" size={16} className="mr-2" />
+                  Export PDF
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleEdit}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+              style={{ backgroundColor: '#4C1D95' }}
+              title="Edit workshop"
+            >
+              <Icon name="pencil" size={16} className="mr-2" />
+              Edit
+            </button>
+          </div>
         </div>
 
         {/* Workshop Overview Section */}
@@ -2310,7 +2317,7 @@ export default function WorkshopDetails() {
               {workshop.status}
             </span>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="space-y-2">
@@ -2361,7 +2368,7 @@ export default function WorkshopDetails() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Agenda</span>
               <div className="mt-2 space-y-2">
@@ -2370,7 +2377,7 @@ export default function WorkshopDetails() {
                 <div className="text-sm text-gray-700">• Discussion of newly identified risks</div>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Summary</span>
               <div className="mt-1 text-sm font-medium text-gray-900">
@@ -2392,15 +2399,15 @@ export default function WorkshopDetails() {
               className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               title={allCardsCollapsed ? "Expand all risk cards" : "Collapse all risk cards"}
             >
-              <Icon 
-                name={allCardsCollapsed ? "chevron-down" : "chevron-up"} 
-                size={16} 
-                className="mr-2" 
+              <Icon
+                name={allCardsCollapsed ? "chevron-down" : "chevron-up"}
+                size={16}
+                className="mr-2"
               />
               {allCardsCollapsed ? "Expand All" : "Collapse All"}
             </button>
           </div>
-          
+
           <div className="space-y-8">
             {/* Extensions Subsection */}
             <div>
@@ -2412,7 +2419,7 @@ export default function WorkshopDetails() {
                   {workshop.extensions.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    
+
                     return (
                       <RiskCard
                         key={index}
@@ -2447,7 +2454,7 @@ export default function WorkshopDetails() {
                   {workshop.closure.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    
+
                     return (
                       <RiskCard
                         key={index}
@@ -2482,7 +2489,7 @@ export default function WorkshopDetails() {
                   {workshop.newRisks.map((item, index) => {
                     const risk = risks[item.riskId]
                     const allRiskTreatments = treatments[item.riskId] || []
-                    
+
                     return (
                       <RiskCard
                         key={index}
@@ -2515,7 +2522,7 @@ export default function WorkshopDetails() {
             <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
             <h3 className="text-lg font-semibold text-gray-900">Metadata</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Created</span>
@@ -2523,7 +2530,7 @@ export default function WorkshopDetails() {
                 {workshop.createdAt ? formatDateTime(workshop.createdAt) : '-'}
               </div>
             </div>
-            
+
             <div className="bg-gray-50 rounded-lg p-4">
               <span className="text-xs text-gray-500 uppercase tracking-wide">Last Updated</span>
               <div className="mt-1 text-sm font-medium text-gray-900">
@@ -2543,7 +2550,7 @@ export default function WorkshopDetails() {
           <Icon name="arrow-left" className="w-4 h-4 mr-2" />
           Back to Workshops
         </Link>
-        
+
         <div className="flex space-x-3">
           <button
             onClick={handleEdit}
@@ -2556,16 +2563,16 @@ export default function WorkshopDetails() {
         </div>
       </div>
 
-              {/* Extension Modal */}
-        {selectedTreatment && (
-          <ExtensionModal
-            isOpen={showExtensionModal}
-            onClose={closeExtensionModal}
-            treatment={selectedTreatment}
-            onSubmit={handleExtensionRequest}
-            submitting={submittingExtension}
-          />
-        )}
+      {/* Extension Modal */}
+      {selectedTreatment && (
+        <ExtensionModal
+          isOpen={showExtensionModal}
+          onClose={closeExtensionModal}
+          treatment={selectedTreatment}
+          onSubmit={handleExtensionRequest}
+          submitting={submittingExtension}
+        />
+      )}
 
       {/* Close Treatment Modal */}
       {selectedCloseTreatment && (
