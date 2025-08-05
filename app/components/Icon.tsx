@@ -131,6 +131,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     ruler: faRuler,
     bandage: faBandage,
     'file-waveform': faChartLine,
+    'chart-line': faChartLine,
     globe: faGlobe,
     'earth-oceania': faEarthOceania,
     'chevron-double-left': faAnglesLeft,
