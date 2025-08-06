@@ -750,7 +750,8 @@ export default function DataTable({
                         <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
                           column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 
                           column.key === 'riskStatement' ? 'max-w-96' :
-                          column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' : ''
+                          column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' :
+                          column.key === 'informationAssets' ? 'max-w-80 md:max-w-96 lg:max-w-none' : ''
                         } ${
                         column.align === 'center' ? 'flex justify-center' : 
                         column.align === 'right' ? 'flex justify-end' : ''

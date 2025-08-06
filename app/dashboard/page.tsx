@@ -119,7 +119,7 @@ export default function DashboardHome() {
   ]
 
   const quickActions = [
-    { name: 'Add Risk', icon: 'add', description: 'Create new risk entry', href: '/risk-management/register/new' },
+            { name: 'Add Risk', icon: 'add', description: 'Create new risk entry', href: '/risk-management/risks/new' },
     { name: 'New Audit', icon: 'audit_new', description: 'Schedule audit', href: '/audit/new' },
     { name: 'Generate Report', icon: 'report', description: 'Create compliance report', href: '/reports' },
     { name: 'Settings', icon: 'settings_advanced', description: 'Configure system', href: '/settings' },

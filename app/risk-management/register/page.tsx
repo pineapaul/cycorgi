@@ -112,180 +112,7 @@ const DATE_COLUMNS = [
   'dateRiskTreatmentCompleted'
 ]
 
-// Get columns for each phase
-const getColumnsForPhase = (phase: string): Column[] => {
-  const allColumns: Column[] = [
-    { key: 'riskId', label: 'Risk ID', sortable: true, width: '140px' },
-    { key: 'actions', label: 'Actions', sortable: false },
-    { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-    { key: 'currentPhase', label: 'Current Phase', sortable: true },
-    { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
-    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '120px' },
-    { key: 'raisedBy', label: 'Raised By', sortable: true },
-    { key: 'riskOwner', label: 'Risk Owner', sortable: true },
-    { key: 'affectedSites', label: 'Affected Sites', sortable: true },
-    { key: 'informationAssets', label: 'Information Assets', sortable: true },
-    { key: 'threat', label: 'Threat', sortable: true },
-    { key: 'vulnerability', label: 'Vulnerability', sortable: true },
-    { key: 'riskStatement', label: 'Risk Statement', sortable: true },
-    { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues },
-    { key: 'currentControls', label: 'Current Controls', sortable: true },
-    { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
-    { key: 'consequence', label: 'Consequence', sortable: true },
-    { key: 'likelihood', label: 'Likelihood', sortable: true },
-    { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
-    { key: 'riskAction', label: 'Risk Action', sortable: true },
-    { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
-    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '120px' },
-    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
-    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '120px' },
-    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '120px' },
-    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
-    { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
-    { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
-    { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
-    { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
-    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '120px' },
-    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '120px' },
-  ]
 
-  switch (phase) {
-    case 'identification':
-      return allColumns.filter(col => [
-        'riskId',
-        'actions',
-        'functionalUnit',
-        'currentPhase',
-        'jiraTicket',
-        'dateRiskRaised',
-        'raisedBy',
-        'riskOwner',
-        'affectedSites',
-        'informationAssets',
-        'threat',
-        'vulnerability',
-        'riskStatement'
-      ].includes(col.key))
-    case 'analysis':
-      return allColumns.filter(col => [
-        'riskId',
-        'actions',
-        'functionalUnit',
-        'currentPhase',
-        'jiraTicket',
-        'dateRiskRaised',
-        'raisedBy',
-        'riskOwner',
-        'affectedSites',
-        'informationAssets',
-        'threat',
-        'vulnerability',
-        'riskStatement',
-        'impactCIA',
-        'currentControls',
-        'currentControlsReference',
-        'consequence',
-        'likelihood',
-        'currentRiskRating'
-      ].includes(col.key))
-    case 'evaluation':
-      return allColumns.filter(col => [
-        'riskId',
-        'actions',
-        'functionalUnit',
-        'currentPhase',
-        'jiraTicket',
-        'dateRiskRaised',
-        'raisedBy',
-        'riskOwner',
-        'affectedSites',
-        'informationAssets',
-        'threat',
-        'vulnerability',
-        'riskStatement',
-        'impactCIA',
-        'currentControls',
-        'currentControlsReference',
-        'consequence',
-        'likelihood',
-        'currentRiskRating',
-        'riskAction',
-        'reasonForAcceptance',
-        'dateOfSSCApproval'
-      ].includes(col.key))
-    case 'treatment':
-      return allColumns.filter(col => [
-        'riskId',
-        'actions',
-        'functionalUnit',
-        'currentPhase',
-        'jiraTicket',
-        'dateRiskRaised',
-        'raisedBy',
-        'riskOwner',
-        'affectedSites',
-        'informationAssets',
-        'threat',
-        'vulnerability',
-        'riskStatement',
-        'impactCIA',
-        'currentControls',
-        'currentControlsReference',
-        'consequence',
-        'likelihood',
-        'currentRiskRating',
-        'riskAction',
-        'reasonForAcceptance',
-        'dateOfSSCApproval',
-        'riskTreatments',
-        'dateRiskTreatmentsApproved',
-        'dateRiskTreatmentsAssigned',
-        'applicableControlsAfterTreatment',
-        'residualConsequence',
-        'residualLikelihood',
-        'residualRiskRating',
-        'residualRiskAcceptedByOwner',
-        'dateResidualRiskAccepted'
-      ].includes(col.key))
-    case 'monitoring':
-      return allColumns.filter(col => [
-        'riskId',
-        'actions',
-        'functionalUnit',
-        'currentPhase',
-        'jiraTicket',
-        'dateRiskRaised',
-        'raisedBy',
-        'riskOwner',
-        'affectedSites',
-        'informationAssets',
-        'threat',
-        'vulnerability',
-        'riskStatement',
-        'impactCIA',
-        'currentControls',
-        'currentControlsReference',
-        'consequence',
-        'likelihood',
-        'currentRiskRating',
-        'riskAction',
-        'reasonForAcceptance',
-        'dateOfSSCApproval',
-        'riskTreatments',
-        'dateRiskTreatmentsApproved',
-        'dateRiskTreatmentsAssigned',
-        'applicableControlsAfterTreatment',
-        'residualConsequence',
-        'residualLikelihood',
-        'residualRiskRating',
-        'residualRiskAcceptedByOwner',
-        'dateResidualRiskAccepted',
-        'dateRiskTreatmentCompleted'
-      ].includes(col.key))
-    default:
-      return allColumns // Show all columns for full view
-  }
-}
 
 export default function RiskRegister() {
   const router = useRouter()
@@ -296,6 +123,242 @@ export default function RiskRegister() {
   const [risks, setRisks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Custom renderer for Information Assets
+  const renderInformationAssets = (value: any) => {
+    if (!value || value === 'Not specified' || value === '' || value === '-') {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    let assets: string[] = []
+
+    // Handle different data formats
+    if (Array.isArray(value)) {
+      // Handle array of objects with id/name or array of strings
+      assets = value.map((asset: any) => {
+        if (typeof asset === 'object' && asset !== null) {
+          // The API returns objects with id and name properties
+          if (asset.name) return asset.name
+          if (asset.id) return asset.id
+          if (asset.title) return asset.title
+          if (asset.label) return asset.label
+          // If none of the above, try to find any string property
+          const stringProps = Object.values(asset).filter(val => typeof val === 'string' && val.trim() !== '')
+          if (stringProps.length > 0) return stringProps[0]
+          return JSON.stringify(asset)
+        }
+        return String(asset)
+      }).filter(asset => asset && asset !== '[object Object]')
+    } else if (typeof value === 'string') {
+      // Handle comma-separated string
+      assets = value
+        .split(/[,;|]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+    } else {
+      // Fallback for other types
+      assets = [String(value)]
+    }
+
+    if (assets.length === 0) {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1.5 min-w-32 max-w-none">
+        {assets.map((asset, index) => (
+          <span
+            key={index}
+            className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200 transition-all duration-200 hover:scale-105 flex-shrink-0 whitespace-nowrap max-w-full"
+            title={asset}
+          >
+            <span className="truncate">{asset}</span>
+          </span>
+        ))}
+      </div>
+    )
+  }
+  
+
+
+  // Get columns for each phase
+  const getColumnsForPhase = (phase: string): Column[] => {
+    const allColumns: Column[] = [
+      { key: 'riskId', label: 'Risk ID', sortable: true, width: '140px' },
+      { key: 'actions', label: 'Actions', sortable: false },
+      { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
+      { key: 'currentPhase', label: 'Current Phase', sortable: true },
+      { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
+      { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '120px' },
+      { key: 'raisedBy', label: 'Raised By', sortable: true },
+      { key: 'riskOwner', label: 'Risk Owner', sortable: true },
+      { key: 'affectedSites', label: 'Affected Sites', sortable: true },
+      { key: 'informationAssets', label: 'Information Assets', sortable: true, render: renderInformationAssets, width: 'auto' },
+      { key: 'threat', label: 'Threat', sortable: true },
+      { key: 'vulnerability', label: 'Vulnerability', sortable: true },
+      { key: 'riskStatement', label: 'Risk Statement', sortable: true },
+      { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues },
+      { key: 'currentControls', label: 'Current Controls', sortable: true },
+      { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
+      { key: 'consequence', label: 'Consequence', sortable: true },
+      { key: 'likelihood', label: 'Likelihood', sortable: true },
+      { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
+      { key: 'riskAction', label: 'Risk Action', sortable: true },
+      { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
+      { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '120px' },
+      { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
+      { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '120px' },
+      { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '120px' },
+      { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
+      { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
+      { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
+      { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
+      { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
+      { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '120px' },
+      { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '120px' },
+    ]
+
+    switch (phase) {
+      case 'identification':
+        return allColumns.filter(col => [
+          'riskId',
+          'actions',
+          'functionalUnit',
+          'currentPhase',
+          'jiraTicket',
+          'dateRiskRaised',
+          'raisedBy',
+          'riskOwner',
+          'affectedSites',
+          'informationAssets',
+          'threat',
+          'vulnerability',
+          'riskStatement'
+        ].includes(col.key))
+      case 'analysis':
+        return allColumns.filter(col => [
+          'riskId',
+          'actions',
+          'functionalUnit',
+          'currentPhase',
+          'jiraTicket',
+          'dateRiskRaised',
+          'raisedBy',
+          'riskOwner',
+          'affectedSites',
+          'informationAssets',
+          'threat',
+          'vulnerability',
+          'riskStatement',
+          'impactCIA',
+          'currentControls',
+          'currentControlsReference',
+          'consequence',
+          'likelihood',
+          'currentRiskRating'
+        ].includes(col.key))
+      case 'evaluation':
+        return allColumns.filter(col => [
+          'riskId',
+          'actions',
+          'functionalUnit',
+          'currentPhase',
+          'jiraTicket',
+          'dateRiskRaised',
+          'raisedBy',
+          'riskOwner',
+          'affectedSites',
+          'informationAssets',
+          'threat',
+          'vulnerability',
+          'riskStatement',
+          'impactCIA',
+          'currentControls',
+          'currentControlsReference',
+          'consequence',
+          'likelihood',
+          'currentRiskRating',
+          'riskAction',
+          'reasonForAcceptance',
+          'dateOfSSCApproval'
+        ].includes(col.key))
+      case 'treatment':
+        return allColumns.filter(col => [
+          'riskId',
+          'actions',
+          'functionalUnit',
+          'currentPhase',
+          'jiraTicket',
+          'dateRiskRaised',
+          'raisedBy',
+          'riskOwner',
+          'affectedSites',
+          'informationAssets',
+          'threat',
+          'vulnerability',
+          'riskStatement',
+          'impactCIA',
+          'currentControls',
+          'currentControlsReference',
+          'consequence',
+          'likelihood',
+          'currentRiskRating',
+          'riskAction',
+          'reasonForAcceptance',
+          'dateOfSSCApproval',
+          'riskTreatments',
+          'dateRiskTreatmentsApproved',
+          'dateRiskTreatmentsAssigned',
+          'applicableControlsAfterTreatment',
+          'residualConsequence',
+          'residualLikelihood',
+          'residualRiskRating',
+          'residualRiskAcceptedByOwner',
+          'dateResidualRiskAccepted'
+        ].includes(col.key))
+      case 'monitoring':
+        return allColumns.filter(col => [
+          'riskId',
+          'actions',
+          'functionalUnit',
+          'currentPhase',
+          'jiraTicket',
+          'dateRiskRaised',
+          'raisedBy',
+          'riskOwner',
+          'affectedSites',
+          'informationAssets',
+          'threat',
+          'vulnerability',
+          'riskStatement',
+          'impactCIA',
+          'currentControls',
+          'currentControlsReference',
+          'consequence',
+          'likelihood',
+          'currentRiskRating',
+          'riskAction',
+          'reasonForAcceptance',
+          'dateOfSSCApproval',
+          'riskTreatments',
+          'dateRiskTreatmentsApproved',
+          'dateRiskTreatmentsAssigned',
+          'applicableControlsAfterTreatment',
+          'residualConsequence',
+          'residualLikelihood',
+          'residualRiskRating',
+          'residualRiskAcceptedByOwner',
+          'dateResidualRiskAccepted',
+          'dateRiskTreatmentCompleted'
+        ].includes(col.key))
+      default:
+        return allColumns // Show all columns for full view
+    }
+  }
 
   // Fetch risks from MongoDB
   useEffect(() => {
@@ -313,6 +376,10 @@ export default function RiskRegister() {
         const treatmentsResult = await treatmentsResponse.json()
         
         if (risksResult.success && treatmentsResult.success) {
+          // Debug: Log the first risk to see the data structure
+          console.log('First risk from API:', risksResult.data[0])
+          console.log('InformationAsset from API:', risksResult.data[0]?.informationAsset)
+          
           // Create a map of treatments by riskId for quick lookup
           const treatmentsByRiskId = new Map()
           treatmentsResult.data.forEach((treatment: any) => {
@@ -354,7 +421,7 @@ export default function RiskRegister() {
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner,
               affectedSites: 'All Sites',
-              informationAssets: formatInformationAssets(risk.informationAsset) || '',
+              informationAssets: risk.informationAsset || '',
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,
@@ -405,7 +472,7 @@ export default function RiskRegister() {
 
   const handleRowClick = (row: any) => {
     // Navigate to risk information page
-    router.push(`/risk-management/register/${row.riskId}`)
+            router.push(`/risk-management/risks/${row.riskId}`)
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -492,7 +559,7 @@ export default function RiskRegister() {
       if (col.key === 'riskId') {
         return (
           <Link
-            href={`/risk-management/register/${row.riskId}`}
+                            href={`/risk-management/risks/${row.riskId}`}
             className="risk-id-button"
             onClick={(e) => e.stopPropagation()}
           >
@@ -506,7 +573,7 @@ export default function RiskRegister() {
           <div className="flex items-center space-x-2">
             <Tooltip content="View Risk Details">
               <Link
-                href={`/risk-management/register/${row.riskId}`}
+                href={`/risk-management/risks/${row.riskId}`}
                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -517,7 +584,7 @@ export default function RiskRegister() {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  const url = `${window.location.origin}/risk-management/register/${row.riskId}`
+                  const url = `${window.location.origin}/risk-management/risks/${row.riskId}`
                   navigator.clipboard.writeText(url).then(() => {
                     showToast({
                       type: 'success',
@@ -557,6 +624,10 @@ export default function RiskRegister() {
       if (col.key === 'impactCIA') {
         // Use the custom renderCIAValues function for the impactCIA column
         return renderCIAValues(value)
+      }
+      if (col.key === 'informationAssets') {
+        // Use the custom renderInformationAssets function for the informationAssets column
+        return renderInformationAssets(value)
       }
       if (col.key === 'currentPhase') {
         return (
@@ -620,7 +691,7 @@ export default function RiskRegister() {
         </div>
                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
            <Link
-             href="/risk-management/register/new"
+             href="/risk-management/risks/new"
              className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
              style={{ 
                backgroundColor: '#4C1D95',

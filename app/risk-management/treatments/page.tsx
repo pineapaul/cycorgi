@@ -229,7 +229,7 @@ export default function Treatments() {
              if (col.key === 'riskId') {
          return (
            <Link
-             href={`/risk-management/register/${row.riskId}`}
+                             href={`/risk-management/risks/${row.riskId}`}
              className="risk-id-button"
              onClick={(e) => e.stopPropagation()}
            >

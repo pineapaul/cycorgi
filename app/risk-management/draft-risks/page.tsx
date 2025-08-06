@@ -201,7 +201,7 @@ export default function DraftRisks() {
 
   const handleRowClick = (row: any) => {
     // Navigate to risk information page
-    router.push(`/risk-management/register/${row.riskId}`)
+            router.push(`/risk-management/risks/${row.riskId}`)
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
@@ -267,7 +267,7 @@ export default function DraftRisks() {
       if (col.key === 'riskId') {
         return (
           <Link
-            href={`/risk-management/register/${row.riskId}`}
+            href={`/risk-management/risks/${row.riskId}`}
             className="risk-id-button"
             onClick={(e) => e.stopPropagation()}
           >
@@ -281,7 +281,7 @@ export default function DraftRisks() {
            <div className="flex items-center space-x-2">
              <Tooltip content="View Risk Details">
                <Link
-                 href={`/risk-management/register/${row.riskId}`}
+                 href={`/risk-management/risks/${row.riskId}`}
                  className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                  onClick={(e) => e.stopPropagation()}
                >
@@ -366,7 +366,7 @@ export default function DraftRisks() {
         </div>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <Link
-            href="/risk-management/register/new"
+            href="/risk-management/risks/new"
             className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ 
               backgroundColor: '#4C1D95',
@@ -461,7 +461,7 @@ export default function DraftRisks() {
             There are currently no risks in draft status.
           </p>
           <Link
-            href="/risk-management/register/new"
+            href="/risk-management/risks/new"
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
             style={{ backgroundColor: '#4C1D95' }}
           >
