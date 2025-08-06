@@ -308,6 +308,32 @@ export default function RiskInformation() {
     }
   }, [params.id])
 
+  // Separate useEffect for fetching comment count to avoid interference with main data loading
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      const validRiskId = validateRiskId(params.id)
+      if (!validRiskId) return
+
+      try {
+        const commentsApiUrl = buildApiUrl('/api/risks', params.id)
+        if (commentsApiUrl) {
+          const commentsResponse = await fetch(`${commentsApiUrl}/comments`)
+          const commentsResult = await commentsResponse.json()
+          if (commentsResult.success) {
+            setCommentCount(commentsResult.data.length)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching comments count:', error)
+        // Don't fail if comments fetch fails
+      }
+    }
+
+    if (params.id) {
+      fetchCommentCount()
+    }
+  }, [params.id])
+
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
     
