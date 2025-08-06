@@ -102,6 +102,16 @@ const renderCIAValues = (value: string) => {
   )
 }
 
+// Date column keys for consistent formatting
+const DATE_COLUMNS = [
+  'dateRiskRaised',
+  'dateOfSSCApproval', 
+  'dateRiskTreatmentsApproved',
+  'dateResidualRiskAccepted',
+  'dateRiskTreatmentsAssigned',
+  'dateRiskTreatmentCompleted'
+]
+
 // Get columns for each phase
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
@@ -541,7 +551,7 @@ export default function RiskRegister() {
           </span>
         )
       }
-             if (col.key === 'dateRiskRaised' || col.key === 'dateOfSSCApproval' || col.key === 'dateRiskTreatmentsApproved' || col.key === 'dateResidualRiskAccepted' || col.key === 'dateRiskTreatmentsAssigned' || col.key === 'dateRiskTreatmentCompleted') {
+       if (DATE_COLUMNS.includes(col.key)) {
          return (
            <span className="truncate block max-w-full">
              {formatDate(value)}
