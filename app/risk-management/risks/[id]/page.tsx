@@ -398,11 +398,11 @@ export default function RiskInformation() {
   }
 
   const handleRowClick = (row: any) => {
-    // TODO: Navigate to treatment detail page
+    
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    // TODO: Implement CSV export
+    
   }
 
   const handleExportPDF = async () => {
@@ -1906,7 +1906,7 @@ export default function RiskInformation() {
                          <button
                            onClick={(e) => {
                              e.stopPropagation()
-                             // TODO: Implement workshop agenda functionality
+             
                              showToast({
                                title: 'Success',
                                message: `Treatment ${row.treatmentId} added to workshop agenda!`,

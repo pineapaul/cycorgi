@@ -1598,8 +1598,6 @@ export default function WorkshopDetails() {
         }
       }
 
-      console.log('Updating workshop with data:', JSON.stringify(updatedWorkshop, null, 2))
-
       const response = await fetch(`/api/workshops/${workshop.id}`, {
         method: 'PUT',
         headers: {
@@ -1609,7 +1607,6 @@ export default function WorkshopDetails() {
       })
 
       const result = await response.json()
-      console.log('Update response:', result)
 
       if (result.success) {
         setWorkshop(updatedWorkshop)
@@ -1766,7 +1763,6 @@ export default function WorkshopDetails() {
       // If extension was approved but outcome update failed, rollback the extension
       if (extensionApproved && originalTreatmentData) {
         try {
-          console.log('Rolling back extension to:', originalTreatmentData)
           await fetch(`/api/treatments/treatment/${selectedTreatment._id}`, {
             method: 'PUT',
             headers: {
@@ -1903,7 +1899,6 @@ export default function WorkshopDetails() {
       // If treatment status was updated but outcome update failed, rollback the status change
       if (treatmentStatusUpdated && originalTreatmentData) {
         try {
-          console.log('Rolling back treatment status to:', originalTreatmentData)
           await fetch(`/api/treatments/treatment/${selectedCloseTreatment._id}`, {
             method: 'PUT',
             headers: {
@@ -2009,7 +2004,6 @@ export default function WorkshopDetails() {
       // If risk status was updated but outcome update failed, rollback the status change
       if (riskStatusUpdated && originalRiskStatus) {
         try {
-          console.log('Rolling back risk status to:', originalRiskStatus)
           await fetch(`/api/risks/${selectedCloseRisk.riskId}`, {
             method: 'PUT',
             headers: {

@@ -205,7 +205,7 @@ export default function DraftRisks() {
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    // TODO: Implement CSV export
+    
   }
 
   const getStatusColor = (status: string) => {
@@ -292,7 +292,7 @@ export default function DraftRisks() {
                <button
                  onClick={(e) => {
                    e.stopPropagation()
-                   // TODO: Implement submit for review functionality
+           
                    showToast({
                      type: 'success',
                      title: `Risk ${row.riskId} submitted for review!`

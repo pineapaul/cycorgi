@@ -376,10 +376,6 @@ export default function RiskRegister() {
         const treatmentsResult = await treatmentsResponse.json()
         
         if (risksResult.success && treatmentsResult.success) {
-          // Debug: Log the first risk to see the data structure
-          console.log('First risk from API:', risksResult.data[0])
-          console.log('InformationAsset from API:', risksResult.data[0]?.informationAsset)
-          
           // Create a map of treatments by riskId for quick lookup
           const treatmentsByRiskId = new Map()
           treatmentsResult.data.forEach((treatment: any) => {
@@ -476,7 +472,7 @@ export default function RiskRegister() {
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    // TODO: Implement CSV export
+    
   }
 
   const handlePhaseSelect = (phase: string | null) => {
@@ -606,7 +602,7 @@ export default function RiskRegister() {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  // TODO: Implement workshop agenda functionality
+  
                   showToast({
                     type: 'success',
                     title: `Risk ${row.riskId} added to workshop agenda!`

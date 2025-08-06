@@ -135,7 +135,7 @@ export default function Treatments() {
   }
 
   const handleExportCSV = (selectedRows: Set<number>) => {
-    // TODO: Implement CSV export
+    
   }
 
   const getStatusColor = (status: string) => {
@@ -211,7 +211,7 @@ export default function Treatments() {
                <button
                  onClick={(e) => {
                    e.stopPropagation()
-                   // TODO: Implement workshop agenda functionality
+   
                    showToast({
                      type: 'success',
                      title: `Treatment ${row.treatmentId} added to workshop agenda!`
