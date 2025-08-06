@@ -39,11 +39,10 @@ export const CONSEQUENCE_RATINGS = {
 
 export const LIKELIHOOD_RATINGS = {
   ALMOST_CERTAIN: 'Almost Certain',
-  CERTAIN: 'Certain',
+  LIKELY: 'Likely',
   POSSIBLE: 'Possible',
   UNLIKELY: 'Unlikely',
-  RARE: 'Rare',
-  INCONSEQUENTIAL: 'Inconsequential'
+  RARE: 'Rare'
 } as const
 
 // Data parsing constants
