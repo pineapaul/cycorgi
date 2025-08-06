@@ -144,12 +144,30 @@ export function validateAndTransformRiskData(
   }
 
   // Validate risk ratings
-  const validRatings = ['High', 'Medium', 'Low']
+  const validRatings = ['Low', 'Moderate', 'High', 'Extreme']
   if (data.currentRiskRating && !validRatings.includes(data.currentRiskRating)) {
     errors.push(`Invalid current risk rating: ${data.currentRiskRating}. Must be one of: ${validRatings.join(', ')}`)
   }
   if (data.residualRiskRating && !validRatings.includes(data.residualRiskRating)) {
     errors.push(`Invalid residual risk rating: ${data.residualRiskRating}. Must be one of: ${validRatings.join(', ')}`)
+  }
+
+  // Validate consequence ratings
+  const validConsequences = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Critical']
+  if (data.consequence && !validConsequences.includes(data.consequence)) {
+    errors.push(`Invalid consequence rating: ${data.consequence}. Must be one of: ${validConsequences.join(', ')}`)
+  }
+  if (data.residualConsequence && !validConsequences.includes(data.residualConsequence)) {
+    errors.push(`Invalid residual consequence rating: ${data.residualConsequence}. Must be one of: ${validConsequences.join(', ')}`)
+  }
+
+  // Validate likelihood ratings
+  const validLikelihoods = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain']
+  if (data.likelihood && !validLikelihoods.includes(data.likelihood)) {
+    errors.push(`Invalid likelihood rating: ${data.likelihood}. Must be one of: ${validLikelihoods.join(', ')}`)
+  }
+  if (data.residualLikelihood && !validLikelihoods.includes(data.residualLikelihood)) {
+    errors.push(`Invalid residual likelihood rating: ${data.residualLikelihood}. Must be one of: ${validLikelihoods.join(', ')}`)
   }
 
   // Validate phases

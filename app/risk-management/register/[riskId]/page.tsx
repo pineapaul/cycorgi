@@ -331,9 +331,11 @@ export default function RiskInformation() {
     if (!level) return 'bg-gray-100 text-gray-800'
     
     switch (level.toLowerCase()) {
-      case 'high':
+      case 'extreme':
         return 'bg-red-100 text-red-800'
-      case 'medium':
+      case 'high':
+        return 'bg-orange-100 text-orange-800'
+      case 'moderate':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
         return 'bg-green-100 text-green-800'
@@ -347,11 +349,22 @@ export default function RiskInformation() {
     
     switch (priority.toLowerCase()) {
       case 'high':
+      case 'critical':
+      case 'almost certain':
         return 'bg-red-100 text-red-800'
       case 'medium':
+      case 'moderate':
+      case 'likely':
+      case 'possible':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
+      case 'minor':
+      case 'insignificant':
+      case 'unlikely':
+      case 'rare':
         return 'bg-green-100 text-green-800'
+      case 'major':
+        return 'bg-orange-100 text-orange-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -1154,9 +1167,11 @@ export default function RiskInformation() {
                         onChange={(e) => handleFieldChange('currentRiskRating', e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
+                        <option value="">Select risk rating</option>
                         <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
+                        <option value="Moderate">Moderate</option>
                         <option value="High">High</option>
+                        <option value="Extreme">Extreme</option>
                       </select>
                     ) : (
                       <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium cursor-help ${getRiskLevelColor(riskDetails.currentRiskRating)}`}>
@@ -1185,6 +1200,54 @@ export default function RiskInformation() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Consequence Rating</span>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <select
+                        value={editedRisk?.consequence || ''}
+                        onChange={(e) => handleFieldChange('consequence', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select consequence rating</option>
+                        <option value="Insignificant">Insignificant</option>
+                        <option value="Minor">Minor</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Major">Major</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.consequence)}`}>
+                        {riskDetails.consequence}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Likelihood Rating</span>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <select
+                        value={editedRisk?.likelihood || ''}
+                        onChange={(e) => handleFieldChange('likelihood', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select likelihood rating</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Unlikely">Unlikely</option>
+                        <option value="Possible">Possible</option>
+                        <option value="Likely">Likely</option>
+                        <option value="Almost Certain">Almost Certain</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.likelihood)}`}>
+                        {riskDetails.likelihood}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -1602,10 +1665,11 @@ export default function RiskInformation() {
                     onChange={(e) => handleFieldChange('residualRiskRating', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="">Select...</option>
+                    <option value="">Select risk rating</option>
                     <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
+                    <option value="Moderate">Moderate</option>
                     <option value="High">High</option>
+                    <option value="Extreme">Extreme</option>
                   </select>
                 ) : (
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getRiskLevelColor(riskDetails.residualRiskRating)}`}>

@@ -14,28 +14,36 @@ export const EXTENSION_STATUS = {
 
 export const RISK_PHASES = {
   DRAFT: 'Draft',
-  ASSESSMENT: 'Assessment',
+  IDENTIFICATION: 'Identification',
+  ANALYSIS: 'Analysis',
+  EVALUATION: 'Evaluation',
   TREATMENT: 'Treatment',
   MONITORING: 'Monitoring',
   CLOSED: 'Closed'
 } as const
 
 export const RISK_RATINGS = {
+  EXTREME: 'Extreme',
   HIGH: 'High',
-  MEDIUM: 'Medium',
+  MODERATE: 'Moderate',
   LOW: 'Low'
 } as const
 
 export const CONSEQUENCE_RATINGS = {
-  HIGH: 'High',
-  MEDIUM: 'Medium',
-  LOW: 'Low'
+  CRITICAL: 'Critical',
+  MAJOR: 'Major',
+  MODERATE: 'Moderate',
+  MINOR: 'Minor',
+  INSIGNIFICANT: 'Insignificant'
 } as const
 
 export const LIKELIHOOD_RATINGS = {
-  HIGH: 'High',
-  MEDIUM: 'Medium',
-  LOW: 'Low'
+  ALMOST_CERTAIN: 'Almost Certain',
+  CERTAIN: 'Certain',
+  POSSIBLE: 'Possible',
+  UNLIKELY: 'Unlikely',
+  RARE: 'Rare',
+  INCONSEQUENTIAL: 'Inconsequential'
 } as const
 
 // Data parsing constants
