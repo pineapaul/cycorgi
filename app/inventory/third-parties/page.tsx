@@ -5,7 +5,7 @@ import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
 import Tooltip from '@/app/components/Tooltip'
-import { formatDate, formatDateForCSV } from '@/lib/utils'
+import { formatDate, formatDateForCSV, escapeHtml } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -138,7 +138,7 @@ export default function ThirdPartiesPage() {
           className="text-blue-600 hover:text-blue-800 underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {assetName}
+          {escapeHtml(assetName)}
         </Link>
       )
     }
@@ -150,7 +150,7 @@ export default function ThirdPartiesPage() {
         <div className="font-medium text-white mb-2">Linked Information Assets:</div>
         {assetNames.map((name, index) => (
           <div key={index} className="text-sm text-gray-200">
-            • {name}
+            • {escapeHtml(name)}
           </div>
         ))}
       </div>
@@ -228,13 +228,15 @@ export default function ThirdPartiesPage() {
       key: 'vendorId',
       label: 'Vendor ID',
       sortable: true,
-      width: '120px'
+      width: '120px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'vendorName',
       label: 'Vendor Name',
       sortable: true,
-      width: '200px'
+      width: '200px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'informationAssetIds',
@@ -247,25 +249,29 @@ export default function ThirdPartiesPage() {
       key: 'functionalUnit',
       label: 'Functional Unit',
       sortable: true,
-      width: '150px'
+      width: '150px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'vendorContact',
       label: 'Vendor Contact',
       sortable: true,
-      width: '250px'
+      width: '250px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'internalContact',
       label: 'Internal Contact',
       sortable: true,
-      width: '250px'
+      width: '250px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'entity',
       label: 'Entity',
       sortable: true,
-      width: '150px'
+      width: '150px',
+      render: (value) => escapeHtml(value)
     },
     {
       key: 'startDate',
@@ -288,7 +294,7 @@ export default function ThirdPartiesPage() {
       width: '200px',
       render: (value) => (
         <span className="text-blue-600 hover:text-blue-800 cursor-pointer">
-          {value}
+          {escapeHtml(value)}
         </span>
       )
     },
@@ -299,7 +305,7 @@ export default function ThirdPartiesPage() {
       width: '200px',
       render: (value) => (
         <span className="text-blue-600 hover:text-blue-800 cursor-pointer">
-          {value}
+          {escapeHtml(value)}
         </span>
       )
     },
@@ -310,7 +316,7 @@ export default function ThirdPartiesPage() {
       width: '200px',
       render: (value) => (
         <span className="text-blue-600 hover:text-blue-800 cursor-pointer">
-          {value}
+          {escapeHtml(value)}
         </span>
       )
     },
@@ -344,7 +350,7 @@ export default function ThirdPartiesPage() {
         
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
-            {value}
+            {escapeHtml(value)}
           </span>
         )
       }

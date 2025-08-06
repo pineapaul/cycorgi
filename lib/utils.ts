@@ -123,13 +123,13 @@ export function formatInformationAssets(informationAsset: string | Array<{ id: s
     return informationAsset.map((asset: any) => {
       // Handle both new format (objects with id/name) and old format (strings)
       if (typeof asset === 'object' && asset !== null) {
-        return asset.name || asset.id || JSON.stringify(asset)
+        return escapeHtml(asset.name || asset.id || JSON.stringify(asset))
       }
-      return asset
+      return escapeHtml(String(asset))
     }).join(', ')
   }
   
-  return String(informationAsset)
+  return escapeHtml(String(informationAsset))
 }
 
 /**
@@ -150,4 +150,34 @@ export function formatDateForCSV(dateString: string): string {
   } catch (error) {
     return dateString
   }
+} 
+
+/**
+ * Safely escapes HTML content to prevent XSS attacks
+ * @param text - The text to escape
+ * @returns Escaped text safe for rendering in JSX, or original value if not a string
+ */
+export function escapeHtml(text: unknown): string {
+  // Return original value if it's not a string, to prevent data loss
+  if (typeof text !== 'string') {
+    return String(text || '')
+  }
+  
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+}
+
+/**
+ * Safely formats and escapes option text for select elements
+ * @param parts - Array of text parts to concatenate and escape
+ * @returns Properly escaped concatenated string
+ */
+export function formatOptionText(...parts: unknown[]): string {
+  const concatenated = parts.map(part => String(part || '')).join('')
+  return escapeHtml(concatenated)
 } 
