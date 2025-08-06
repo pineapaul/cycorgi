@@ -47,6 +47,15 @@ export default function AddTreatment() {
   // Generate next treatment ID
   const generateNextTreatmentId = async (riskId: string): Promise<string> => {
     try {
+      // Validate riskId format (should be RISK-XXX)
+      const riskIdMatch = riskId.match(/^RISK-(\d+)$/)
+      if (!riskIdMatch) {
+        console.error('Invalid riskId format:', riskId)
+        throw new Error(`Invalid risk ID format: ${riskId}. Expected format: RISK-XXX`)
+      }
+      
+      const riskNumber = riskIdMatch[1]
+      
       const response = await fetch(`/api/treatments/${riskId}`)
       const result = await response.json()
       
@@ -55,8 +64,6 @@ export default function AddTreatment() {
         const treatmentNumbers = result.data
           .filter((treatment: any) => treatment.treatmentId && typeof treatment.treatmentId === 'string')
           .map((treatment: any) => {
-            // Extract risk number from riskId (e.g., "001" from "RISK-001")
-            const riskNumber = riskId.split('-')[1]
             const expectedPrefix = `TREAT-${riskNumber}-`
             
             if (treatment.treatmentId.startsWith(expectedPrefix)) {
@@ -69,18 +76,16 @@ export default function AddTreatment() {
         
         const maxNumber = treatmentNumbers.length > 0 ? Math.max(...treatmentNumbers) : 0
         const nextNumber = (maxNumber + 1).toString().padStart(2, '0')
-        const riskNumber = riskId.split('-')[1]
         return `TREAT-${riskNumber}-${nextNumber}`
       } else {
         // First treatment for this risk
-        const riskNumber = riskId.split('-')[1]
         return `TREAT-${riskNumber}-01`
       }
     } catch (error) {
       console.error('Error generating treatment ID:', error)
-      // Fallback to manual generation
-      const riskNumber = riskId.split('-')[1]
-      return `TREAT-${riskNumber}-01`
+      // Fallback to a safe default - use the original riskId if it's not in expected format
+      const fallbackNumber = riskId.replace(/\D/g, '') || '001'
+      return `TREAT-${fallbackNumber}-01`
     }
   }
 
@@ -140,7 +145,7 @@ export default function AddTreatment() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: keyof TreatmentFormData, value: string | number) => {
+  const handleInputChange = (field: keyof TreatmentFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
