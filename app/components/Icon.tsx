@@ -141,6 +141,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'exclamation-circle': faExclamationCircle,
     'exclamation-triangle': faTriangleExclamation,
     'information-circle': faCircleInfo,
+    'info-circle': faCircleInfo,
     'x-mark': faXmark,
     x: faXmark,
     'id-card': faIdCard,

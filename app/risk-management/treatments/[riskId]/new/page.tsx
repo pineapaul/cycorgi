@@ -5,22 +5,16 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { TREATMENT_STATUS } from '../../../../../lib/constants'
 import { formatInformationAssets } from '../../../../../lib/utils'
 
 interface TreatmentFormData {
   riskId: string
   treatmentId: string
-  treatmentJira?: string
+  treatmentJira: string
   riskTreatment: string
   riskTreatmentOwner: string
   dateRiskTreatmentDue: string
-  extendedDueDate?: string
-  numberOfExtensions?: number
-  completionDate?: string
-  closureApproval?: string
-  closureApprovedBy?: string
-  notes?: string
+  notes: string
 }
 
 type TreatmentFormErrors = {
@@ -34,44 +28,91 @@ export default function AddTreatment() {
   const riskId = params.riskId as string
   
   const [formData, setFormData] = useState<TreatmentFormData>({
-    riskId: riskId,
+    riskId: riskId || '',
     treatmentId: '',
     treatmentJira: '',
     riskTreatment: '',
     riskTreatmentOwner: '',
     dateRiskTreatmentDue: '',
-    extendedDueDate: '',
-    numberOfExtensions: 0,
-    completionDate: '',
-    closureApproval: TREATMENT_STATUS.PENDING,
-    closureApprovedBy: '',
     notes: ''
   })
 
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<TreatmentFormErrors>({})
   const [riskDetails, setRiskDetails] = useState<any>(null)
+  const [generatingTreatmentId, setGeneratingTreatmentId] = useState(false)
 
   const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
 
-  // Fetch risk details to display context
+  // Generate next treatment ID
+  const generateNextTreatmentId = async (riskId: string): Promise<string> => {
+    try {
+      const response = await fetch(`/api/treatments/${riskId}`)
+      const result = await response.json()
+      
+      if (result.success && result.data.length > 0) {
+        // Extract treatment numbers and find the highest one
+        const treatmentNumbers = result.data
+          .filter((treatment: any) => treatment.treatmentId && typeof treatment.treatmentId === 'string')
+          .map((treatment: any) => {
+            // Extract risk number from riskId (e.g., "001" from "RISK-001")
+            const riskNumber = riskId.split('-')[1]
+            const expectedPrefix = `TREAT-${riskNumber}-`
+            
+            if (treatment.treatmentId.startsWith(expectedPrefix)) {
+              const match = treatment.treatmentId.match(/TREAT-\d+-(\d+)$/)
+              return match ? parseInt(match[1], 10) : 0
+            }
+            return 0
+          })
+          .filter((num: number) => !isNaN(num) && num > 0)
+        
+        const maxNumber = treatmentNumbers.length > 0 ? Math.max(...treatmentNumbers) : 0
+        const nextNumber = (maxNumber + 1).toString().padStart(2, '0')
+        const riskNumber = riskId.split('-')[1]
+        return `TREAT-${riskNumber}-${nextNumber}`
+      } else {
+        // First treatment for this risk
+        const riskNumber = riskId.split('-')[1]
+        return `TREAT-${riskNumber}-01`
+      }
+    } catch (error) {
+      console.error('Error generating treatment ID:', error)
+      // Fallback to manual generation
+      const riskNumber = riskId.split('-')[1]
+      return `TREAT-${riskNumber}-01`
+    }
+  }
+
+  // Fetch risk details and generate treatment ID
   useEffect(() => {
-    const fetchRiskDetails = async () => {
+    const fetchRiskDetailsAndGenerateId = async () => {
+      if (!riskId) return
+
       try {
+        // Fetch risk details
         const response = await fetch(`/api/risks/${riskId}`)
         const result = await response.json()
         
         if (result.success) {
           setRiskDetails(result.data)
         }
+
+        // Generate treatment ID
+        setGeneratingTreatmentId(true)
+        const newTreatmentId = await generateNextTreatmentId(riskId)
+        setFormData(prev => ({
+          ...prev,
+          treatmentId: newTreatmentId
+        }))
       } catch (error) {
-        console.error('Error fetching risk details:', error)
+        console.error('Error fetching risk details or generating treatment ID:', error)
+      } finally {
+        setGeneratingTreatmentId(false)
       }
     }
 
-    if (riskId) {
-      fetchRiskDetails()
-    }
+    fetchRiskDetailsAndGenerateId()
   }, [riskId])
 
   const validateForm = (): boolean => {
@@ -95,21 +136,11 @@ export default function AddTreatment() {
       }
     }
 
-    // Validate extended due date is after original due date
-    if (formData.extendedDueDate && formData.dateRiskTreatmentDue) {
-      const originalDueDate = new Date(formData.dateRiskTreatmentDue)
-      const extendedDueDate = new Date(formData.extendedDueDate)
-      
-      if (extendedDueDate <= originalDueDate) {
-        newErrors.extendedDueDate = 'Extended due date must be after the original due date'
-      }
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: keyof TreatmentFormData, value: string) => {
+  const handleInputChange = (field: keyof TreatmentFormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -245,25 +276,70 @@ export default function AddTreatment() {
                 Treatment Details
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Treatment ID */}
+                <div>
+                  <label htmlFor="treatmentId" className="block text-sm font-medium text-gray-700 mb-2">
+                    Treatment ID <span className="text-red-500">*</span>
+                    <span className="text-xs text-gray-500 ml-2">(Auto-generated)</span>
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      id="treatmentId"
+                      value={formData.treatmentId}
+                      readOnly
+                      className={`flex-1 px-3 py-2 border rounded-md shadow-sm bg-gray-50 text-gray-600 cursor-not-allowed ${
+                        errors.treatmentId 
+                          ? 'border-red-300' 
+                          : 'border-gray-300'
+                      }`}
+                      placeholder={generatingTreatmentId ? "Generating..." : "e.g., TREAT-001-05"}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setGeneratingTreatmentId(true)
+                        const newTreatmentId = await generateNextTreatmentId(riskId)
+                        setFormData(prev => ({ ...prev, treatmentId: newTreatmentId }))
+                        setGeneratingTreatmentId(false)
+                      }}
+                      disabled={generatingTreatmentId}
+                      className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Regenerate Treatment ID"
+                    >
+                      <Icon name="arrow-clockwise" size={14} />
+                    </button>
+                  </div>
+                  {errors.treatmentId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.treatmentId}</p>
+                  )}
+                  {generatingTreatmentId && (
+                    <div className="mt-1 text-xs text-blue-600 flex items-center">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-1"></div>
+                      Generating treatment ID...
+                    </div>
+                  )}
+                </div>
+
                 {/* Treatment JIRA Ticket */}
                 <div>
-                  <label htmlFor="treatmentJiraTicket" className="block text-sm font-medium text-gray-700 mb-2">
-                    Treatment JIRA Ticket <span className="text-red-500">*</span>
+                  <label htmlFor="treatmentJira" className="block text-sm font-medium text-gray-700 mb-2">
+                    Treatment JIRA URL
                   </label>
                   <input
-                    type="text"
-                    id="treatmentJiraTicket"
-                    value={formData.treatmentJiraTicket}
-                    onChange={(e) => handleInputChange('treatmentJiraTicket', e.target.value)}
+                    type="url"
+                    id="treatmentJira"
+                    value={formData.treatmentJira}
+                    onChange={(e) => handleInputChange('treatmentJira', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.treatmentJiraTicket 
+                      errors.treatmentJira 
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
                         : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
                     }`}
-                    placeholder="e.g., TREAT-001-01"
+                    placeholder="https://jira.company.com/browse/TREAT-001-05"
                   />
-                  {errors.treatmentJiraTicket && (
-                    <p className="mt-1 text-sm text-red-600">{errors.treatmentJiraTicket}</p>
+                  {errors.treatmentJira && (
+                    <p className="mt-1 text-sm text-red-600">{errors.treatmentJira}</p>
                   )}
                 </div>
 
@@ -309,27 +385,6 @@ export default function AddTreatment() {
                     <p className="mt-1 text-sm text-red-600">{errors.dateRiskTreatmentDue}</p>
                   )}
                 </div>
-
-                {/* Extended Due Date */}
-                <div>
-                  <label htmlFor="extendedDueDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Extended Due Date
-                  </label>
-                  <input
-                    type="date"
-                    id="extendedDueDate"
-                    value={formData.extendedDueDate}
-                    onChange={(e) => handleInputChange('extendedDueDate', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.extendedDueDate 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  />
-                  {errors.extendedDueDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.extendedDueDate}</p>
-                  )}
-                </div>
               </div>
 
               {/* Risk Treatment - Full Width */}
@@ -361,56 +416,9 @@ export default function AddTreatment() {
                 <Icon name="plus-circle" size={16} className="mr-2 text-gray-500" />
                 Additional Information (Optional)
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Completion Date */}
-                <div>
-                  <label htmlFor="completionDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Completion Date
-                  </label>
-                  <input
-                    type="date"
-                    id="completionDate"
-                    value={formData.completionDate}
-                    onChange={(e) => handleInputChange('completionDate', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                  />
-                </div>
-
-                {/* Closure Approval */}
-                <div>
-                  <label htmlFor="closureApproval" className="block text-sm font-medium text-gray-700 mb-2">
-                    Closure Approval
-                  </label>
-                  <select
-                    id="closureApproval"
-                    value={formData.closureApproval}
-                    onChange={(e) => handleInputChange('closureApproval', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                  >
-                    <option value={TREATMENT_STATUS.PENDING}>{TREATMENT_STATUS.PENDING}</option>
-                    <option value={TREATMENT_STATUS.APPROVED}>{TREATMENT_STATUS.APPROVED}</option>
-                    <option value={TREATMENT_STATUS.REJECTED}>{TREATMENT_STATUS.REJECTED}</option>
-                  </select>
-                </div>
-
-                {/* Closure Approved By */}
-                <div>
-                  <label htmlFor="closureApprovedBy" className="block text-sm font-medium text-gray-700 mb-2">
-                    Closure Approved By
-                  </label>
-                  <input
-                    type="text"
-                    id="closureApprovedBy"
-                    value={formData.closureApprovedBy}
-                    onChange={(e) => handleInputChange('closureApprovedBy', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    placeholder="Enter approver name"
-                  />
-                </div>
-              </div>
 
               {/* Notes */}
-              <div className="mt-6">
+              <div>
                 <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
                   Notes
                 </label>
