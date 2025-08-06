@@ -12,6 +12,12 @@ export const EXTENSION_STATUS = {
   REJECTED: 'Rejected'
 } as const
 
+export const IMPACT_CIA = {
+  CONFIDENTIALITY: 'Confidentiality',
+  INTEGRITY: 'Integrity',
+  AVAILABILITY: 'Availability'
+} as const
+
 export const RISK_PHASES = {
   DRAFT: 'Draft',
   IDENTIFICATION: 'Identification',
@@ -20,6 +26,13 @@ export const RISK_PHASES = {
   TREATMENT: 'Treatment',
   MONITORING: 'Monitoring',
   CLOSED: 'Closed'
+} as const
+
+export const RISK_ACTIONS = {
+  AVOID: 'Avoid',
+  TRANSFER: 'Transfer',
+  ACCEPT: 'Accept',
+  MITIGATE: 'Mitigate'
 } as const
 
 export const RISK_RATINGS = {
@@ -58,3 +71,5 @@ export type RiskPhase = typeof RISK_PHASES[keyof typeof RISK_PHASES]
 export type RiskRating = typeof RISK_RATINGS[keyof typeof RISK_RATINGS]
 export type ConsequenceRating = typeof CONSEQUENCE_RATINGS[keyof typeof CONSEQUENCE_RATINGS]
 export type LikelihoodRating = typeof LIKELIHOOD_RATINGS[keyof typeof LIKELIHOOD_RATINGS] 
+export type ImpactCIA = typeof IMPACT_CIA[keyof typeof IMPACT_CIA]
+export type RiskAction = typeof RISK_ACTIONS[keyof typeof RISK_ACTIONS]
