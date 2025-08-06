@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import { useToast } from '@/app/components/Toast'
+import { escapeHtml } from '@/lib/utils'
 
 interface InformationAsset {
   id: string
@@ -210,7 +211,7 @@ export default function AssetProfilePage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#22223B' }}>
-              {isEditing ? 'Edit Asset' : asset.informationAsset}
+              {isEditing ? 'Edit Asset' : escapeHtml(asset.informationAsset)}
             </h1>
             <p className="text-gray-600" style={{ color: '#22223B' }}>
               Asset Profile
@@ -297,7 +298,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.informationAsset}</p>
+                <p className="text-gray-900">{escapeHtml(asset.informationAsset)}</p>
               )}
             </div>
 
@@ -320,7 +321,7 @@ export default function AssetProfilePage() {
                   <option value="Communication">Communication</option>
                 </select>
               ) : (
-                <p className="text-gray-900">{asset.category}</p>
+                <p className="text-gray-900">{escapeHtml(asset.category)}</p>
               )}
             </div>
 
@@ -345,7 +346,7 @@ export default function AssetProfilePage() {
                   <option value="Logs">Logs</option>
                 </select>
               ) : (
-                <p className="text-gray-900">{asset.type}</p>
+                <p className="text-gray-900">{escapeHtml(asset.type)}</p>
               )}
             </div>
 
@@ -359,7 +360,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.description}</p>
+                <p className="text-gray-900">{escapeHtml(asset.description)}</p>
               )}
             </div>
 
@@ -373,7 +374,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.location}</p>
+                <p className="text-gray-900">{escapeHtml(asset.location)}</p>
               )}
             </div>
           </div>
@@ -392,7 +393,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.owner}</p>
+                <p className="text-gray-900">{escapeHtml(asset.owner)}</p>
               )}
             </div>
 
@@ -406,7 +407,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.sme}</p>
+                <p className="text-gray-900">{escapeHtml(asset.sme)}</p>
               )}
             </div>
 
@@ -420,7 +421,7 @@ export default function AssetProfilePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900">{asset.administrator}</p>
+                <p className="text-gray-900">{escapeHtml(asset.administrator)}</p>
               )}
             </div>
 
@@ -439,7 +440,7 @@ export default function AssetProfilePage() {
                   <option value="ART-5">ART-5</option>
                 </select>
               ) : (
-                <p className="text-gray-900">{asset.agileReleaseTrain}</p>
+                <p className="text-gray-900">{escapeHtml(asset.agileReleaseTrain)}</p>
               )}
             </div>
           </div>
@@ -468,7 +469,7 @@ export default function AssetProfilePage() {
                   asset.confidentiality === 'Low' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {asset.confidentiality}
+                  {escapeHtml(asset.confidentiality)}
                 </span>
               )}
             </div>
@@ -492,7 +493,7 @@ export default function AssetProfilePage() {
                   asset.integrity === 'Low' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {asset.integrity}
+                  {escapeHtml(asset.integrity)}
                 </span>
               )}
             </div>
@@ -518,7 +519,7 @@ export default function AssetProfilePage() {
                   asset.availability === 'Low' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {asset.availability}
+                  {escapeHtml(asset.availability)}
                 </span>
               )}
             </div>
@@ -544,7 +545,7 @@ export default function AssetProfilePage() {
                   asset.criticality === 'non-critical' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {asset.criticality.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {escapeHtml(asset.criticality.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()))}
                 </span>
               )}
             </div>
@@ -563,7 +564,7 @@ export default function AssetProfilePage() {
               placeholder="Enter any additional information about this asset..."
             />
           ) : (
-            <p className="text-gray-900">{asset.additionalInfo}</p>
+            <p className="text-gray-900">{escapeHtml(asset.additionalInfo)}</p>
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
-import { formatDate } from '@/lib/utils'
+import { formatDate, escapeHtml } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -113,7 +113,7 @@ export default function ThirdPartyDetailPage() {
           href={`/inventory/information-assets/${assetIds[0]}`}
           className="text-blue-600 hover:text-blue-800 underline"
         >
-          {assetName}
+          {escapeHtml(assetName)}
         </Link>
       )
     }
@@ -129,7 +129,7 @@ export default function ThirdPartyDetailPage() {
                 href={`/inventory/information-assets/${id}`}
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                {assetName}
+                {escapeHtml(assetName)}
               </Link>
             </div>
           )
@@ -255,10 +255,10 @@ export default function ThirdPartyDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900" style={{ color: '#22223B' }}>
-            {editing ? 'Edit Third Party' : thirdParty.vendorName}
+            {editing ? 'Edit Third Party' : escapeHtml(thirdParty.vendorName)}
           </h1>
           <p className="text-gray-600 mt-2" style={{ color: '#22223B' }}>
-            {editing ? 'Update third party information' : `Vendor ID: ${thirdParty.vendorId}`}
+            {editing ? 'Update third party information' : `Vendor ID: ${escapeHtml(thirdParty.vendorId)}`}
           </p>
         </div>
         <div className="flex space-x-3">
@@ -345,7 +345,7 @@ export default function ThirdPartyDetailPage() {
                 >
                   {informationAssets.map((asset) => (
                     <option key={asset.id} value={asset.id}>
-                      {asset.id} - {asset.informationAsset} ({asset.category})
+                      {escapeHtml(asset.id)} - {escapeHtml(asset.informationAsset)} ({escapeHtml(asset.category)})
                     </option>
                   ))}
                 </select>
@@ -575,11 +575,11 @@ export default function ThirdPartyDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Vendor ID</label>
-              <p className="text-gray-900">{thirdParty.vendorId}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.vendorId)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Vendor Name</label>
-              <p className="text-gray-900">{thirdParty.vendorName}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.vendorName)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Information Assets</label>
@@ -589,19 +589,19 @@ export default function ThirdPartyDetailPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Functional Unit</label>
-              <p className="text-gray-900">{thirdParty.functionalUnit}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.functionalUnit)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Vendor Contact</label>
-              <p className="text-gray-900">{thirdParty.vendorContact}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.vendorContact)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Internal Contact</label>
-              <p className="text-gray-900">{thirdParty.internalContact}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.internalContact)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Entity</label>
-              <p className="text-gray-900">{thirdParty.entity}</p>
+              <p className="text-gray-900">{escapeHtml(thirdParty.entity)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
@@ -613,15 +613,15 @@ export default function ThirdPartyDetailPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Risk Assessment Jira Ticket</label>
-              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{thirdParty.riskAssessmentJiraTicket || '-'}</p>
+              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{escapeHtml(thirdParty.riskAssessmentJiraTicket || '-')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Data Privacy Risk Assessment</label>
-              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{thirdParty.dataPrivacy || '-'}</p>
+              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{escapeHtml(thirdParty.dataPrivacy || '-')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Security Review Jira Ticket</label>
-              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{thirdParty.securityReviewJiraTicket || '-'}</p>
+              <p className="text-blue-600 hover:text-blue-800 cursor-pointer">{escapeHtml(thirdParty.securityReviewJiraTicket || '-')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Last Security Review Date</label>
@@ -636,7 +636,7 @@ export default function ThirdPartyDetailPage() {
                 thirdParty.status.toLowerCase() === 'expired' ? 'bg-gray-100 text-gray-800' :
                 'bg-gray-100 text-gray-800'
               }`}>
-                {thirdParty.status}
+                {escapeHtml(thirdParty.status)}
               </span>
             </div>
           </div>
