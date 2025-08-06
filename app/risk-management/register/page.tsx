@@ -302,12 +302,28 @@ export default function RiskRegister() {
     const fetchRisks = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/risks')
-        const result = await response.json()
         
-        if (result.success) {
+        // Fetch both risks and treatments
+        const [risksResponse, treatmentsResponse] = await Promise.all([
+          fetch('/api/risks'),
+          fetch('/api/treatments')
+        ])
+        
+        const risksResult = await risksResponse.json()
+        const treatmentsResult = await treatmentsResponse.json()
+        
+        if (risksResult.success && treatmentsResult.success) {
+          // Create a map of treatments by riskId for quick lookup
+          const treatmentsByRiskId = new Map()
+          treatmentsResult.data.forEach((treatment: any) => {
+            if (!treatmentsByRiskId.has(treatment.riskId)) {
+              treatmentsByRiskId.set(treatment.riskId, [])
+            }
+            treatmentsByRiskId.get(treatment.riskId).push(treatment)
+          })
+          
           // Filter out draft risks and transform the data
-          const transformedRisks = result.data
+          const transformedRisks = risksResult.data
             .filter((risk: any) => risk.currentPhase !== 'Draft')
             .map((risk: any) => {
             // Create a new object with only the properties we need - simplified
@@ -322,6 +338,12 @@ export default function RiskRegister() {
               };
               return phaseMap[phase] || phase;
             };
+
+            // Get treatments for this risk
+            const riskTreatments = treatmentsByRiskId.get(risk.riskId) || []
+            const treatmentsText = riskTreatments.length > 0 
+              ? `${riskTreatments.length} treatment${riskTreatments.length > 1 ? 's' : ''} assigned`
+              : 'No treatments assigned'
 
             const transformed = {
               riskId: risk.riskId,
@@ -345,32 +367,32 @@ export default function RiskRegister() {
               riskAction: 'Requires treatment',
               reasonForAcceptance: risk.reasonForAcceptance || '',
               dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
-              riskTreatments: '',
+              riskTreatments: treatmentsText,
               dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
-              dateRiskTreatmentsAssigned: '',
-              applicableControlsAfterTreatment: '',
+              dateRiskTreatmentsAssigned: risk.dateRiskTreatmentsAssigned ? new Date(risk.dateRiskTreatmentsAssigned).toISOString().split('T')[0] : '',
+              applicableControlsAfterTreatment: risk.applicableControlsAfterTreatment || '',
               residualConsequence: risk.residualConsequence || '',
               residualLikelihood: risk.residualLikelihood || '',
               residualRiskRating: risk.residualRiskRating || '',
               residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
               dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
-              dateRiskTreatmentCompleted: '',
+              dateRiskTreatmentCompleted: risk.dateRiskTreatmentCompleted ? new Date(risk.dateRiskTreatmentCompleted).toISOString().split('T')[0] : '',
             }
             return transformed
           })
           setRisks(transformedRisks)
         } else {
-          setError(result.error || 'Failed to fetch risks')
+          setError(risksResult.error || treatmentsResult.error || 'Failed to fetch data')
         }
               } catch (err) {
           if (err instanceof TypeError) {
-            setError('Network error: Failed to fetch risks. Please check your connection.')
+            setError('Network error: Failed to fetch data. Please check your connection.')
           } else if (err instanceof SyntaxError) {
             setError('Parsing error: Received malformed data from the server.')
           } else {
-            setError('Unexpected error: Failed to fetch risks.')
+            setError('Unexpected error: Failed to fetch data.')
           }
-          console.error('Error fetching risks:', err)
+          console.error('Error fetching data:', err)
         } finally {
           setLoading(false)
         }
@@ -418,11 +440,22 @@ export default function RiskRegister() {
     
     switch (priority.toLowerCase()) {
       case 'high':
+      case 'critical':
+      case 'almost certain':
         return 'bg-red-100 text-red-800'
       case 'medium':
+      case 'moderate':
+      case 'likely':
+      case 'possible':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
+      case 'minor':
+      case 'insignificant':
+      case 'unlikely':
+      case 'rare':
         return 'bg-green-100 text-green-800'
+      case 'major':
+        return 'bg-orange-100 text-orange-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -432,9 +465,11 @@ export default function RiskRegister() {
     if (!level) return 'bg-gray-100 text-gray-800'
     
     switch (level.toLowerCase()) {
-      case 'high':
+      case 'extreme':
         return 'bg-red-100 text-red-800'
-      case 'medium':
+      case 'high':
+        return 'bg-orange-100 text-orange-800'
+      case 'moderate':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
         return 'bg-green-100 text-green-800'

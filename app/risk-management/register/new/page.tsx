@@ -66,7 +66,7 @@ export default function NewRisk() {
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
   const [selectedLetter, setSelectedLetter] = useState('')
 
-  const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'impact']
+  const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'consequenceRating', 'likelihoodRating', 'riskRating', 'impact']
 
   // Fetch information assets on component mount
   useEffect(() => {
@@ -552,8 +552,95 @@ export default function NewRisk() {
                 </div>
               </div>
 
-              {/* Impact Assessment */}
+              {/* Risk Assessment */}
               <div className="mt-6">
+                <h3 className="text-md font-medium text-gray-900 mb-3">Risk Assessment <span className="text-red-500">*</span></h3>
+                <p className="text-sm text-gray-600 mb-4">Assess the consequence and likelihood of this risk:</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Consequence Rating */}
+                  <div>
+                    <label htmlFor="consequenceRating" className="block text-sm font-medium text-gray-700 mb-2">
+                      Consequence Rating <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="consequenceRating"
+                      value={formData.consequenceRating}
+                      onChange={(e) => handleInputChange('consequenceRating', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                        errors.consequenceRating 
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                      }`}
+                    >
+                      <option value="">Select consequence rating</option>
+                      <option value="Insignificant">Insignificant</option>
+                      <option value="Minor">Minor</option>
+                      <option value="Moderate">Moderate</option>
+                      <option value="Major">Major</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                    {errors.consequenceRating && (
+                      <p className="mt-1 text-sm text-red-600">{errors.consequenceRating}</p>
+                    )}
+                  </div>
+
+                  {/* Likelihood Rating */}
+                  <div>
+                    <label htmlFor="likelihoodRating" className="block text-sm font-medium text-gray-700 mb-2">
+                      Likelihood Rating <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="likelihoodRating"
+                      value={formData.likelihoodRating}
+                      onChange={(e) => handleInputChange('likelihoodRating', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                        errors.likelihoodRating 
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                      }`}
+                    >
+                      <option value="">Select likelihood rating</option>
+                      <option value="Rare">Rare</option>
+                      <option value="Unlikely">Unlikely</option>
+                      <option value="Possible">Possible</option>
+                      <option value="Likely">Likely</option>
+                      <option value="Almost Certain">Almost Certain</option>
+                    </select>
+                    {errors.likelihoodRating && (
+                      <p className="mt-1 text-sm text-red-600">{errors.likelihoodRating}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Risk Rating */}
+                <div className="mt-6">
+                  <label htmlFor="riskRating" className="block text-sm font-medium text-gray-700 mb-2">
+                    Risk Rating <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="riskRating"
+                    value={formData.riskRating}
+                    onChange={(e) => handleInputChange('riskRating', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                      errors.riskRating 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                    }`}
+                  >
+                    <option value="">Select risk rating</option>
+                    <option value="Low">Low</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="High">High</option>
+                    <option value="Extreme">Extreme</option>
+                  </select>
+                  {errors.riskRating && (
+                    <p className="mt-1 text-sm text-red-600">{errors.riskRating}</p>
+                  )}
+                </div>
+                </div>
+
+                {/* Impact Assessment */}
                 <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA) <span className="text-red-500">*</span></h3>
                 <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

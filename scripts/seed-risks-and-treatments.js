@@ -15,7 +15,7 @@ function loadEnvFile() {
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf8');
     const envVars = {};
-    
+
     envContent.split('\n').forEach(line => {
       const [key, ...valueParts] = line.split('=');
       if (key && valueParts.length > 0) {
@@ -25,7 +25,7 @@ function loadEnvFile() {
         }
       }
     });
-    
+
     // Set environment variables
     Object.keys(envVars).forEach(key => {
       process.env[key] = envVars[key];
@@ -42,7 +42,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 // Risk data generation
 function generateRisks() {
   const functionalUnits = [
-    'IT Security', 'Finance', 'HR', 'Operations', 'Legal', 'Marketing', 
+    'IT Security', 'Finance', 'HR', 'Operations', 'Legal', 'Marketing',
     'Procurement', 'Sales', 'Customer Support', 'Research & Development',
     'Quality Assurance', 'Facilities', 'Compliance', 'Business Development',
     'Product Management', 'Engineering', 'Data Analytics', 'Risk Management',
@@ -50,15 +50,26 @@ function generateRisks() {
   ];
 
   const informationAssets = [
-    'Customer Database, Payment Systems', 'Vendor Management System', 'Financial Systems',
-    'HR Systems', 'Production Systems, Network Infrastructure', 'Contract Management System, Legal Documents',
-    'Customer Data, Marketing Campaigns', 'Source Code Repository, Development Environment',
-    'Backup Systems, Disaster Recovery', 'API Keys, Security Credentials',
-    'Employee Records, Payroll System', 'Network Infrastructure, Security Devices',
-    'Compliance Documentation, Audit Trails', 'Marketing Materials, Brand Assets',
-    'System Logs, Monitoring Tools', 'Email Archive, Communication Systems',
-    'Mobile App Backend, API Services', 'Cloud Infrastructure, Storage Systems',
-    'Third-party Integrations, External APIs', 'Business Intelligence, Analytics Platform'
+    [1, 2, 3, 4, 5], // Customer Database, Payment Systems, Financial Systems, HR Systems, Production Systems
+    [6, 7, 8, 9, 10], // Vendor Management System, Network Infrastructure, Contract Management System, Legal Documents, Customer Data
+    [11, 12, 13, 14, 15], // Marketing Campaigns, Source Code Repository, Development Environment, Backup Systems, Disaster Recovery
+    [16, 17, 18, 19, 20], // API Keys, Security Credentials, Employee Records, Payroll System, Network Infrastructure
+    [21, 22, 23, 24, 25], // Security Devices, Compliance Documentation, Audit Trails, Marketing Materials, Brand Assets
+    [26, 27, 28, 29, 30], // System Logs, Monitoring Tools, Email Archive, Communication Systems, Mobile App Backend
+    [31, 32, 33, 34, 35], // API Services, Cloud Infrastructure, Storage Systems, Third-party Integrations, External APIs
+    [36, 37, 38, 39, 40], // Business Intelligence, Analytics Platform, Customer Database, Payment Systems, Financial Systems
+    [41, 42, 43, 44, 45], // HR Systems, Production Systems, Network Infrastructure, Contract Management System, Legal Documents
+    [46, 47, 48, 49, 50], // Customer Data, Marketing Campaigns, Source Code Repository, Development Environment, Backup Systems
+    [51, 52, 53, 54, 55], // Disaster Recovery, API Keys, Security Credentials, Employee Records, Payroll System
+    [56, 57, 58, 59, 60], // Network Infrastructure, Security Devices, Compliance Documentation, Audit Trails, Marketing Materials
+    [61, 62, 63, 64, 65], // Brand Assets, System Logs, Monitoring Tools, Email Archive, Communication Systems
+    [66, 67, 68, 69, 70], // Mobile App Backend, API Services, Cloud Infrastructure, Storage Systems, Third-party Integrations
+    [71, 72, 73, 74, 75], // External APIs, Business Intelligence, Analytics Platform, Customer Database, Payment Systems
+    [76, 77, 78, 79, 80], // Financial Systems, HR Systems, Production Systems, Network Infrastructure, Contract Management System
+    [81, 82, 83, 84, 85], // Legal Documents, Customer Data, Marketing Campaigns, Source Code Repository, Development Environment
+    [86, 87, 88, 89, 90], // Backup Systems, Disaster Recovery, API Keys, Security Credentials, Employee Records
+    [91, 92, 93, 94, 95], // Payroll System, Network Infrastructure, Security Devices, Compliance Documentation, Audit Trails
+    [96, 97, 98, 99, 100] // Marketing Materials, Brand Assets, System Logs, Monitoring Tools, Email Archive
   ];
 
   const riskStatements = [
@@ -165,23 +176,23 @@ function generateRisks() {
     const currentControlsValue = currentControls[i - 1];
 
     // Generate risk rating based on index
-    let riskLevel, consequenceRating, likelihoodRating;
+    let riskRating, consequenceRating, likelihoodRating;
     if (i <= 5) {
-      riskLevel = 'High';
-      consequenceRating = 'High';
-      likelihoodRating = 'Medium';
+      riskRating = 'Extreme';
+      consequenceRating = 'Critical';
+      likelihoodRating = 'Possible';
     } else if (i <= 10) {
-      riskLevel = 'Medium';
-      consequenceRating = 'Medium';
-      likelihoodRating = 'Medium';
+      riskRating = 'High';
+      consequenceRating = 'Major';
+      likelihoodRating = 'Possible';
     } else if (i <= 15) {
-      riskLevel = 'High';
-      consequenceRating = 'High';
-      likelihoodRating = 'Low';
+      riskRating = 'Moderate';
+      consequenceRating = 'Moderate';
+      likelihoodRating = 'Unlikely';
     } else {
-      riskLevel = 'Medium';
-      consequenceRating = 'Low';
-      likelihoodRating = 'High';
+      riskRating = 'Low';
+      consequenceRating = 'Minor';
+      likelihoodRating = 'Rare';
     }
 
     // Generate CIA impact based on risk type
@@ -197,15 +208,15 @@ function generateRisks() {
     }
 
     // Distribute phases equally among 20 risks (4 risks per phase)
-    const phases = ['identification', 'analysis', 'evaluation', 'treatment', 'monitoring'];
+    const phases = ['Identification', 'Analysis', 'Evaluation', 'Treatment', 'Monitoring'];
     const currentPhase = phases[Math.floor((i - 1) / 4)]; // 4 risks per phase
 
     const risk = {
       riskId,
       functionalUnit,
-      informationAsset,
+      informationAsset: informationAsset.map(id => id.toString()), // Convert IDs to strings
       riskStatement,
-      riskLevel,
+      riskRating,
       consequenceRating,
       likelihoodRating,
       impact,
@@ -218,11 +229,14 @@ function generateRisks() {
       reasonForAcceptance: i <= 5 ? 'High business impact requires immediate attention' : i <= 10 ? 'Moderate risk acceptable with monitoring' : i <= 15 ? 'Risk accepted pending treatment implementation' : 'Low risk acceptable with current controls',
       dateOfSSCApproval: i <= 5 ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() : null,
       dateRiskTreatmentsApproved: i <= 5 ? new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() : null,
-      residualConsequence: i <= 5 ? 'Medium' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
-      residualLikelihood: i <= 5 ? 'Low' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
-      residualRiskRating: i <= 5 ? 'Medium' : i <= 10 ? 'Low' : i <= 15 ? 'Medium' : 'Low',
+      residualConsequence: i <= 5 ? 'Minor' : i <= 10 ? 'Moderate' : i <= 15 ? 'Major' : 'Critical',
+      residualLikelihood: i <= 5 ? 'Rare' : i <= 10 ? 'Unlikely' : i <= 15 ? 'Possible' : 'Likely',
+      residualRiskRating: i <= 5 ? 'Low' : i <= 10 ? 'High' : i <= 15 ? 'Moderate' : 'Extreme',
       residualRiskAcceptedByOwner: i <= 5 ? `${functionalUnit} Director` : i <= 10 ? `${functionalUnit} Manager` : i <= 15 ? `${functionalUnit} Director` : `${functionalUnit} Manager`,
       dateResidualRiskAccepted: i <= 5 ? new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() : null,
+      dateRiskTreatmentCompleted: i <= 5 ? new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() : null,
+      dateRiskTreatmentsAssigned: i <= 5 ? new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString() : i <= 10 ? new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString() : null,
+      applicableControlsAfterTreatment: i <= 5 ? 'Enhanced access controls, multi-factor authentication, continuous monitoring' : i <= 10 ? 'Improved vendor controls, enhanced monitoring, regular assessments' : i <= 15 ? 'Enhanced approval workflows, automated monitoring, audit trails' : 'Basic controls with periodic reviews',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -279,7 +293,7 @@ function generateTreatments() {
 
   for (let riskIndex = 1; riskIndex <= 20; riskIndex++) {
     const riskId = `RISK-${riskIndex.toString().padStart(3, '0')}`;
-    
+
     // Generate 4 treatments per risk
     for (let treatmentIndex = 1; treatmentIndex <= 4; treatmentIndex++) {
       const treatmentId = `TREAT-${riskIndex.toString().padStart(3, '0')}-${treatmentIndex.toString().padStart(2, '0')}`;
@@ -299,14 +313,14 @@ function generateTreatments() {
       if (riskIndex <= 10) {
         // Generate 3-4 extensions
         const numExtensions = Math.floor(Math.random() * 2) + 3; // 3 or 4
-        
+
         for (let extIndex = 1; extIndex <= numExtensions; extIndex++) {
           const extensionDate = new Date(currentDueDate);
           extensionDate.setMonth(extensionDate.getMonth() + 1);
-          
+
           const approvalDate = new Date(currentDueDate);
           approvalDate.setDate(approvalDate.getDate() - 5);
-          
+
           const justifications = [
             'Additional time required for comprehensive testing',
             'Resource constraints due to concurrent projects',
@@ -317,14 +331,14 @@ function generateTreatments() {
             'Third-party vendor delays affecting timeline',
             'Scope expansion due to new requirements'
           ];
-          
+
           extensions.push({
             extendedDueDate: extensionDate.toISOString().split('T')[0],
             approver,
             dateApproved: approvalDate.toISOString().split('T')[0],
             justification: justifications[Math.floor(Math.random() * justifications.length)]
           });
-          
+
           currentDueDate = extensionDate;
           numberOfExtensions++;
         }
@@ -365,52 +379,52 @@ async function seedDatabase() {
     console.log('💡 Make sure your .env.local file contains MONGODB_URI=your_connection_string');
     process.exit(1);
   }
-  
+
   const client = new MongoClient(MONGODB_URI);
-  
+
   try {
     console.log('🔗 Connecting to MongoDB...');
     console.log(`📡 Using URI: ${MONGODB_URI.substring(0, 20)}...`);
     await client.connect();
-    
+
     const db = client.db('cycorgi');
-    
+
     // Generate data
     console.log('📊 Generating risk data...');
     const risks = generateRisks();
-    
+
     console.log('📊 Generating treatment data...');
     const treatments = generateTreatments();
-    
+
     // Clear existing data
     console.log('🧹 Clearing existing data...');
     await db.collection('risks').deleteMany({});
     await db.collection('treatments').deleteMany({});
-    
+
     // Insert risks
     console.log('📝 Inserting risks...');
     const risksResult = await db.collection('risks').insertMany(risks);
-    
+
     // Insert treatments
     console.log('📝 Inserting treatments...');
     const treatmentsResult = await db.collection('treatments').insertMany(treatments);
-    
+
     console.log(`✅ Successfully seeded database:`);
     console.log(`   - ${risksResult.insertedCount} risks`);
     console.log(`   - ${treatmentsResult.insertedCount} treatments`);
     console.log(`   - ${treatments.filter(t => t.numberOfExtensions > 0).length} treatments with extensions`);
-    
+
     console.log('\n📊 Sample data includes:');
     console.log('- RISK-001: Customer data security (High risk)');
     console.log('- RISK-005: HR data protection (High risk)');
     console.log('- RISK-010: Legal compliance (Medium risk)');
     console.log('- RISK-015: System monitoring (High risk)');
     console.log('- RISK-020: Data analytics security (Medium risk)');
-    
+
     console.log('\n🎯 Treatment statistics:');
     console.log(`   - Average extensions per treatment: ${(treatments.reduce((sum, t) => sum + t.numberOfExtensions, 0) / treatments.length).toFixed(1)}`);
     console.log(`   - Completion rate: ${((treatments.filter(t => t.closureApproval === TREATMENT_STATUS.APPROVED).length / treatments.length) * 100).toFixed(1)}%`);
-    
+
   } catch (error) {
     console.error('❌ Error seeding database:', error);
   } finally {
