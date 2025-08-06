@@ -241,7 +241,7 @@ export default function NewRisk() {
           type: 'success'
         })
         // Redirect to the newly created risk's info page using the risk ID
-        router.push(`/risk-management/register/${formData.riskId}`)
+        router.push(`/risk-management/risks/${formData.riskId}`)
       } else {
         showToast({
           title: 'Error',
