@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
-import { formatDate, escapeHtml } from '@/lib/utils'
+import { formatDate, escapeHtml, formatOptionText } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -345,7 +345,7 @@ export default function ThirdPartyDetailPage() {
                 >
                   {informationAssets.map((asset) => (
                     <option key={asset.id} value={asset.id}>
-                      {escapeHtml(asset.id)} - {escapeHtml(asset.informationAsset)} ({escapeHtml(asset.category)})
+                      {formatOptionText(asset.id, ' - ', asset.informationAsset, ' (', asset.category, ')')}
                     </option>
                   ))}
                 </select>

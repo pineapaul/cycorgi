@@ -155,10 +155,13 @@ export function formatDateForCSV(dateString: string): string {
 /**
  * Safely escapes HTML content to prevent XSS attacks
  * @param text - The text to escape
- * @returns Escaped text safe for rendering in JSX
+ * @returns Escaped text safe for rendering in JSX, or original value if not a string
  */
-export function escapeHtml(text: string): string {
-  if (!text || typeof text !== 'string') return ''
+export function escapeHtml(text: unknown): string {
+  // Return original value if it's not a string, to prevent data loss
+  if (typeof text !== 'string') {
+    return String(text || '')
+  }
   
   return text
     .replace(/&/g, '&amp;')
@@ -167,4 +170,14 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')
+}
+
+/**
+ * Safely formats and escapes option text for select elements
+ * @param parts - Array of text parts to concatenate and escape
+ * @returns Properly escaped concatenated string
+ */
+export function formatOptionText(...parts: unknown[]): string {
+  const concatenated = parts.map(part => String(part || '')).join('')
+  return escapeHtml(concatenated)
 } 

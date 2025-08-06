@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import { useToast } from '@/app/components/Toast'
-import { escapeHtml } from '@/lib/utils'
+import { escapeHtml, formatOptionText } from '@/lib/utils'
 
 interface InformationAsset {
   id: string
@@ -165,6 +165,11 @@ export default function AssetProfilePage() {
       ...editedAsset,
       [field]: value
     })
+  }
+
+  // Helper function to format criticality for display
+  const formatCriticalityDisplay = (criticality: string): string => {
+    return criticality.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 
   if (loading) {
@@ -545,7 +550,7 @@ export default function AssetProfilePage() {
                   asset.criticality === 'non-critical' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {escapeHtml(asset.criticality.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()))}
+                  {escapeHtml(formatCriticalityDisplay(asset.criticality))}
                 </span>
               )}
             </div>
