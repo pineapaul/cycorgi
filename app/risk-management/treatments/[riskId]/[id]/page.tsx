@@ -92,7 +92,7 @@ export default function TreatmentInformation() {
   const router = useRouter()
   const { showToast } = useToast()
   const { goBack } = useBackNavigation({
-    fallbackRoute: `/risk-management/risks/${validateRiskId(params.riskId as string)}`
+    fallbackRoute: `/risk-management/register/${validateRiskId(params.riskId as string)}`
   })
   const [treatment, setTreatment] = useState<Treatment | null>(null)
   const [risk, setRisk] = useState<Risk | null>(null)
