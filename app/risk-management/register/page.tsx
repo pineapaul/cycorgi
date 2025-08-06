@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets, formatDate } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
 import { useToast } from '@/app/components/Toast'
 
@@ -102,6 +102,16 @@ const renderCIAValues = (value: string) => {
   )
 }
 
+// Date column keys for consistent formatting
+const DATE_COLUMNS = [
+  'dateRiskRaised',
+  'dateOfSSCApproval', 
+  'dateRiskTreatmentsApproved',
+  'dateResidualRiskAccepted',
+  'dateRiskTreatmentsAssigned',
+  'dateRiskTreatmentCompleted'
+]
+
 // Get columns for each phase
 const getColumnsForPhase = (phase: string): Column[] => {
   const allColumns: Column[] = [
@@ -110,7 +120,7 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
     { key: 'currentPhase', label: 'Current Phase', sortable: true },
     { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
-    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true },
+    { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '120px' },
     { key: 'raisedBy', label: 'Raised By', sortable: true },
     { key: 'riskOwner', label: 'Risk Owner', sortable: true },
     { key: 'affectedSites', label: 'Affected Sites', sortable: true },
@@ -126,13 +136,17 @@ const getColumnsForPhase = (phase: string): Column[] => {
     { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
     { key: 'riskAction', label: 'Risk Action', sortable: true },
     { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
-    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true },
-    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true },
+    { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '120px' },
+    { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
+    { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '120px' },
+    { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '120px' },
+    { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
     { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
     { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
     { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
     { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
-         { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
+    { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '120px' },
+    { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '120px' },
   ]
 
   switch (phase) {
@@ -313,10 +327,10 @@ export default function RiskRegister() {
               riskId: risk.riskId,
               functionalUnit: risk.functionalUnit,
               currentPhase: getPhaseDisplayName(risk.currentPhase),
-                              jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
+              jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
               dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
               raisedBy: risk.riskOwner,
-              riskOwner: risk.riskOwner, // Add this for the riskOwner column
+              riskOwner: risk.riskOwner,
               affectedSites: 'All Sites',
               informationAssets: formatInformationAssets(risk.informationAsset) || '',
               threat: risk.threat,
@@ -324,7 +338,7 @@ export default function RiskRegister() {
               riskStatement: risk.riskStatement,
               impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
               currentControls: risk.currentControls,
-                              currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
+              currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
               consequence: risk.consequenceRating,
               likelihood: risk.likelihoodRating,
               currentRiskRating: risk.riskRating,
@@ -340,7 +354,7 @@ export default function RiskRegister() {
               residualRiskRating: risk.residualRiskRating || '',
               residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
               dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
-                             dateRiskTreatmentCompleted: '',
+              dateRiskTreatmentCompleted: '',
             }
             return transformed
           })
@@ -537,6 +551,13 @@ export default function RiskRegister() {
           </span>
         )
       }
+       if (DATE_COLUMNS.includes(col.key)) {
+         return (
+           <span className="truncate block max-w-full">
+             {formatDate(value)}
+           </span>
+         )
+       }
 
       
       // Implement tooltip rendering for all content
