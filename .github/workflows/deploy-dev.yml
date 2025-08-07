@@ -1,9 +1,12 @@
-name: Deploy GRC Platform (Dev)
+name: Deploy to GCP Dev
 
 on:
   push:
     branches:
-      - dev
+      - main
+    paths:
+      - 'infra/environments/dev/**'
+      - '.github/workflows/deploy-dev.yml'
 
 permissions:
   id-token: write
@@ -11,26 +14,30 @@ permissions:
 
 jobs:
   deploy:
+    name: Deploy Dev Infra to GCP
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.7.5
+      - name: Authenticate to Google Cloud (OIDC)
+        id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: 'projects/720149050668/locations/global/workloadIdentityPools/github/providers/github-provider'
+          service_account: 'grc-dev-invoker@cycorgi-grc-platform.iam.gserviceaccount.com'
 
-    - name: Authenticate with Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        token_format: "access_token"
-        workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-        service_account: terraform-deployer@cycorgi-grc-platform.iam.gserviceaccount.com
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
 
-    - name: Terraform Init
-      run: terraform init
+      - name: Terraform Init
+        working-directory: infra/environments/dev
+        run: terraform init -upgrade
 
-    - name: Terraform Plan
-      run: terraform plan
+      - name: Terraform Apply
+        working-directory: infra/environments/dev
+        run: terraform apply -auto-approve
