@@ -26,8 +26,8 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
-          workload_identity_provider: 'projects/720149050668/locations/global/workloadIdentityPools/github/providers/github-provider'
-          service_account: 'grc-dev-invoker@cycorgi-grc-platform.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/720149050668/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'terraform-deployer@cycorgi-grc-platform.iam.gserviceaccount.com'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
