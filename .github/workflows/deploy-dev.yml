@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'infra/environments/dev/**'
-      - '.github/workflows/deploy-dev.yml'
 
 permissions:
   id-token: write
