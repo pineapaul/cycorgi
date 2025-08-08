@@ -1812,16 +1812,16 @@ export default function RiskInformation() {
           <DataTable
             data={treatments}
             columns={[
-              { key: 'riskTreatment', label: 'Risk Treatment', sortable: true },
-              { key: 'actions', label: 'Actions', sortable: false },
-              { key: 'treatmentId', label: 'Treatment ID', sortable: true },
-              { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true },
-              { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true },
-              { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true },
-              { key: 'numberOfExtensions', label: 'Number of Extensions', sortable: true },
-              { key: 'completionDate', label: 'Completion Date', sortable: true },
-              { key: 'closureApproval', label: 'Closure Approval', sortable: true },
-              { key: 'closureApprovedBy', label: 'Closure Approved by', sortable: true },
+              { key: 'riskTreatment', label: 'Risk Treatment', sortable: true, width: 'auto' },
+              { key: 'actions', label: 'Add to Workshop Agenda', sortable: false, width: '120px', align: 'center' as const },
+              { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
+              { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true, width: '180px' },
+              { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true, width: '160px' },
+              { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true, width: '160px' },
+              { key: 'numberOfExtensions', label: 'Number of Extensions', sortable: true, width: '140px' },
+              { key: 'completionDate', label: 'Completion Date', sortable: true, width: '150px' },
+              { key: 'closureApproval', label: 'Closure Approval', sortable: true, width: '140px' },
+              { key: 'closureApprovedBy', label: 'Closure Approved by', sortable: true, width: '160px' },
             ].map(col => ({
               ...col,
               render: (value: any, row: any) => {
@@ -1852,39 +1852,7 @@ export default function RiskInformation() {
                 }
                 if (col.key === 'actions') {
                   return (
-                    <div className="flex items-center space-x-2">
-                      <Tooltip content="View Treatment Details">
-                        <Link
-                          href={`/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`}
-                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                        >
-                          <Icon name="eye" size={12} />
-                        </Link>
-                      </Tooltip>
-                      <Tooltip content="Copy Treatment Link">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`
-                            navigator.clipboard.writeText(url).then(() => {
-                              showToast({
-                                title: 'Success',
-                                message: 'Treatment link copied to clipboard!',
-                                type: 'success'
-                              })
-                            }).catch(() => {
-                              showToast({
-                                title: 'Error',
-                                message: 'Failed to copy link to clipboard',
-                                type: 'error'
-                              })
-                            })
-                          }}
-                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-                        >
-                          <Icon name="link" size={12} />
-                        </button>
-                      </Tooltip>
+                    <div className="flex items-center justify-center">
                       <Tooltip content="Add to Workshop Agenda">
                         <button
                           onClick={(e) => {
@@ -1896,23 +1864,22 @@ export default function RiskInformation() {
                               type: 'success'
                             })
                           }}
-                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
                         >
-                          <Icon name="calendar-plus" size={12} className="mr-1" />
-                          Workshop
+                          <Icon name="calendar-plus" size={12} />
                         </button>
                       </Tooltip>
                     </div>
                   )
                 }
-                // Implement tooltip rendering for all content
+                // Implement responsive content display
                 const cellValue = value ? String(value) : '-'
                 return (
                   <div className="relative group">
-                    <span className="truncate block max-w-full">
+                    <span className="block break-words w-full">
                       {cellValue}
                     </span>
-                    <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words">
+                    <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-sm break-words">
                       {cellValue}
                       <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                     </div>
@@ -1920,7 +1887,10 @@ export default function RiskInformation() {
                 )
               }
             }))}
-            onRowClick={() => { }}
+            onRowClick={(row: any) => {
+              const treatmentUrl = `/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`
+              window.location.href = treatmentUrl
+            }}
             onExportCSV={() => { }}
             selectable={true}
           />
