@@ -68,10 +68,7 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
     'treatmentId' in selectedTreatments[0]
 }
 
-// Helper function to safely check if array is empty or can be treated as TreatmentMinutes
-const isEmptyOrTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): boolean => {
-  return selectedTreatments.length === 0 || isTreatmentMinutesArray(selectedTreatments)
-}
+
 
 interface Workshop {
   _id: string
@@ -381,7 +378,7 @@ const generatePDFHTML = (
         ${riskTreatments.length > 0 ? `
           <div>
             <h4 style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 12px;">Risk Treatments</h4>
-            ${riskTreatments.map((treatment: Treatment, treatmentIndex: number) => {
+            ${riskTreatments.map((treatment: Treatment) => {
       const treatmentMinutes = getTreatmentMinutes(treatment.treatmentId, item.selectedTreatments)
       return `
                 <div style="background-color: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px;">
@@ -1453,8 +1450,7 @@ export default function WorkshopDetails() {
   const [error, setError] = useState<string | null>(null)
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
-  // Per-field saving states
-  const [savingFields, setSavingFields] = useState<Set<string>>(new Set())
+
   const [exportingPDF, setExportingPDF] = useState(false)
   // Extension modal state
   const [showExtensionModal, setShowExtensionModal] = useState(false)

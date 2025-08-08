@@ -140,9 +140,7 @@ export default function RiskInformation() {
     return id.trim()
   }
 
-  const isValidRiskId = (riskId: string | string[] | undefined): riskId is string => {
-    return validateRiskId(riskId) !== null
-  }
+
 
   // Safe API URL construction
   const buildApiUrl = (endpoint: string, riskId?: string | string[] | undefined): string | null => {
@@ -245,6 +243,33 @@ export default function RiskInformation() {
           }
           setOriginalInformationAssetIds(originalIds)
           
+          // Helper function to map asset IDs to names
+          const mapAssetIdsToNames = (assetIds: any): string => {
+            if (!assetIds) return ''
+            
+            let ids: string[] = []
+            if (Array.isArray(assetIds)) {
+              ids = assetIds.map((asset: any) => {
+                if (typeof asset === 'object' && asset !== null) {
+                  return asset.id || asset
+                }
+                return asset
+              }).filter(Boolean)
+            } else if (typeof assetIds === 'string') {
+              ids = assetIds.split(',').map((id: string) => id.trim()).filter(Boolean)
+            }
+            
+            if (ids.length === 0) return ''
+            
+            // Map IDs to names using the fetched informationAssets data directly
+            const assetNames = ids.map(id => {
+              const asset = informationAssetsResult.data?.find((a: InformationAsset) => a.id === id)
+              return asset ? asset.informationAsset : id
+            })
+            
+            return assetNames.join(', ')
+          }
+
           const transformedRisk = {
             riskId: risk.riskId,
             functionalUnit: risk.functionalUnit,
@@ -254,7 +279,7 @@ export default function RiskInformation() {
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-                          informationAssets: formatInformationAssets(risk.informationAsset) || '',
+                          informationAssets: mapAssetIdsToNames(risk.informationAsset),
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
@@ -423,13 +448,7 @@ export default function RiskInformation() {
     }
   }
 
-  const handleRowClick = (row: any) => {
-    
-  }
 
-  const handleExportCSV = (selectedRows: Set<number>) => {
-    
-  }
 
   const handleExportPDF = async () => {
     if (!riskDetails) return
@@ -932,31 +951,7 @@ export default function RiskInformation() {
     })
   }
 
-  // Type-safe string field change handler
-  const handleStringFieldChange = (field: StringFields, value: string) => {
-    handleFieldChange(field, value)
-  }
 
-  // Type-safe number field change handler
-  const handleNumberFieldChange = (field: NumberFields, value: number) => {
-    handleFieldChange(field, value)
-  }
-
-  // Type-safe date field change handler (dates are stored as strings)
-  const handleDateFieldChange = (field: StringFields, value: string) => {
-    // Ensure date is in proper format for storage
-    const formattedDate = value ? value : ''
-    handleFieldChange(field, formattedDate)
-  }
-
-  // Handle information assets selection
-  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
-    setSelectedInformationAssets(prev => 
-      checked 
-        ? [...prev, assetId]
-        : prev.filter(id => id !== assetId)
-    )
-  }
 
   // Modal functions for information assets selection
   const openAssetModal = () => {
@@ -1619,7 +1614,7 @@ export default function RiskInformation() {
                     <input
                       type="date"
                       value={toDateInputValue(editedRisk?.dateRiskRaised)}
-                      onChange={(e) => handleDateFieldChange('dateRiskRaised', e.target.value)}
+                      onChange={(e) => handleFieldChange('dateRiskRaised', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
@@ -1736,7 +1731,7 @@ export default function RiskInformation() {
                   <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateOfSSCApproval)}
-                    onChange={(e) => handleDateFieldChange('dateOfSSCApproval', e.target.value)}
+                                          onChange={(e) => handleFieldChange('dateOfSSCApproval', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1754,7 +1749,7 @@ export default function RiskInformation() {
                   <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateRiskTreatmentsApproved)}
-                    onChange={(e) => handleDateFieldChange('dateRiskTreatmentsApproved', e.target.value)}
+                                          onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1772,7 +1767,7 @@ export default function RiskInformation() {
                                                         <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateResidualRiskAccepted)}
-                    onChange={(e) => handleDateFieldChange('dateResidualRiskAccepted', e.target.value)}
+                                          onChange={(e) => handleFieldChange('dateResidualRiskAccepted', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1963,8 +1958,8 @@ export default function RiskInformation() {
                 )
               }
             }))}
-            onRowClick={handleRowClick}
-            onExportCSV={handleExportCSV}
+            onRowClick={() => {}}
+            onExportCSV={() => {}}
             selectable={true}
           />
         )}

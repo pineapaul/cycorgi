@@ -81,7 +81,7 @@ export async function PUT(
     console.log('API: MongoDB connected successfully')
     
     // Add updatedAt timestamp, but exclude _id field as it's immutable
-    const { _id: _unused, ...bodyWithoutId } = body
+    const { _id, ...bodyWithoutId } = body
     const updateData = {
       ...bodyWithoutId,
       updatedAt: new Date().toISOString()
