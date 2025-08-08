@@ -46,7 +46,7 @@ export async function PUT(
     const collection = db.collection('treatments')
     
     // Remove _id from body if it exists to avoid MongoDB conflicts
-    const { _id: _unused, ...updateData } = body
+    const { _id, ...updateData } = body
     
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },

@@ -95,15 +95,15 @@ const formatDate = (dateString: string | null | undefined): string => {
 // Get relative time (e.g., "2 days ago", "1 week ago")
 const getRelativeTime = (dateString: string | null | undefined): string => {
   if (!dateString || dateString === 'Not specified') return ''
-  
+
   const date = parseDate(dateString)
   if (!date) return ''
-  
+
   try {
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays === 1) return '1 day ago'
     if (diffDays < 7) return `${diffDays} days ago`
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
@@ -126,23 +126,21 @@ export default function RiskInformation() {
   // Validation utilities
   const validateRiskId = (riskId: string | string[] | undefined): string | null => {
     if (!riskId) return null
-    
+
     // Ensure it's a string
     const id = Array.isArray(riskId) ? riskId[0] : riskId
-    
+
     // Check if it's empty or whitespace
     if (!id || id.trim() === '') return null
-    
+
     // Validate format (RISK-XXX where XXX is numeric)
     const riskIdPattern = /^RISK-\d+$/i
     if (!riskIdPattern.test(id.trim())) return null
-    
+
     return id.trim()
   }
 
-  const isValidRiskId = (riskId: string | string[] | undefined): riskId is string => {
-    return validateRiskId(riskId) !== null
-  }
+
 
   // Safe API URL construction
   const buildApiUrl = (endpoint: string, riskId?: string | string[] | undefined): string | null => {
@@ -165,7 +163,7 @@ export default function RiskInformation() {
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
   const [originalInformationAssetIds, setOriginalInformationAssetIds] = useState<string[]>([])
-  
+
   // Modal state for information assets selection
   const [showAssetModal, setShowAssetModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -205,11 +203,11 @@ export default function RiskInformation() {
 
       try {
         setLoading(true)
-        
+
         // Build safe API URLs
         const riskApiUrl = buildApiUrl('/api/risks', params.id)
         const treatmentsApiUrl = buildApiUrl('/api/treatments', params.id)
-        
+
         if (!riskApiUrl || !treatmentsApiUrl) {
           setError('Invalid risk ID format. Expected format: RISK-XXX')
           setLoading(false)
@@ -222,15 +220,15 @@ export default function RiskInformation() {
         if (informationAssetsResult.success) {
           setInformationAssets(informationAssetsResult.data)
         }
-        
+
         // Fetch risk details
         const riskResponse = await fetch(riskApiUrl)
         const riskResult = await riskResponse.json()
-        
+
         if (riskResult.success) {
           // Transform the data to match the expected format
           const risk = riskResult.data;
-          
+
           // Store the original information asset IDs for proper initialization
           let originalIds: string[] = []
           if (Array.isArray(risk.informationAsset)) {
@@ -244,23 +242,50 @@ export default function RiskInformation() {
             originalIds = risk.informationAsset.split(',').map((id: string) => id.trim())
           }
           setOriginalInformationAssetIds(originalIds)
-          
+
+          // Helper function to map asset IDs to names
+          const mapAssetIdsToNames = (assetIds: any): string => {
+            if (!assetIds) return ''
+
+            let ids: string[] = []
+            if (Array.isArray(assetIds)) {
+              ids = assetIds.map((asset: any) => {
+                if (typeof asset === 'object' && asset !== null) {
+                  return asset.id || asset
+                }
+                return asset
+              }).filter(Boolean)
+            } else if (typeof assetIds === 'string') {
+              ids = assetIds.split(',').map((id: string) => id.trim()).filter(Boolean)
+            }
+
+            if (ids.length === 0) return ''
+
+            // Map IDs to names using the fetched informationAssets data directly
+            const assetNames = ids.map(id => {
+              const asset = informationAssetsResult.data?.find((a: InformationAsset) => a.id === id)
+              return asset ? asset.informationAsset : id
+            })
+
+            return assetNames.join(', ')
+          }
+
           const transformedRisk = {
             riskId: risk.riskId,
             functionalUnit: risk.functionalUnit,
             currentPhase: risk.currentPhase,
-                            jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
+            jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
             dateRiskRaised: risk.createdAt ? toDateInputValue(risk.createdAt) : '2024-01-15',
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-                          informationAssets: formatInformationAssets(risk.informationAsset) || '',
+            informationAssets: mapAssetIdsToNames(risk.informationAsset),
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
             impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
             currentControls: risk.currentControls,
-                            currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
+            currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
             consequence: risk.consequenceRating,
             likelihood: risk.likelihoodRating,
             currentRiskRating: risk.riskRating,
@@ -281,15 +306,15 @@ export default function RiskInformation() {
           setLoading(false)
           return
         }
-        
+
         // Fetch treatments for this risk
         const treatmentsResponse = await fetch(treatmentsApiUrl)
         const treatmentsResult = await treatmentsResponse.json()
-        
+
         if (treatmentsResult.success) {
           setTreatments(treatmentsResult.data)
         }
-        
+
       } catch (err) {
         setError('Failed to fetch risk details')
         console.error('Error fetching data:', err)
@@ -336,7 +361,7 @@ export default function RiskInformation() {
 
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
-    
+
     switch (status.toLowerCase()) {
       case 'identification':
         return 'bg-blue-100 text-blue-800'
@@ -355,7 +380,7 @@ export default function RiskInformation() {
 
   const getRiskLevelColor = (level: string) => {
     if (!level) return 'bg-gray-100 text-gray-800'
-    
+
     switch (level.toLowerCase()) {
       case 'extreme':
         return 'bg-red-100 text-red-800'
@@ -372,7 +397,7 @@ export default function RiskInformation() {
 
   const getPriorityColor = (priority: string) => {
     if (!priority) return 'bg-gray-100 text-gray-800'
-    
+
     switch (priority.toLowerCase()) {
       case 'high':
       case 'critical':
@@ -398,7 +423,7 @@ export default function RiskInformation() {
 
   const getTreatmentStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
-    
+
     switch (status.toLowerCase()) {
       case 'approved':
         return 'bg-green-100 text-green-800'
@@ -415,7 +440,7 @@ export default function RiskInformation() {
   const toDateInputValue = (dateString: string | null | undefined): string => {
     const date = parseDate(dateString)
     if (!date) return ''
-    
+
     try {
       return date.toISOString().split('T')[0]
     } catch (error) {
@@ -423,23 +448,17 @@ export default function RiskInformation() {
     }
   }
 
-  const handleRowClick = (row: any) => {
-    
-  }
 
-  const handleExportCSV = (selectedRows: Set<number>) => {
-    
-  }
 
   const handleExportPDF = async () => {
     if (!riskDetails) return
 
     try {
       setExportingPDF(true)
-      
+
       // Generate HTML content for PDF
       const htmlContent = generatePDFHTML(riskDetails, treatments)
-      
+
       // Call the PDF generation API
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -826,7 +845,7 @@ export default function RiskInformation() {
     setIsEditing(true)
     setOriginalRisk(riskDetails) // Store the original values when entering edit mode
     setEditedRisk(riskDetails)
-    
+
     // Initialize selected information assets from the stored original IDs
     setSelectedInformationAssets(originalInformationAssetIds)
   }
@@ -859,13 +878,13 @@ export default function RiskInformation() {
 
     try {
       setSaving(true)
-      
+
       // Prepare the data to save, including the selected information assets
       const dataToSave = {
         ...editedRisk,
         informationAsset: selectedInformationAssets
       }
-      
+
       const response = await fetch(riskApiUrl, {
         method: 'PUT',
         headers: {
@@ -875,7 +894,7 @@ export default function RiskInformation() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         setRiskDetails(editedRisk)
         setIsEditing(false)
@@ -888,7 +907,7 @@ export default function RiskInformation() {
         })
       } else {
         // Show detailed validation errors if available
-        const errorMessage = result.details 
+        const errorMessage = result.details
           ? `Validation failed: ${result.details.join(', ')}`
           : result.error || 'An unknown error occurred while updating the risk.'
         showToast({
@@ -922,7 +941,7 @@ export default function RiskInformation() {
 
   // Type-safe field change handler that accepts appropriate value types for each field
   const handleFieldChange = <K extends keyof RiskDetails>(
-    field: K, 
+    field: K,
     value: RiskDetails[K]
   ) => {
     if (!editedRisk) return
@@ -932,31 +951,7 @@ export default function RiskInformation() {
     })
   }
 
-  // Type-safe string field change handler
-  const handleStringFieldChange = (field: StringFields, value: string) => {
-    handleFieldChange(field, value)
-  }
 
-  // Type-safe number field change handler
-  const handleNumberFieldChange = (field: NumberFields, value: number) => {
-    handleFieldChange(field, value)
-  }
-
-  // Type-safe date field change handler (dates are stored as strings)
-  const handleDateFieldChange = (field: StringFields, value: string) => {
-    // Ensure date is in proper format for storage
-    const formattedDate = value ? value : ''
-    handleFieldChange(field, formattedDate)
-  }
-
-  // Handle information assets selection
-  const handleInformationAssetsChange = (assetId: string, checked: boolean) => {
-    setSelectedInformationAssets(prev => 
-      checked 
-        ? [...prev, assetId]
-        : prev.filter(id => id !== assetId)
-    )
-  }
 
   // Modal functions for information assets selection
   const openAssetModal = () => {
@@ -974,8 +969,8 @@ export default function RiskInformation() {
   }
 
   const handleAssetSelection = (assetId: string, checked: boolean) => {
-    setTempSelectedAssets(prev => 
-      checked 
+    setTempSelectedAssets(prev =>
+      checked
         ? [...prev, assetId]
         : prev.filter(id => id !== assetId)
     )
@@ -1021,7 +1016,7 @@ export default function RiskInformation() {
           <button
             onClick={goBack}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ 
+            style={{
               backgroundColor: '#4C1D95',
               '--tw-ring-color': '#4C1D95'
             } as React.CSSProperties}
@@ -1057,7 +1052,7 @@ export default function RiskInformation() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {!isEditing && (
               <>
@@ -1131,7 +1126,7 @@ export default function RiskInformation() {
             )}
           </div>
         </div>
-        
+
         {/* Risk Statement - Prominent Display */}
         <div className="bg-gray-50 rounded-lg p-6 border-l-4 mb-8" style={{ borderLeftColor: '#4C1D95' }}>
           <label className="block text-sm font-semibold text-gray-700 mb-3">Risk Statement</label>
@@ -1154,7 +1149,7 @@ export default function RiskInformation() {
             <div className="w-1 h-6 bg-purple-600 rounded-full mr-3"></div>
             <h3 className="text-lg font-semibold text-gray-900">Risk Assessment</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Current Risk Status */}
             <div className="bg-gray-50 rounded-lg p-4">
@@ -1289,18 +1284,17 @@ export default function RiskInformation() {
                             checked={editedRisk?.impactCIA?.includes('Confidentiality')}
                             onChange={(e) => {
                               const currentCIA = editedRisk?.impactCIA?.split(', ') || []
-                              const newCIA = e.target.checked 
+                              const newCIA = e.target.checked
                                 ? [...currentCIA, 'Confidentiality']
                                 : currentCIA.filter(item => item !== 'Confidentiality')
                               handleFieldChange('impactCIA', newCIA.join(', '))
                             }}
                             className="sr-only"
                           />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                            editedRisk?.impactCIA?.includes('Confidentiality')
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${editedRisk?.impactCIA?.includes('Confidentiality')
                               ? 'bg-red-500 border-red-500'
                               : 'border-gray-300 group-hover:border-red-400'
-                          }`}>
+                            }`}>
                             {editedRisk?.impactCIA?.includes('Confidentiality') && (
                               <Icon name="check" size={12} className="text-white" />
                             )}
@@ -1318,18 +1312,17 @@ export default function RiskInformation() {
                             checked={editedRisk?.impactCIA?.includes('Integrity')}
                             onChange={(e) => {
                               const currentCIA = editedRisk?.impactCIA?.split(', ') || []
-                              const newCIA = e.target.checked 
+                              const newCIA = e.target.checked
                                 ? [...currentCIA, 'Integrity']
                                 : currentCIA.filter(item => item !== 'Integrity')
                               handleFieldChange('impactCIA', newCIA.join(', '))
                             }}
                             className="sr-only"
                           />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                            editedRisk?.impactCIA?.includes('Integrity')
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${editedRisk?.impactCIA?.includes('Integrity')
                               ? 'bg-orange-500 border-orange-500'
                               : 'border-gray-300 group-hover:border-orange-400'
-                          }`}>
+                            }`}>
                             {editedRisk?.impactCIA?.includes('Integrity') && (
                               <Icon name="check" size={12} className="text-white" />
                             )}
@@ -1347,18 +1340,17 @@ export default function RiskInformation() {
                             checked={editedRisk?.impactCIA?.includes('Availability')}
                             onChange={(e) => {
                               const currentCIA = editedRisk?.impactCIA?.split(', ') || []
-                              const newCIA = e.target.checked 
+                              const newCIA = e.target.checked
                                 ? [...currentCIA, 'Availability']
                                 : currentCIA.filter(item => item !== 'Availability')
                               handleFieldChange('impactCIA', newCIA.join(', '))
                             }}
                             className="sr-only"
                           />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                            editedRisk?.impactCIA?.includes('Availability')
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${editedRisk?.impactCIA?.includes('Availability')
                               ? 'bg-blue-500 border-blue-500'
                               : 'border-gray-300 group-hover:border-blue-400'
-                          }`}>
+                            }`}>
                             {editedRisk?.impactCIA?.includes('Availability') && (
                               <Icon name="check" size={12} className="text-white" />
                             )}
@@ -1480,7 +1472,7 @@ export default function RiskInformation() {
             <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
             <h3 className="text-lg font-semibold text-gray-900">Ownership & Asset</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-3">Primary Contact</h4>
@@ -1619,7 +1611,7 @@ export default function RiskInformation() {
                     <input
                       type="date"
                       value={toDateInputValue(editedRisk?.dateRiskRaised)}
-                      onChange={(e) => handleDateFieldChange('dateRiskRaised', e.target.value)}
+                      onChange={(e) => handleFieldChange('dateRiskRaised', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
@@ -1642,7 +1634,7 @@ export default function RiskInformation() {
             <div className="w-1 h-6 bg-orange-600 rounded-full mr-3"></div>
             <h3 className="text-lg font-semibold text-gray-900">Residual Risk Assessment</h3>
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
@@ -1727,7 +1719,7 @@ export default function RiskInformation() {
             <div className="w-1 h-6 bg-green-600 rounded-full mr-3"></div>
             <h3 className="text-lg font-semibold text-gray-900">Approvals & Dates</h3>
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
@@ -1736,7 +1728,7 @@ export default function RiskInformation() {
                   <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateOfSSCApproval)}
-                    onChange={(e) => handleDateFieldChange('dateOfSSCApproval', e.target.value)}
+                    onChange={(e) => handleFieldChange('dateOfSSCApproval', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1754,7 +1746,7 @@ export default function RiskInformation() {
                   <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateRiskTreatmentsApproved)}
-                    onChange={(e) => handleDateFieldChange('dateRiskTreatmentsApproved', e.target.value)}
+                    onChange={(e) => handleFieldChange('dateRiskTreatmentsApproved', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1769,10 +1761,10 @@ export default function RiskInformation() {
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Residual Risk Accepted</span>
                 {isEditing ? (
-                                                        <input
+                  <input
                     type="date"
                     value={toDateInputValue(editedRisk?.dateResidualRiskAccepted)}
-                    onChange={(e) => handleDateFieldChange('dateResidualRiskAccepted', e.target.value)}
+                    onChange={(e) => handleFieldChange('dateResidualRiskAccepted', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 ) : (
@@ -1817,7 +1809,7 @@ export default function RiskInformation() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-lg">
               <Icon name="check-circle" size={16} className="text-green-500" />
@@ -1831,20 +1823,20 @@ export default function RiskInformation() {
                 {treatments.filter(t => !t.completionDate).length} pending
               </span>
             </div>
-                    <Link
-          href={`/risk-management/treatments/${validateRiskId(params.id)}/new`}
-          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
-          style={{
-            backgroundColor: '#4C1D95',
-            '--tw-ring-color': '#4C1D95'
-          } as React.CSSProperties}
-        >
-          <Icon name="plus" size={16} className="mr-2" />
-          Add Treatment
-        </Link>
+            <Link
+              href={`/risk-management/treatments/${validateRiskId(params.id)}/new`}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{
+                backgroundColor: '#4C1D95',
+                '--tw-ring-color': '#4C1D95'
+              } as React.CSSProperties}
+            >
+              <Icon name="plus" size={16} className="mr-2" />
+              Add Treatment
+            </Link>
           </div>
         </div>
-        
+
         {treatments.length === 0 ? (
           <div className="text-center py-8">
             <Icon name="list-check" size={48} className="text-gray-300 mx-auto mb-3" />
@@ -1893,58 +1885,58 @@ export default function RiskInformation() {
                   if (!value) return <span className="text-gray-400">-</span>
                   return <span className="text-sm font-medium">{formatDate(value)}</span>
                 }
-                                 if (col.key === 'actions') {
-                   return (
-                     <div className="flex items-center space-x-2">
-                       <Tooltip content="View Treatment Details">
-                         <Link
-                           href={`/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`}
-                           className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                         >
-                           <Icon name="eye" size={12} />
-                         </Link>
-                       </Tooltip>
-                                             <Tooltip content="Copy Treatment Link">
-                         <button
-                           onClick={(e) => {
-                             e.stopPropagation()
-                             const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`
-                             navigator.clipboard.writeText(url).then(() => {
-                               showToast({
-                                 title: 'Success',
-                                 message: 'Treatment link copied to clipboard!',
-                                 type: 'success'
-                               })
-                             }).catch(() => {
-                               showToast({
-                                 title: 'Error',
-                                 message: 'Failed to copy link to clipboard',
-                                 type: 'error'
-                               })
-                             })
-                           }}
-                           className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-                         >
-                           <Icon name="link" size={12} />
-                         </button>
-                       </Tooltip>
-                                             <Tooltip content="Add to Workshop Agenda">
-                         <button
-                           onClick={(e) => {
-                             e.stopPropagation()
-             
-                             showToast({
-                               title: 'Success',
-                               message: `Treatment ${row.treatmentId} added to workshop agenda!`,
-                               type: 'success'
-                             })
-                           }}
-                           className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
-                         >
-                           <Icon name="calendar-plus" size={12} className="mr-1" />
-                           Workshop
-                         </button>
-                       </Tooltip>
+                if (col.key === 'actions') {
+                  return (
+                    <div className="flex items-center space-x-2">
+                      <Tooltip content="View Treatment Details">
+                        <Link
+                          href={`/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`}
+                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                        >
+                          <Icon name="eye" size={12} />
+                        </Link>
+                      </Tooltip>
+                      <Tooltip content="Copy Treatment Link">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const url = `${window.location.origin}/risk-management/treatments/${validateRiskId(params.id)}/${row.treatmentId}`
+                            navigator.clipboard.writeText(url).then(() => {
+                              showToast({
+                                title: 'Success',
+                                message: 'Treatment link copied to clipboard!',
+                                type: 'success'
+                              })
+                            }).catch(() => {
+                              showToast({
+                                title: 'Error',
+                                message: 'Failed to copy link to clipboard',
+                                type: 'error'
+                              })
+                            })
+                          }}
+                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          <Icon name="link" size={12} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Add to Workshop Agenda">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+
+                            showToast({
+                              title: 'Success',
+                              message: `Treatment ${row.treatmentId} added to workshop agenda!`,
+                              type: 'success'
+                            })
+                          }}
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+                        >
+                          <Icon name="calendar-plus" size={12} className="mr-1" />
+                          Workshop
+                        </button>
+                      </Tooltip>
                     </div>
                   )
                 }
@@ -1963,8 +1955,8 @@ export default function RiskInformation() {
                 )
               }
             }))}
-            onRowClick={handleRowClick}
-            onExportCSV={handleExportCSV}
+            onRowClick={() => { }}
+            onExportCSV={() => { }}
             selectable={true}
           />
         )}
@@ -1982,33 +1974,33 @@ export default function RiskInformation() {
           }}
           onMouseDown={(e) => {
             e.preventDefault()
-            
+
             const startY = e.clientY
             const startTop = floatingButtonPosition.y
             let hasMoved = false
             const moveThreshold = 5 // pixels
-            
+
             const handleMouseMove = (e: MouseEvent) => {
               const deltaY = Math.abs(e.clientY - startY)
-              
+
               // Only start dragging if mouse has moved beyond threshold
               if (deltaY > moveThreshold && !hasMoved) {
                 hasMoved = true
                 setIsDragging(true)
               }
-              
+
               if (hasMoved) {
                 const newY = Math.max(20, Math.min(window.innerHeight - 100, startTop + (e.clientY - startY)))
                 setFloatingButtonPosition(prev => ({ ...prev, y: newY }))
               }
             }
-            
+
             const handleMouseUp = () => {
               setIsDragging(false)
               document.removeEventListener('mousemove', handleMouseMove)
               document.removeEventListener('mouseup', handleMouseUp)
             }
-            
+
             document.addEventListener('mousemove', handleMouseMove)
             document.addEventListener('mouseup', handleMouseUp)
           }}
@@ -2064,11 +2056,10 @@ export default function RiskInformation() {
               <div className="flex flex-wrap gap-1">
                 <button
                   onClick={() => setSelectedLetter('')}
-                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
-                    selectedLetter === '' 
-                      ? 'bg-purple-600 text-white' 
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${selectedLetter === ''
+                      ? 'bg-purple-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   All
                 </button>
@@ -2076,11 +2067,10 @@ export default function RiskInformation() {
                   <button
                     key={letter}
                     onClick={() => setSelectedLetter(selectedLetter === letter ? '' : letter)}
-                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
-                      selectedLetter === letter 
-                        ? 'bg-purple-600 text-white' 
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${selectedLetter === letter
+                        ? 'bg-purple-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     {letter}
                   </button>
