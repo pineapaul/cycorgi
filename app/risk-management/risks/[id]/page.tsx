@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets, mapAssetIdsToNames } from '@/lib/utils'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
@@ -243,32 +243,7 @@ export default function RiskInformation() {
           }
           setOriginalInformationAssetIds(originalIds)
 
-          // Helper function to map asset IDs to names
-          const mapAssetIdsToNames = (assetIds: any): string => {
-            if (!assetIds) return ''
 
-            let ids: string[] = []
-            if (Array.isArray(assetIds)) {
-              ids = assetIds.map((asset: any) => {
-                if (typeof asset === 'object' && asset !== null) {
-                  return asset.id || asset
-                }
-                return asset
-              }).filter(Boolean)
-            } else if (typeof assetIds === 'string') {
-              ids = assetIds.split(',').map((id: string) => id.trim()).filter(Boolean)
-            }
-
-            if (ids.length === 0) return ''
-
-            // Map IDs to names using the fetched informationAssets data directly
-            const assetNames = ids.map(id => {
-              const asset = informationAssetsResult.data?.find((a: InformationAsset) => a.id === id)
-              return asset ? asset.informationAsset : id
-            })
-
-            return assetNames.join(', ')
-          }
 
           const transformedRisk = {
             riskId: risk.riskId,
@@ -279,7 +254,7 @@ export default function RiskInformation() {
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
             affectedSites: 'All Sites',
-            informationAssets: mapAssetIdsToNames(risk.informationAsset),
+            informationAssets: mapAssetIdsToNames(risk.informationAsset, informationAssetsResult.data || []),
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
