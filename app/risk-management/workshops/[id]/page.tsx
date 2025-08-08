@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 import { useModal } from '@/app/hooks/useModal'
-import { formatInformationAssets } from '@/lib/utils'
+import { formatInformationAssets, mapAssetIdsToNames } from '@/lib/utils'
 
 interface Risk {
   riskId: string
@@ -265,7 +265,8 @@ const getTreatmentMinutes = (
 const generatePDFHTML = (
   workshop: Workshop,
   risks: Record<string, Risk>,
-  treatments: Record<string, Treatment[]>
+  treatments: Record<string, Treatment[]>,
+  informationAssets: Array<{ id: string; informationAsset: string }>
 ): string => {
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
@@ -351,7 +352,7 @@ const generatePDFHTML = (
               </div>
               <div>
                 <h5 style="font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 8px;">Information Asset</h5>
-                <p style="font-size: 14px; color: #374151;">${formatInformationAssets(risk.informationAsset)}</p>
+                <p style="font-size: 14px; color: #374151;">${mapAssetIdsToNames(risk.informationAsset, informationAssets)}</p>
               </div>
             </div>
             
@@ -680,9 +681,10 @@ interface RiskCardProps {
   onCloseTreatment: (treatment: Treatment) => void
   onCloseRisk: (risk: Risk) => void
   allCardsCollapsed: boolean
+  informationAssets: Array<{ id: string; informationAsset: string }>
 }
 
-function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk, allCardsCollapsed }: RiskCardProps) {
+function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreatment, onRequestExtension, onCloseTreatment, onCloseRisk, allCardsCollapsed, informationAssets }: RiskCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const riskTreatments = getFilteredTreatments(treatments, item.selectedTreatments)
 
@@ -779,7 +781,7 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                 <div>
                   <h5 className="text-sm font-medium text-gray-900 mb-2">Information Asset</h5>
                   <p className="text-sm text-gray-700">
-                    {formatInformationAssets(risk.informationAsset)}
+                    {mapAssetIdsToNames(risk.informationAsset, informationAssets)}
                   </p>
                 </div>
               </div>
@@ -1449,6 +1451,7 @@ export default function WorkshopDetails() {
   const [error, setError] = useState<string | null>(null)
   const [risks, setRisks] = useState<Record<string, Risk>>({})
   const [treatments, setTreatments] = useState<Record<string, Treatment[]>>({})
+  const [informationAssets, setInformationAssets] = useState<Array<{ id: string; informationAsset: string }>>([])
 
   const [exportingPDF, setExportingPDF] = useState(false)
   // Extension modal state
@@ -1677,6 +1680,14 @@ export default function WorkshopDetails() {
           }
         })
         setTreatments(treatmentsMap)
+      }
+
+      // Fetch information assets data
+      const informationAssetsResponse = await fetch('/api/information-assets')
+      const informationAssetsResult = await informationAssetsResponse.json()
+
+      if (informationAssetsResult.success) {
+        setInformationAssets(informationAssetsResult.data || [])
       }
     } catch (error) {
       console.error('Error fetching risk and treatment data:', error)
@@ -2136,7 +2147,7 @@ export default function WorkshopDetails() {
       setExportingPDF(true)
 
       // Generate HTML content for PDF
-      const htmlContent = generatePDFHTML(workshop, risks, treatments)
+      const htmlContent = generatePDFHTML(workshop, risks, treatments, informationAssets)
 
       // Call the PDF generation API
       const response = await fetch('/api/export-pdf', {
@@ -2407,6 +2418,7 @@ export default function WorkshopDetails() {
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
                         allCardsCollapsed={allCardsCollapsed}
+                        informationAssets={informationAssets}
                       />
                     )
                   })}
@@ -2442,6 +2454,7 @@ export default function WorkshopDetails() {
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
                         allCardsCollapsed={allCardsCollapsed}
+                        informationAssets={informationAssets}
                       />
                     )
                   })}
@@ -2477,6 +2490,7 @@ export default function WorkshopDetails() {
                         onCloseTreatment={openCloseTreatmentModal}
                         onCloseRisk={openCloseRiskModal}
                         allCardsCollapsed={allCardsCollapsed}
+                        informationAssets={informationAssets}
                       />
                     )
                   })}
@@ -2595,7 +2609,7 @@ export default function WorkshopDetails() {
                 <span className="font-medium">Risk Statement:</span> {selectedCloseRisk.riskStatement}
               </p>
               <p className="text-sm text-gray-700">
-                <span className="font-medium">Information Asset:</span> {formatInformationAssets(selectedCloseRisk.informationAsset)}
+                <span className="font-medium">Information Asset:</span> {mapAssetIdsToNames(selectedCloseRisk.informationAsset, informationAssets)}
               </p>
             </>
           }

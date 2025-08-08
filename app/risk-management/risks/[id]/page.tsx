@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
@@ -87,7 +87,7 @@ const formatDate = (dateString: string | null | undefined): string => {
       month: 'short',
       year: 'numeric'
     })
-  } catch (error) {
+  } catch {
     return 'Invalid date'
   }
 }
@@ -109,14 +109,13 @@ const getRelativeTime = (dateString: string | null | undefined): string => {
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
     if (diffDays < 365) return `${Math.ceil(diffDays / 30)} months ago`
     return `${Math.ceil(diffDays / 365)} years ago`
-  } catch (error) {
+  } catch {
     return ''
   }
 }
 
 export default function RiskInformation() {
   const params = useParams()
-  const router = useRouter()
   const { showToast } = useToast()
   const { goBack } = useBackNavigation({
     fallbackRoute: '/risk-management/register'
@@ -143,11 +142,11 @@ export default function RiskInformation() {
 
 
   // Safe API URL construction
-  const buildApiUrl = (endpoint: string, riskId?: string | string[] | undefined): string | null => {
+  const buildApiUrl = useCallback((endpoint: string, riskId?: string | string[] | undefined): string | null => {
     const validRiskId = validateRiskId(riskId || params.id)
     if (!validRiskId) return null
     return `${endpoint}/${validRiskId}`
-  }
+  }, [params.id])
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -306,7 +305,7 @@ export default function RiskInformation() {
       setError('Invalid risk ID format. Expected format: RISK-XXX')
       setLoading(false)
     }
-  }, [params.id])
+  }, [params.id, buildApiUrl])
 
   // Separate useEffect for fetching comment count to avoid interference with main data loading
   useEffect(() => {
@@ -332,7 +331,7 @@ export default function RiskInformation() {
     if (params.id) {
       fetchCommentCount()
     }
-  }, [params.id])
+  }, [params.id, buildApiUrl])
 
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
@@ -418,7 +417,7 @@ export default function RiskInformation() {
 
     try {
       return date.toISOString().split('T')[0]
-    } catch (error) {
+    } catch {
       return ''
     }
   }
@@ -904,15 +903,6 @@ export default function RiskInformation() {
       setSaving(false)
     }
   }
-
-  // Type utilities for safe field change handling
-  type StringFields = {
-    [K in keyof RiskDetails]: RiskDetails[K] extends string ? K : never
-  }[keyof RiskDetails]
-
-  type NumberFields = {
-    [K in keyof RiskDetails]: RiskDetails[K] extends number ? K : never
-  }[keyof RiskDetails]
 
   // Type-safe field change handler that accepts appropriate value types for each field
   const handleFieldChange = <K extends keyof RiskDetails>(
