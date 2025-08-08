@@ -7,15 +7,24 @@ import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 
+interface MeetingMinutesItem {
+  riskId: string
+  selectedTreatments?: string[]
+  actionsTaken?: string
+  toDo?: string
+  outcome?: string
+}
+
 interface Workshop {
   id: string
   date: string
   status: 'Pending Agenda' | 'Planned' | 'Scheduled' | 'Finalising Meeting Minutes' | 'Completed'
   facilitator: string
   participants: string[]
-  risks: string[]
   outcomes: string
-  securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
+  extensions?: MeetingMinutesItem[]
+  closure?: MeetingMinutesItem[]
+  newRisks?: MeetingMinutesItem[]
   actionsTaken?: string
   toDo?: string
   notes?: string
@@ -121,19 +130,7 @@ export default function Workshops() {
         </span>
       )
     },
-    {
-      key: 'securitySteeringCommittee',
-      label: 'Security Steering Committee',
-      sortable: true,
-      width: '180px',
-      render: (value) => {
-        return (
-          <span className="whitespace-nowrap">
-            {String(value) || '-'}
-          </span>
-        )
-      }
-    },
+
     {
       key: 'facilitator',
       label: 'Facilitator',
@@ -161,16 +158,37 @@ export default function Workshops() {
       }
     },
     {
-      key: 'risks',
+      key: 'relatedRisks',
       label: 'Related Risks',
       sortable: false,
       width: '150px',
-      render: (value) => {
-        const risks = Array.isArray(value) ? value : []
+      render: (value, row) => {
+        // Calculate total unique risks from all agenda sections
+        const workshop = row as unknown as Workshop
+        const allRiskIds = new Set<string>()
+        
+        // Add risks from extensions
+        if (workshop.extensions) {
+          workshop.extensions.forEach(item => allRiskIds.add(item.riskId))
+        }
+        
+        // Add risks from closure
+        if (workshop.closure) {
+          workshop.closure.forEach(item => allRiskIds.add(item.riskId))
+        }
+        
+        // Add risks from newRisks
+        if (workshop.newRisks) {
+          workshop.newRisks.forEach(item => allRiskIds.add(item.riskId))
+        }
+        
+        const riskCount = allRiskIds.size
+        const risksList = Array.from(allRiskIds).join(', ')
+        
         return (
-          <Tooltip content={risks.join(', ')} theme="dark">
+          <Tooltip content={risksList || 'No risks assigned'} theme="dark">
             <span className="truncate block max-w-full">
-              {risks.length > 0 ? `${risks.length} risk(s)` : '-'}
+              {riskCount > 0 ? `${riskCount} risk(s)` : '-'}
             </span>
           </Tooltip>
         )
@@ -202,20 +220,33 @@ export default function Workshops() {
   const handleExportCSV = (selectedRows: Set<number>) => {
     const selectedWorkshops = Array.from(selectedRows).map(index => workshops[index])
     const csvContent = [
-      ['Workshop ID', 'Date', 'Status', 'Security Steering Committee', 'Facilitator', 'Participants', 'Related Risks', 'Outcomes', 'Actions Taken', 'To Do', 'Notes'],
-      ...selectedWorkshops.map(workshop => [
-        workshop.id,
-        workshop.date,
-        getStatusDisplayName(workshop.status),
-        workshop.securitySteeringCommittee,
-        workshop.facilitator,
-        workshop.participants.join('; '),
-        workshop.risks.join('; '),
-        workshop.outcomes,
-        workshop.actionsTaken || '',
-        workshop.toDo || '',
-        workshop.notes || ''
-      ])
+      ['Workshop ID', 'Date', 'Status', 'Facilitator', 'Participants', 'Related Risks', 'Outcomes', 'Actions Taken', 'To Do', 'Notes'],
+      ...selectedWorkshops.map(workshop => {
+        // Calculate related risks count for export
+        const allRiskIds = new Set<string>()
+        if (workshop.extensions) {
+          workshop.extensions.forEach(item => allRiskIds.add(item.riskId))
+        }
+        if (workshop.closure) {
+          workshop.closure.forEach(item => allRiskIds.add(item.riskId))
+        }
+        if (workshop.newRisks) {
+          workshop.newRisks.forEach(item => allRiskIds.add(item.riskId))
+        }
+        
+        return [
+          workshop.id,
+          workshop.date,
+          getStatusDisplayName(workshop.status),
+          workshop.facilitator,
+          workshop.participants ? workshop.participants.join('; ') : '',
+          Array.from(allRiskIds).join('; '),
+          workshop.outcomes,
+          workshop.actionsTaken || '',
+          workshop.toDo || '',
+          workshop.notes || ''
+        ]
+      })
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv' })

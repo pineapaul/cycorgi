@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
 import { useModal } from '@/app/hooks/useModal'
-import { formatInformationAssets, mapAssetIdsToNames } from '@/lib/utils'
+import { mapAssetIdsToNames } from '@/lib/utils'
 
 interface Risk {
   riskId: string
@@ -1639,7 +1639,7 @@ export default function WorkshopDetails() {
   }, [params.id])
 
   // Fetch risk and treatment data for meeting minutes items
-  const fetchRiskAndTreatmentData = async () => {
+  const fetchRiskAndTreatmentData = useCallback(async () => {
     if (!workshop) return
 
     try {
@@ -1692,11 +1692,11 @@ export default function WorkshopDetails() {
     } catch (error) {
       console.error('Error fetching risk and treatment data:', error)
     }
-  }
+  }, [workshop])
 
   useEffect(() => {
     fetchRiskAndTreatmentData()
-  }, [workshop])
+  }, [fetchRiskAndTreatmentData])
 
   // Handle extension request
   const handleExtensionRequest = async (data: { extendedDueDate: string; justification: string }) => {

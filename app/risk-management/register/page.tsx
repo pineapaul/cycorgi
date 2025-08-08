@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber, formatInformationAssets, formatDate, mapAssetIdsToNames } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatDate, mapAssetIdsToNames } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
 import { useToast } from '@/app/components/Toast'
+import WorkshopSelectionModal from '@/app/components/WorkshopSelectionModal'
 
 // Risk management phases
 const RISK_PHASES = [
@@ -122,9 +123,10 @@ export default function RiskRegister() {
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [risks, setRisks] = useState<any[]>([])
-  const [informationAssets, setInformationAssets] = useState<Array<{ id: string; informationAsset: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [workshopModalOpen, setWorkshopModalOpen] = useState(false)
+  const [selectedRiskForWorkshop, setSelectedRiskForWorkshop] = useState<any>(null)
 
   // Custom renderer for Information Assets
   const renderInformationAssets = (value: any) => {
@@ -190,38 +192,38 @@ export default function RiskRegister() {
   // Get columns for each phase
   const getColumnsForPhase = (phase: string): Column[] => {
     const allColumns: Column[] = [
-      { key: 'riskId', label: 'Risk ID', sortable: true, width: '140px' },
-      { key: 'actions', label: 'Actions', sortable: false },
-      { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-      { key: 'currentPhase', label: 'Current Phase', sortable: true },
-      { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
-      { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '120px' },
-      { key: 'raisedBy', label: 'Raised By', sortable: true },
-      { key: 'riskOwner', label: 'Risk Owner', sortable: true },
-      { key: 'affectedSites', label: 'Affected Sites', sortable: true },
-      { key: 'informationAssets', label: 'Information Assets', sortable: true, render: renderInformationAssets, width: 'auto' },
-      { key: 'threat', label: 'Threat', sortable: true },
-      { key: 'vulnerability', label: 'Vulnerability', sortable: true },
-      { key: 'riskStatement', label: 'Risk Statement', sortable: true },
-      { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues },
-      { key: 'currentControls', label: 'Current Controls', sortable: true },
-      { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
-      { key: 'consequence', label: 'Consequence', sortable: true },
-      { key: 'likelihood', label: 'Likelihood', sortable: true },
-      { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
-      { key: 'riskAction', label: 'Risk Action', sortable: true },
-      { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
-      { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '120px' },
-      { key: 'riskTreatments', label: 'Risk Treatments', sortable: true },
-      { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '120px' },
-      { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: '120px' },
-      { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true },
-      { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
-      { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
-      { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
-      { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
-      { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '120px' },
-      { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: '120px' },
+      { key: 'riskId', label: 'Risk ID', sortable: true, width: 'w-24 sm:w-28 md:w-32 lg:w-36' },
+      { key: 'actions', label: 'Actions', sortable: false, width: 'w-20 sm:w-24 md:w-28 lg:w-32' },
+      { key: 'functionalUnit', label: 'Functional Unit', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'currentPhase', label: 'Current Phase', sortable: true, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true, width: 'w-24 sm:w-28 md:w-32 lg:w-36' },
+      { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: 'w-24 sm:w-28 md:w-32 lg:w-36' },
+      { key: 'raisedBy', label: 'Raised By', sortable: true, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'riskOwner', label: 'Risk Owner', sortable: true, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'affectedSites', label: 'Affected Sites', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'informationAssets', label: 'Information Assets', sortable: true, render: renderInformationAssets, width: 'w-40 sm:w-44 md:w-48 lg:w-52' },
+      { key: 'threat', label: 'Threat', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'vulnerability', label: 'Vulnerability', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'riskStatement', label: 'Risk Statement', sortable: true, width: 'w-40 sm:w-44 md:w-48 lg:w-52' },
+      { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'currentControls', label: 'Current Controls', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'consequence', label: 'Consequence', sortable: true, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'likelihood', label: 'Likelihood', sortable: true, width: 'w-28 sm:w-32 md:w-36 lg:w-40' },
+      { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'riskAction', label: 'Risk Action', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'riskTreatments', label: 'Risk Treatments', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: 'w-40 sm:w-44 md:w-48 lg:w-52' },
+      { key: 'dateRiskTreatmentsAssigned', label: 'Date Risk Treatments Assigned', sortable: true, width: 'w-40 sm:w-44 md:w-48 lg:w-52' },
+      { key: 'applicableControlsAfterTreatment', label: 'Applicable Controls After Treatment', sortable: true, width: 'w-44 sm:w-48 md:w-52 lg:w-56' },
+      { key: 'residualConsequence', label: 'Residual Consequence', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true, width: 'w-32 sm:w-36 md:w-40 lg:w-44' },
+      { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true, width: 'w-44 sm:w-48 md:w-52 lg:w-56' },
+      { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: 'w-36 sm:w-40 md:w-44 lg:w-48' },
+      { key: 'dateRiskTreatmentCompleted', label: 'Date Risk Treatment Completed', sortable: true, width: 'w-40 sm:w-44 md:w-48 lg:w-52' },
     ]
 
     switch (phase) {
@@ -380,8 +382,6 @@ export default function RiskRegister() {
         const informationAssetsResult = await informationAssetsResponse.json()
         
         if (risksResult.success && treatmentsResult.success && informationAssetsResult.success) {
-          // Set information assets for mapping
-          setInformationAssets(informationAssetsResult.data || [])
           // Create a map of treatments by riskId for quick lookup
           const treatmentsByRiskId = new Map()
           treatmentsResult.data.forEach((treatment: any) => {
@@ -485,6 +485,16 @@ export default function RiskRegister() {
     setSelectedPhase(phase)
   }
 
+  const handleAddToWorkshop = (risk: any) => {
+    setSelectedRiskForWorkshop(risk)
+    setWorkshopModalOpen(true)
+  }
+
+  const handleCloseWorkshopModal = () => {
+    setWorkshopModalOpen(false)
+    setSelectedRiskForWorkshop(null)
+  }
+
   const getStatusColor = (status: string) => {
     if (!status) return 'bg-gray-100 text-gray-800'
     
@@ -573,15 +583,6 @@ export default function RiskRegister() {
       if (col.key === 'actions') {
         return (
           <div className="flex items-center space-x-2">
-            <Tooltip content="View Risk Details">
-              <Link
-                href={`/risk-management/risks/${row.riskId}`}
-                className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Icon name="eye" size={12} />
-              </Link>
-            </Tooltip>
             <Tooltip content="Copy Link">
               <button
                 onClick={(e) => {
@@ -608,11 +609,7 @@ export default function RiskRegister() {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-  
-                  showToast({
-                    type: 'success',
-                    title: `Risk ${row.riskId} added to workshop agenda!`
-                  })
+                  handleAddToWorkshop(row)
                 }}
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
               >
@@ -816,6 +813,13 @@ export default function RiskRegister() {
            onPhaseSelect={handlePhaseSelect}
          />
       )}
+
+      {/* Workshop Selection Modal */}
+      <WorkshopSelectionModal
+        isOpen={workshopModalOpen}
+        onClose={handleCloseWorkshopModal}
+        risk={selectedRiskForWorkshop}
+      />
     </div>
   )
 } 

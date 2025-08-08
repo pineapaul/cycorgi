@@ -2,12 +2,6 @@ require('dotenv').config({ path: '.env.local' })
 const { MongoClient } = require('mongodb')
 
 // Validation constants (shared with API validation)
-const VALID_SECURITY_COMMITTEES = [
-  'Core Systems Engineering',
-  'Software Engineering', 
-  'IP Engineering'
-]
-
 const VALID_STATUSES = [
   'Pending Agenda',
   'Planned',
@@ -25,7 +19,7 @@ const sampleWorkshops = [
     participants: ['John Smith', 'Emily Davis', 'Michael Brown', 'Lisa Wilson'],
     risks: ['RISK-001', 'RISK-003', 'RISK-005'],
     outcomes: 'Comprehensive review of system architecture risks completed. All critical vulnerabilities identified and mitigation strategies approved.',
-    securitySteeringCommittee: 'Core Systems Engineering',
+
     actionsTaken: 'Implemented additional security controls for data encryption',
     toDo: 'Schedule follow-up review in 3 months',
     notes: 'Team showed excellent collaboration and thorough risk assessment',
@@ -68,7 +62,7 @@ const sampleWorkshops = [
     participants: ['Alex Thompson', 'Maria Garcia', 'David Lee', 'Sophie Anderson'],
     risks: ['RISK-002', 'RISK-004'],
     outcomes: 'Software development lifecycle risks assessed. Code review processes enhanced.',
-    securitySteeringCommittee: 'Software Engineering',
+
     actionsTaken: 'Updated code review guidelines',
     toDo: 'Implement automated testing pipeline',
     notes: 'Focus on CI/CD security improvements',
@@ -98,7 +92,7 @@ const sampleWorkshops = [
     participants: ['Chris Rodriguez', 'Jennifer Kim', 'Kevin Patel', 'Rachel Green'],
     risks: ['RISK-006'],
     outcomes: 'IP protection strategies reviewed. Patent filing process optimized.',
-    securitySteeringCommittee: 'IP Engineering',
+
     actionsTaken: 'Updated IP documentation procedures',
     toDo: 'Schedule legal review session',
     notes: 'Strong focus on trade secret protection',
@@ -129,10 +123,7 @@ function validateWorkshop(workshop) {
   if (!workshop.date) errors.push('Missing required field: date')
   if (!workshop.facilitator) errors.push('Missing required field: facilitator')
   
-  // Check security steering committee
-  if (!VALID_SECURITY_COMMITTEES.includes(workshop.securitySteeringCommittee)) {
-    errors.push(`Invalid securitySteeringCommittee: "${workshop.securitySteeringCommittee}". Must be one of: ${VALID_SECURITY_COMMITTEES.join(', ')}`)
-  }
+
   
   // Check status
   if (!VALID_STATUSES.includes(workshop.status)) {

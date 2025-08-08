@@ -687,11 +687,15 @@ export default function DataTable<T = Record<string, unknown>>({
                     className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
                       column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'
+                    } ${
+                      column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
+                        ? column.width 
+                        : ''
                     }`}
                     style={{ 
                       color: '#22223B',
-                      width: column.width || 'auto',
-                      minWidth: column.width === 'auto' ? '150px' : column.width
+                      width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
+                      minWidth: column.width === 'auto' ? '150px' : undefined
                     }}
                   >
                     <div className={`flex items-center space-x-1 ${
@@ -741,11 +745,15 @@ export default function DataTable<T = Record<string, unknown>>({
                       className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-4 text-xs md:text-sm ${
                         column.align === 'center' ? 'text-center' : 
                         column.align === 'right' ? 'text-right' : 'text-left'
+                      } ${
+                        column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
+                          ? column.width 
+                          : ''
                       }`}
                       style={{ 
                         color: '#22223B',
-                        width: column.width || 'auto',
-                        minWidth: column.width === 'auto' ? '150px' : column.width
+                        width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
+                        minWidth: column.width === 'auto' ? '150px' : undefined
                       }}
                     >
                         <div className={`w-full ${

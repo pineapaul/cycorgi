@@ -204,7 +204,7 @@ export default function TreatmentInformation() {
     )
   }, [handleMouseEnter, handleMouseLeave])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null) // Clear any previous errors
@@ -240,11 +240,11 @@ export default function TreatmentInformation() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [riskId, params.id])
 
   useEffect(() => {
     fetchData()
-  }, [params.riskId, params.id])
+  }, [fetchData])
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
@@ -363,14 +363,14 @@ export default function TreatmentInformation() {
     }
   }
 
-  const closeExtensionForm = () => {
+  const closeExtensionForm = useCallback(() => {
     setShowExtensionForm(false)
     setExtensionFormData({ extendedDueDate: '', justification: '' })
     // Restore focus to the previous active element
     if (previousActiveElement) {
       previousActiveElement.focus()
     }
-  }
+  }, [previousActiveElement])
 
   // Focus management for modal
   useEffect(() => {
@@ -407,7 +407,7 @@ export default function TreatmentInformation() {
       document.removeEventListener('keydown', handleEscapeKey)
       document.body.style.overflow = 'unset'
     }
-  }, [showExtensionForm])
+  }, [showExtensionForm, closeExtensionForm])
 
   // Handle tab key to trap focus within modal
   const handleTabKey = (event: React.KeyboardEvent) => {
