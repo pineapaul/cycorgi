@@ -4,7 +4,7 @@ import { validateWorkshopForCreate } from '../../../lib/workshop-validation'
 
 export async function GET() {
   try {
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     

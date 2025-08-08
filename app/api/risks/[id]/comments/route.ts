@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const comments = await db
       .collection('comments')
@@ -31,7 +31,7 @@ export async function POST(
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json({ success: false, error: 'Comment content is required' }, { status: 400 })
     }
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const comment = {
       riskId: id,

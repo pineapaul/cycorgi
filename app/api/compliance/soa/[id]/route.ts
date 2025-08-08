@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')
     
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')
     

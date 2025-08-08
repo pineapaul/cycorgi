@@ -12,7 +12,7 @@ export async function POST(
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json({ success: false, error: 'Reply content is required' }, { status: 400 })
     }
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const reply = {
       content: content.trim(),

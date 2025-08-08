@@ -9,7 +9,7 @@ import {
 
 export async function GET() {
   try {
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const risksCollection = db.collection('risks')
     const informationAssetsCollection = db.collection('information-assets')
@@ -40,7 +40,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('risks')
     

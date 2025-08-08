@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ riskId: string; treatmentId: string }> }
 ) {
   try {
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const { riskId, treatmentId } = await params
 

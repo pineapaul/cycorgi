@@ -274,7 +274,7 @@ export async function GET(request: Request) {
     const functionalUnit = searchParams.get('functionalUnit') || ''
     
     // Connect to MongoDB
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('third-parties')
     
@@ -409,7 +409,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('third-parties')
     

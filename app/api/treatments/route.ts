@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const riskId = searchParams.get('riskId')
     
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const treatmentsCollection = db.collection('treatments')
     const risksCollection = db.collection('risks')
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('treatments')
     

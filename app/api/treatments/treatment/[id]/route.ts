@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('treatments')
     
@@ -41,7 +41,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('treatments')
     
@@ -82,7 +82,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('treatments')
     

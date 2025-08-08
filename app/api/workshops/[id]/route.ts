@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
@@ -75,7 +75,7 @@ export async function PUT(
     
     // Test MongoDB connection
     console.log('API: Connecting to MongoDB')
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     console.log('API: MongoDB connected successfully')
@@ -143,7 +143,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     

@@ -44,7 +44,7 @@ export async function POST(
       )
     }
 
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
 
     // Find the treatment by treatmentId and riskId

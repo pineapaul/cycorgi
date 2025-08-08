@@ -263,7 +263,7 @@ const fakeInformationAssets = [
 export async function GET() {
   try {
     // Connect to MongoDB
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     
     // Check if information assets collection exists and has data
@@ -372,7 +372,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('information-assets')
     
