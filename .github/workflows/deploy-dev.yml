@@ -9,16 +9,25 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  PROJECT_ID: cycorgi-grc-platform
+  REGION: us-central1
+  REPOSITORY: grc-containers
+  SERVICE_NAME: grc-dev
+  IMAGE_NAME: grc-dev
+
 jobs:
   deploy:
-    name: Deploy Dev Infra to GCP
+    name: Build and Deploy to GCP Dev
     runs-on: ubuntu-latest
-    env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker auth for Artifact Registry
+        run: |
+          gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
       - name: Authenticate to Google Cloud (OIDC)
         id: 'auth'
@@ -28,10 +37,25 @@ jobs:
           workload_identity_provider: 'projects/720149050668/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'terraform-deployer@cycorgi-grc-platform.iam.gserviceaccount.com'
 
-      - name: Setup Terraform
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.8.5
+
+      - name: Set IMAGE_TAG
+        id: vars
+        run: echo "tag=gh-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }} .
+
+      - name: Push Docker image
+        run: |
+          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }}
 
       - name: Terraform Init
         working-directory: infra/environments/dev
@@ -40,5 +64,6 @@ jobs:
       - name: Terraform Apply
         working-directory: infra/environments/dev
         env:
+          TF_VAR_image_tag: ${{ steps.vars.outputs.tag }}
           TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
         run: terraform apply -auto-approve
