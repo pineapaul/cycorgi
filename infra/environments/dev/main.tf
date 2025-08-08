@@ -37,7 +37,7 @@ resource "google_cloud_run_service_iam_member" "public_access" {
   location = google_cloud_run_service.grc_dev.location
   project  = google_cloud_run_service.grc_dev.project
   role   = "roles/run.invoker"
-  member = "allUsers"
+  member = "serviceAccount:grc-dev-invoker@cycorgi-grc-platform.iam.gserviceaccount.com"
 }
 
 provider "google" {
