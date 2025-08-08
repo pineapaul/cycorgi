@@ -1476,9 +1476,6 @@ export default function WorkshopDetails() {
   const updateRiskMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
 
-    const fieldKey = `${section}-${index}-${field}`
-    setSavingFields(prev => new Set(prev).add(fieldKey))
-
     try {
       const updatedWorkshop = { ...workshop }
       if (updatedWorkshop[section]) {
@@ -1514,12 +1511,6 @@ export default function WorkshopDetails() {
         title: 'Update Failed',
         message: 'Failed to update meeting minutes. Please try again.'
       })
-    } finally {
-      setSavingFields(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(fieldKey)
-        return newSet
-      })
     }
   }
 
@@ -1538,9 +1529,6 @@ export default function WorkshopDetails() {
   // Update treatment-level meeting minutes
   const updateTreatmentMinutes = async (section: 'extensions' | 'closure' | 'newRisks', index: number, treatmentId: string, field: 'actionsTaken' | 'toDo' | 'outcome', value: string) => {
     if (!workshop) return
-
-    const fieldKey = `${section}-${index}-treatment-${treatmentId}-${field}`
-    setSavingFields(prev => new Set(prev).add(fieldKey))
 
     try {
       const updatedWorkshop = { ...workshop }
@@ -1620,12 +1608,6 @@ export default function WorkshopDetails() {
         type: 'error',
         title: 'Update Failed',
         message: 'Failed to update treatment minutes. Please try again.'
-      })
-    } finally {
-      setSavingFields(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(fieldKey)
-        return newSet
       })
     }
   }
