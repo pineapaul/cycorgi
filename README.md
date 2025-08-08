@@ -43,14 +43,21 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
 - **PDF Generation**: Playwright for server-side PDF export
 - **Icons**: FontAwesome
 - **Development**: ESLint, Turbopack
+- **Infrastructure**: Terraform with Google Cloud Platform
+- **CI/CD**: GitHub Actions with Workload Identity Federation
+- **Container Registry**: Google Artifact Registry
 
 ## Prerequisites
 
 - Node.js 18+
 - MongoDB instance (local or cloud)
 - npm, yarn, pnpm, or bun package manager
+- Google Cloud Platform account (for production deployment)
+- Terraform 1.7.0+ (for infrastructure management)
 
 ## Installation
+
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -77,6 +84,23 @@ Cycorgi provides a modern, intuitive interface for managing cybersecurity risks 
    
    This populates the database with sample data for testing.
 
+### Cloud Deployment
+
+The application is configured for automated deployment to Google Cloud Platform using Terraform and GitHub Actions.
+
+#### Prerequisites for Cloud Deployment
+- Google Cloud Platform project with billing enabled
+- Google Cloud Run API enabled
+- Google Artifact Registry API enabled
+- Workload Identity Federation configured
+- Terraform state bucket in Google Cloud Storage
+
+#### Deployment Process
+1. **Infrastructure Setup**: Terraform manages the cloud infrastructure
+2. **CI/CD Pipeline**: GitHub Actions automatically deploys on main branch pushes
+3. **Container Deployment**: Application is deployed to Google Cloud Run
+4. **Environment Management**: Separate environments for development and production
+
 ## Development
 
 ### Start the development server
@@ -94,6 +118,26 @@ The application will be available at [http://localhost:3000](http://localhost:30
 - `npm run lint` - Run ESLint
 - `npm run seed` - Seed database with sample data
 
+### Infrastructure Management
+
+#### Terraform Commands
+```bash
+# Navigate to environment directory
+cd infra/environments/dev
+
+# Initialize Terraform
+terraform init
+
+# Plan changes
+terraform plan
+
+# Apply changes
+terraform apply
+
+# Destroy infrastructure (use with caution)
+terraform destroy
+```
+
 ## Project Structure
 
 ```
@@ -107,11 +151,37 @@ cycorgi/
 │   ├── layouts/           # Layout components
 │   ├── risk-management/   # Risk management workflows
 │   └── page.tsx          # Landing page
+├── infra/                 # Infrastructure as Code
+│   ├── environments/      # Environment-specific configurations
+│   │   └── dev/          # Development environment
+│   └── modules/          # Reusable Terraform modules
+│       └── iam/          # Identity and Access Management
 ├── lib/                   # Utility functions
 ├── public/                # Static assets
 ├── scripts/               # Database seeding scripts
+├── .github/               # GitHub Actions workflows
+│   └── workflows/         # CI/CD pipeline definitions
 └── package.json
 ```
+
+## Infrastructure Architecture
+
+### Google Cloud Platform Services
+- **Cloud Run**: Serverless container platform for application hosting
+- **Artifact Registry**: Container image storage and management
+- **Cloud Storage**: Terraform state storage
+- **IAM**: Identity and Access Management with Workload Identity Federation
+
+### CI/CD Pipeline
+- **GitHub Actions**: Automated deployment workflow
+- **Workload Identity Federation**: Secure authentication between GitHub and GCP
+- **Terraform**: Infrastructure as Code for consistent deployments
+- **Container Registry**: Automated image building and deployment
+
+### Environment Management
+- **Development Environment**: Automated deployment on main branch pushes
+- **State Management**: Centralized Terraform state in Google Cloud Storage
+- **Configuration**: Environment-specific variables and secrets management
 
 ## Database Schema
 
@@ -154,6 +224,14 @@ Each treatment includes:
 - **Completion Status**: Treatment completion and approval status
 
 ## Recent Updates
+
+### Infrastructure & Deployment
+- **Cloud Infrastructure**: Added Terraform configuration for Google Cloud Platform deployment
+- **CI/CD Pipeline**: Implemented GitHub Actions workflow for automated deployments
+- **Container Deployment**: Configured Google Cloud Run for serverless application hosting
+- **Workload Identity Federation**: Secure authentication between GitHub Actions and GCP
+- **Environment Management**: Separate development and production environment configurations
+- **State Management**: Centralized Terraform state in Google Cloud Storage
 
 ### Risk Management Enhancements
 - **Comprehensive Risk Register**: Complete risk lifecycle management with phase-specific views
