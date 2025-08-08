@@ -134,7 +134,7 @@ export default function Treatments() {
     router.push(`/risk-management/treatments/${row.riskId}/${row.treatmentId}`)
   }
 
-  const handleExportCSV = (selectedRows: Set<number>) => {
+  const handleExportCSV = (_selectedRows: Set<number>) => {
     
   }
 

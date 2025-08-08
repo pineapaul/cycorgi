@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
-import { formatDate, escapeHtml, formatOptionText } from '@/lib/utils'
+import { formatDate, escapeHtml, formatOptionText, mapAssetIdsToNames } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -99,15 +99,10 @@ export default function ThirdPartyDetailPage() {
     }) : null)
   }
 
-  const getInformationAssetName = (assetId: string) => {
-    const asset = informationAssets.find(a => a.id === assetId)
-    return asset ? asset.informationAsset : assetId
-  }
-
   const getInformationAssetsDisplay = (assetIds: string[]) => {
     if (assetIds.length === 0) return <span>-</span>
     if (assetIds.length === 1) {
-      const assetName = getInformationAssetName(assetIds[0])
+      const assetName = mapAssetIdsToNames([assetIds[0]], informationAssets)
       return (
         <Link 
           href={`/inventory/information-assets/${assetIds[0]}`}
@@ -119,21 +114,19 @@ export default function ThirdPartyDetailPage() {
     }
     
     // Multiple assets - show list
+    const assetNames = mapAssetIdsToNames(assetIds, informationAssets).split(', ')
     return (
       <div className="space-y-1">
-        {assetIds.map((id, index) => {
-          const assetName = getInformationAssetName(id)
-          return (
-            <div key={index}>
-              <Link 
-                href={`/inventory/information-assets/${id}`}
-                className="text-blue-600 hover:text-blue-800 underline"
-              >
-                {escapeHtml(assetName)}
-              </Link>
-            </div>
-          )
-        })}
+        {assetNames.map((name, index) => (
+          <div key={index}>
+            <Link 
+              href={`/inventory/information-assets/${assetIds[index]}`}
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              {escapeHtml(name)}
+            </Link>
+          </div>
+        ))}
       </div>
     )
   }

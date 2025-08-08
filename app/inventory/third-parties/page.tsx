@@ -5,7 +5,7 @@ import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
 import Tooltip from '@/app/components/Tooltip'
-import { formatDate, formatDateForCSV, escapeHtml } from '@/lib/utils'
+import { formatDate, formatDateForCSV, escapeHtml, mapAssetIdsToNames } from '@/lib/utils'
 
 interface ThirdParty {
   id: string
@@ -118,11 +118,6 @@ export default function ThirdPartiesPage() {
 
 
 
-  const getInformationAssetName = (assetId: string) => {
-    const asset = informationAssets.find(a => a.id === assetId)
-    return asset ? asset.informationAsset : assetId
-  }
-
   const getInformationAssetsDisplay = (assetIds: any) => {
     // Handle undefined, null, or non-array values
     if (!assetIds || !Array.isArray(assetIds)) {
@@ -131,7 +126,7 @@ export default function ThirdPartiesPage() {
     
     if (assetIds.length === 0) return <span>-</span>
     if (assetIds.length === 1) {
-      const assetName = getInformationAssetName(assetIds[0])
+      const assetName = mapAssetIdsToNames([assetIds[0]], informationAssets)
       return (
         <Link 
           href={`/inventory/information-assets/${assetIds[0]}`}
@@ -144,7 +139,7 @@ export default function ThirdPartiesPage() {
     }
     
     // Multiple assets - show "Multiple" with tooltip
-    const assetNames = assetIds.map(id => getInformationAssetName(id))
+    const assetNames = mapAssetIdsToNames(assetIds, informationAssets).split(', ')
     const tooltipContent = (
       <div className="space-y-1">
         <div className="font-medium text-white mb-2">Linked Information Assets:</div>

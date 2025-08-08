@@ -56,7 +56,7 @@ export default function EditTreatment() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<TreatmentFormErrors>({})
-  const [riskDetails, setRiskDetails] = useState<any>(null)
+  const [, setRiskDetails] = useState<any>(null)
   const [treatmentDetails, setTreatmentDetails] = useState<any>(null)
 
   const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']

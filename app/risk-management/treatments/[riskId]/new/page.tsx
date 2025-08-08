@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { formatInformationAssets } from '../../../../../lib/utils'
+import { mapAssetIdsToNames } from '../../../../../lib/utils'
 
 interface TreatmentFormData {
   riskId: string
@@ -256,7 +256,7 @@ export default function AddTreatment() {
                               <div>
                   <span className="font-medium text-gray-700">Information Asset:</span>
                   <p className="text-gray-600 mt-1">
-                    {formatInformationAssets(riskDetails.informationAsset)}
+                    {mapAssetIdsToNames(riskDetails.informationAsset, riskDetails.informationAssetDetails || [])}
                   </p>
                 </div>
               <div>

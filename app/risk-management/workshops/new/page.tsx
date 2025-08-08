@@ -786,7 +786,7 @@ export default function NewWorkshop() {
                       Risks added to workshop:
                     </h3>
                     <div className="space-y-2">
-                      {getSelectedRiskData().map((risk, index) => (
+                      {getSelectedRiskData().map((risk) => (
                         <div key={`${risk.riskId}-${risk.originalIndex}`} className="flex items-start justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex-1">
                                                          <div className="flex items-center mb-1">

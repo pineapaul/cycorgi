@@ -173,6 +173,43 @@ export function escapeHtml(text: unknown): string {
 }
 
 /**
+ * Type definition for asset ID input that can be a string, array of strings, or array of objects with id property
+ */
+type AssetIdInput = string | string[] | Array<{ id: string; [key: string]: any }>
+
+/**
+ * Maps information asset IDs to their names using a provided array of information assets
+ * @param assetIds - The asset IDs which can be a string, array of strings, or array of objects with id property
+ * @param informationAssets - Array of information asset objects with id and informationAsset properties
+ * @returns Comma-separated string of asset names, or empty string if no assets found
+ */
+export function mapAssetIdsToNames(assetIds: AssetIdInput, informationAssets: Array<{ id: string; informationAsset: string }>): string {
+  if (!assetIds || !informationAssets) return ''
+  
+  let ids: string[] = []
+  if (Array.isArray(assetIds)) {
+    ids = assetIds.map((asset: string | { id: string; [key: string]: any }): string => {
+      if (typeof asset === 'object' && asset !== null) {
+        return String(asset.id || asset)
+      }
+      return String(asset)
+    }).filter(Boolean)
+  } else if (typeof assetIds === 'string') {
+    ids = assetIds.split(',').map((id: string) => id.trim()).filter(Boolean)
+  }
+  
+  if (ids.length === 0) return ''
+  
+  // Map IDs to names using the provided informationAssets array
+  const assetNames = ids.map(id => {
+    const asset = informationAssets.find(a => a.id === id)
+    return asset ? asset.informationAsset : id
+  })
+  
+  return assetNames.join(', ')
+}
+
+/**
  * Safely formats and escapes option text for select elements
  * @param parts - Array of text parts to concatenate and escape
  * @returns Properly escaped concatenated string
