@@ -408,20 +408,7 @@ export default function EditWorkshop() {
     })
   }
 
-  const isValidRiskSelection = (obj: unknown): obj is RiskSelection => {
-    return (
-      typeof obj === 'object' &&
-      obj !== null &&
-      'riskId' in obj &&
-      'riskStatement' in obj &&
-      'treatments' in obj &&
-      'category' in obj &&
-      typeof (obj as RiskSelection).riskId === 'string' &&
-      typeof (obj as RiskSelection).riskStatement === 'string' &&
-      Array.isArray((obj as RiskSelection).treatments) &&
-      typeof (obj as RiskSelection).category === 'string'
-    )
-  }
+
 
   const removeMeetingMinutesItem = (section: 'extensions' | 'closure' | 'newRisks', index: number) => {
     setFormData(prev => ({
