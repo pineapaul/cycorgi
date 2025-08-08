@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
 import { validateRiskId, getCIAConfig, mapAssetIdsToNames } from '../../../../../lib/utils'
