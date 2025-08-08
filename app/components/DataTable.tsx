@@ -657,7 +657,7 @@ export default function DataTable<T = Record<string, unknown>>({
             minHeight: '400px'
           }}
         >
-          <table className="min-w-full" style={{ minWidth: '1200px' }}>
+          <table className="w-full table-auto">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 {selectable && (
@@ -684,13 +684,18 @@ export default function DataTable<T = Record<string, unknown>>({
                   <th
                     key={column.key}
                     scope="col"
-                    className={`px-3 py-3 md:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
+                    className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
                       column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'
+                    } ${
+                      column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
+                        ? column.width 
+                        : ''
                     }`}
                     style={{ 
                       color: '#22223B',
-                      width: column.width || 'auto'
+                      width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
+                      minWidth: column.width === 'auto' ? '150px' : undefined
                     }}
                   >
                     <div className={`flex items-center space-x-1 ${
@@ -737,21 +742,21 @@ export default function DataTable<T = Record<string, unknown>>({
                     return (
                     <td
                       key={column.key}
-                      className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm ${
+                      className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-4 text-xs md:text-sm ${
                         column.align === 'center' ? 'text-center' : 
                         column.align === 'right' ? 'text-right' : 'text-left'
+                      } ${
+                        column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
+                          ? column.width 
+                          : ''
                       }`}
                       style={{ 
                         color: '#22223B',
-                        width: column.width || 'auto'
+                        width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
+                        minWidth: column.width === 'auto' ? '150px' : undefined
                       }}
                     >
-                        <div className={`${column.width ? 'max-w-full' : 'max-w-48'} ${
-                          column.key === 'description' || column.key === 'additionalInfo' ? 'max-w-xs md:max-w-md lg:max-w-lg' : 
-                          column.key === 'riskStatement' ? 'max-w-96' :
-                          column.key === 'threat' || column.key === 'vulnerability' || column.key === 'currentControls' ? 'max-w-64' :
-                          column.key === 'informationAssets' ? 'max-w-80 md:max-w-96 lg:max-w-none' : ''
-                        } ${
+                        <div className={`w-full ${
                         column.align === 'center' ? 'flex justify-center' : 
                         column.align === 'right' ? 'flex justify-end' : ''
                       }`}>
@@ -759,7 +764,7 @@ export default function DataTable<T = Record<string, unknown>>({
                             ? column.render(cellValue, row as any)
                             : (
                                 <Tooltip content={cellValue ? String(cellValue) : '-'} theme="dark">
-                                  <span className="truncate block max-w-full">
+                                  <span className="block break-words">
                                     {cellValue ? String(cellValue) : '-'}
                                   </span>
                                 </Tooltip>

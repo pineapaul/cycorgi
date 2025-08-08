@@ -44,7 +44,6 @@ export interface WorkshopData {
   id?: string
   date?: string
   facilitator?: string
-  securitySteeringCommittee?: string
   status?: string
   extensions?: MeetingMinutesItem[]
   closure?: MeetingMinutesItem[]
@@ -165,10 +164,6 @@ export const validateWorkshopForCreate = (data: WorkshopData): void => {
     throw new Error('Facilitator must be a string')
   }
   
-  if (data.securitySteeringCommittee && typeof data.securitySteeringCommittee !== 'string') {
-    throw new Error('Security Steering Committee must be a string')
-  }
-  
   // Validate arrays
   validateMeetingMinutesArrays(data)
 }
@@ -191,10 +186,6 @@ export const validateWorkshopForUpdate = (data: WorkshopData): void => {
   // Validate string fields if provided
   if (data.facilitator !== undefined && typeof data.facilitator !== 'string') {
     throw new Error('Facilitator must be a string')
-  }
-  
-  if (data.securitySteeringCommittee !== undefined && typeof data.securitySteeringCommittee !== 'string') {
-    throw new Error('Security Steering Committee must be a string')
   }
   
   // Validate arrays if provided
