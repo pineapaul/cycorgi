@@ -83,7 +83,7 @@ interface IconProps {
 
 export default function Icon({ name, size = 20, className = '' }: IconProps) {
   // Font Awesome icon mapping
-  const icons: Record<string, any> = {
+  const icons: Record<string, IconDefinition> = {
     dashboard: faTachometerAlt,
     risk: faExclamationTriangle,
     audit: faSearch,

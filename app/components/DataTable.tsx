@@ -10,7 +10,7 @@ export interface Column {
   sortable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
-  render?: (value: any, row: any) => React.ReactNode
+  render?: (value: unknown, row: any) => React.ReactNode
 }
 
 export interface Filter {

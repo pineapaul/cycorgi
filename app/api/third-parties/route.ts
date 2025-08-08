@@ -290,7 +290,7 @@ export async function GET(request: Request) {
     }
     
     // Build filter query
-    const filter: any = {}
+    const filter: Record<string, unknown> = {}
     
     if (search) {
       filter.$or = [
@@ -311,7 +311,7 @@ export async function GET(request: Request) {
     }
     
     // Build sort query
-    const sort: any = {}
+    const sort: Record<string, 1 | -1> = {}
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1
     
     // Calculate pagination

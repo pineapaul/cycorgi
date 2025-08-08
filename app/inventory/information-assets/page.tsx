@@ -383,13 +383,13 @@ export default function InformationAssetsPage() {
     }
   }
 
-  const handleFilter = () => {
-    setShowFilter(!showFilter)
-  }
+  // const handleFilter = () => {
+  //   setShowFilter(!showFilter)
+  // }
 
-  const handleColumns = () => {
-    setShowColumns(!showColumns)
-  }
+  // const handleColumns = () => {
+  //   setShowColumns(!showColumns)
+  // }
 
   const toggleColumn = (columnKey: string) => {
     const newVisibleColumns = new Set(visibleColumns)

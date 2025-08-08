@@ -11,7 +11,7 @@ export async function GET() {
     const messages = await collection.find({}).sort({ timestamp: -1 }).limit(5).toArray()
 
     return NextResponse.json({ success: true, messages })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('MongoDB connection error:', error.message || error)
     return NextResponse.json({ success: false, error: 'Failed to connect to MongoDB' }, { status: 500 })
   }

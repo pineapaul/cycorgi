@@ -155,7 +155,7 @@ export default function StatementOfApplicabilityPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Statement of Applicability</h1>
         <p className="text-gray-600 mb-6">
-          This Statement of Applicability (SoA) documents the organization's approach to implementing 
+          This Statement of Applicability (SoA) documents the organization&apos;s approach to implementing 
           ISO 27001:2022 Annex A controls. It identifies which controls are implemented, excluded, 
           or not yet implemented, along with justifications for each decision.
         </p>

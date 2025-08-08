@@ -11,7 +11,7 @@ export default function InventoryPage() {
             Inventory Management
           </h1>
           <p className="text-gray-600 mt-2" style={{ color: '#22223B' }}>
-            Manage your organization's assets and third-party relationships
+            Manage your organization&apos;s assets and third-party relationships
           </p>
         </div>
       </div>
@@ -29,7 +29,7 @@ export default function InventoryPage() {
             </div>
             <h3 className="text-lg font-semibold mb-2" style={{ color: '#22223B' }}>Information Assets</h3>
             <p className="text-sm opacity-80" style={{ color: '#22223B' }}>
-              Manage and track your organization's information assets, their classifications, and security requirements.
+              Manage and track your organization&apos;s information assets, their classifications, and security requirements.
             </p>
           </div>
         </Link>

@@ -638,7 +638,6 @@ export default function NewRisk() {
                     <p className="mt-1 text-sm text-red-600">{errors.riskRating}</p>
                   )}
                 </div>
-                </div>
 
                 {/* Impact Assessment */}
                 <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA) <span className="text-red-500">*</span></h3>

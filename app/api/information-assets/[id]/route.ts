@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
+import { ObjectId } from 'mongodb'
 
 export async function GET(
   request: Request,
@@ -17,9 +18,8 @@ export async function GET(
     if (!asset) {
       // If not found by id, try by _id (MongoDB ObjectId)
       try {
-        const { ObjectId } = require('mongodb')
         asset = await collection.findOne({ _id: new ObjectId(id) })
-      } catch (e) {
+      } catch {
         // If ObjectId conversion fails, asset is not found
       }
     }
@@ -56,7 +56,7 @@ export async function PUT(
     const collection = db.collection('information-assets')
     
     // Update the asset with new data and timestamp, excluding _id field
-    const { _id, ...bodyWithoutId } = body
+    const { _id: _, ...bodyWithoutId } = body
     const updatedAsset = {
       ...bodyWithoutId,
       updatedAt: new Date().toISOString()
@@ -71,12 +71,11 @@ export async function PUT(
     if (result.matchedCount === 0) {
       // If not found by id, try by _id (MongoDB ObjectId)
       try {
-        const { ObjectId } = require('mongodb')
         result = await collection.updateOne(
           { _id: new ObjectId(id) },
           { $set: updatedAsset }
         )
-      } catch (e) {
+      } catch {
         // If ObjectId conversion fails, asset is not found
       }
     }
@@ -117,9 +116,8 @@ export async function DELETE(
     if (result.deletedCount === 0) {
       // If not found by id, try by _id (MongoDB ObjectId)
       try {
-        const { ObjectId } = require('mongodb')
         result = await collection.deleteOne({ _id: new ObjectId(id) })
-      } catch (e) {
+      } catch {
         // If ObjectId conversion fails, asset is not found
       }
     }
