@@ -47,5 +47,14 @@ next-env.d.ts
 *.swo
 *~
 
-# infrastructure
-/infra/
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars.json
+.terraformrc
+terraform.rc
+*.tfplan
+*.tfplan.json
