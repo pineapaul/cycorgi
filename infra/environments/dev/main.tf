@@ -6,7 +6,10 @@ terraform {
     }
   }
 
-  backend "local" {}
+  backend "gcs" {
+    bucket  = "cycorgi-terraform-state"
+    prefix  = "env/dev"  # optional folder-like prefix in the bucket
+  }
 
   required_version = ">= 1.7.0"
 }
