@@ -28,7 +28,7 @@ export async function GET(
     }
     
     // Fetch information assets for transformation
-    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const assetMap = new Map(informationAssets.map(asset => [asset.id, asset]))
     
     // Transform the risk data for response
@@ -60,7 +60,7 @@ export async function PUT(
     const informationAssetsCollection = db.collection('information-assets')
     
     // Fetch available information assets for validation
-    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const availableAssetIds = createAssetIdMap(informationAssets)
     
     // Convert impactCIA string back to impact array for database storage

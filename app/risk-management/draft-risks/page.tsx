@@ -11,7 +11,7 @@ import { CIA_DELIMITERS } from '@/lib/constants'
 import { useToast } from '@/app/components/Toast'
 
 // Custom renderer for CIA values
-const renderCIAValues = (value: string) => {
+const renderCIAValues = (value: unknown) => {
   if (!value || value === 'Not specified') {
     return (
       <span className="text-gray-400 text-xs italic">Not specified</span>
@@ -19,7 +19,8 @@ const renderCIAValues = (value: string) => {
   }
 
   // Use robust parsing with multiple delimiters
-  const ciaValues = value
+  const valueStr = String(value)
+  const ciaValues = valueStr
     .split(CIA_DELIMITERS.ALTERNATIVES)
     .map(item => item.trim())
     .filter(item => item.length > 0)

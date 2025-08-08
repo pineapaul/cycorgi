@@ -77,7 +77,7 @@ const parseDate = (dateString: string | null | undefined): Date | null => {
 }
 
 // Format date to dd MMM yyyy format
-export const formatDate = (dateString: string | null | undefined): string => {
+const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString || dateString === 'Not specified') return 'Not specified'
   const date = parseDate(dateString)
   if (!date) return 'Invalid date'

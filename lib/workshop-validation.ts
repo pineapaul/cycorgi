@@ -1,23 +1,9 @@
-// Workshop validation constants and utilities
-export const VALID_SECURITY_COMMITTEES = [
-  'Core Systems Engineering',
-  'Software Engineering', 
-  'IP Engineering'
-] as const
-
-export const VALID_STATUSES = [
-  'Pending Agenda',
-  'Planned',
-  'Scheduled', 
-  'Finalising Meeting Minutes',
-  'Completed'
-] as const
+import { VALID_STATUSES } from './constants'
 
 export type WorkshopStatus = typeof VALID_STATUSES[number]
 
-// Type guard for workshop status validation
 const isValidWorkshopStatus = (status: unknown): status is WorkshopStatus => {
-  return typeof status === 'string' && VALID_STATUSES.some(validStatus => validStatus === status)
+  return typeof status === 'string' && VALID_STATUSES.includes(status as WorkshopStatus)
 }
 
 export interface TreatmentMinutes {
@@ -28,26 +14,20 @@ export interface TreatmentMinutes {
   outcome?: string
 }
 
-// Discriminated union for selectedTreatments
 type SelectedTreatments = string[] | TreatmentMinutes[]
 
-// Type guards for discriminated union
 const isStringArray = (selectedTreatments: SelectedTreatments): selectedTreatments is string[] => {
-  return selectedTreatments.length > 0 && 
-         selectedTreatments[0] !== undefined && 
-         selectedTreatments[0] !== null &&
-         typeof selectedTreatments[0] === 'string'
+  return Array.isArray(selectedTreatments) && selectedTreatments.every(item => typeof item === 'string')
 }
 
 const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): selectedTreatments is TreatmentMinutes[] => {
-  return selectedTreatments.length > 0 && 
-         selectedTreatments[0] !== undefined && 
-         selectedTreatments[0] !== null &&
-         typeof selectedTreatments[0] === 'object' && 
-         'treatmentId' in selectedTreatments[0]
+  return Array.isArray(selectedTreatments) && selectedTreatments.every(item => 
+    typeof item === 'object' && item !== null && typeof item.treatmentId === 'string'
+  )
 }
 
-// Helper function to safely check if array is empty or can be treated as TreatmentMinutes
+// This function is not used but kept for potential future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isEmptyOrTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): boolean => {
   return selectedTreatments.length === 0 || isTreatmentMinutesArray(selectedTreatments)
 }
@@ -69,11 +49,11 @@ export interface WorkshopData {
   extensions?: MeetingMinutesItem[]
   closure?: MeetingMinutesItem[]
   newRisks?: MeetingMinutesItem[]
-  [key: string]: any
+  [key: string]: unknown
 }
 
 // Validate Treatment Minutes structure
-const validateTreatmentMinutes = (treatment: any, sectionName: string): void => {
+const validateTreatmentMinutes = (treatment: TreatmentMinutes, sectionName: string): void => {
   if (!treatment.treatmentId || typeof treatment.treatmentId !== 'string') {
     throw new Error(`${sectionName}: Each treatment must have a valid treatmentId string`)
   }
@@ -92,7 +72,7 @@ const validateTreatmentMinutes = (treatment: any, sectionName: string): void => 
 }
 
 // Validate Meeting Minutes item structure
-const validateMeetingMinutesItem = (item: any, sectionName: string): void => {
+const validateMeetingMinutesItem = (item: MeetingMinutesItem, sectionName: string): void => {
   if (!item.riskId || typeof item.riskId !== 'string') {
     throw new Error(`${sectionName}: Each item must have a valid riskId string`)
   }
@@ -110,14 +90,14 @@ const validateMeetingMinutesItem = (item: any, sectionName: string): void => {
   if (item.selectedTreatments && Array.isArray(item.selectedTreatments)) {
     if (isStringArray(item.selectedTreatments)) {
       // Validate string array - each item should be a string
-      item.selectedTreatments.forEach((treatmentId: any, index: number) => {
+      item.selectedTreatments.forEach((treatmentId: string, index: number) => {
         if (typeof treatmentId !== 'string') {
           throw new Error(`${sectionName} treatment ${index + 1}: treatmentId must be a string`)
         }
       })
     } else if (isTreatmentMinutesArray(item.selectedTreatments)) {
       // Validate TreatmentMinutes array
-      item.selectedTreatments.forEach((treatment: any, index: number) => {
+      item.selectedTreatments.forEach((treatment: TreatmentMinutes, index: number) => {
         validateTreatmentMinutes(treatment, `${sectionName} treatment ${index + 1}`)
       })
     } else {
@@ -142,19 +122,19 @@ const validateMeetingMinutesArrays = (data: WorkshopData): void => {
   
   // Validate each item in the arrays if they exist
   if (data.extensions) {
-    data.extensions.forEach((item: any, index: number) => {
+    data.extensions.forEach((item: MeetingMinutesItem, index: number) => {
       validateMeetingMinutesItem(item, `Extensions item ${index + 1}`)
     })
   }
   
   if (data.closure) {
-    data.closure.forEach((item: any, index: number) => {
+    data.closure.forEach((item: MeetingMinutesItem, index: number) => {
       validateMeetingMinutesItem(item, `Closure item ${index + 1}`)
     })
   }
   
   if (data.newRisks) {
-    data.newRisks.forEach((item: any, index: number) => {
+    data.newRisks.forEach((item: MeetingMinutesItem, index: number) => {
       validateMeetingMinutesItem(item, `New Risks item ${index + 1}`)
     })
   }
@@ -167,22 +147,56 @@ export const validateWorkshopForCreate = (data: WorkshopData): void => {
     throw new Error('Missing required fields: id and date are required')
   }
   
-  // Validate status
-  if (!isValidWorkshopStatus(data.status)) {
-    throw new Error(`Invalid status: "${data.status}". Must be one of: ${VALID_STATUSES.join(', ')}`)
+  // Validate date format
+  if (data.date) {
+    const date = new Date(data.date)
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format')
+    }
   }
   
-  // Validate Meeting Minutes structure
+  // Validate status if provided
+  if (data.status && !isValidWorkshopStatus(data.status)) {
+    throw new Error(`Invalid status: ${data.status}. Must be one of: ${VALID_STATUSES.join(', ')}`)
+  }
+  
+  // Validate string fields
+  if (data.facilitator && typeof data.facilitator !== 'string') {
+    throw new Error('Facilitator must be a string')
+  }
+  
+  if (data.securitySteeringCommittee && typeof data.securitySteeringCommittee !== 'string') {
+    throw new Error('Security Steering Committee must be a string')
+  }
+  
+  // Validate arrays
   validateMeetingMinutesArrays(data)
 }
 
-// Validate workshop data for PUT requests (only validates provided fields)
+// Validate workshop data for PUT requests (all fields optional but must be valid if present)
 export const validateWorkshopForUpdate = (data: WorkshopData): void => {
-  // Validate status if provided
-  if (data.status && !isValidWorkshopStatus(data.status)) {
-    throw new Error(`Invalid status: "${data.status}". Must be one of: ${VALID_STATUSES.join(', ')}`)
+  // Validate date format if provided
+  if (data.date) {
+    const date = new Date(data.date)
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format')
+    }
   }
   
-  // Validate Meeting Minutes structure if provided
+  // Validate status if provided
+  if (data.status && !isValidWorkshopStatus(data.status)) {
+    throw new Error(`Invalid status: ${data.status}. Must be one of: ${VALID_STATUSES.join(', ')}`)
+  }
+  
+  // Validate string fields if provided
+  if (data.facilitator !== undefined && typeof data.facilitator !== 'string') {
+    throw new Error('Facilitator must be a string')
+  }
+  
+  if (data.securitySteeringCommittee !== undefined && typeof data.securitySteeringCommittee !== 'string') {
+    throw new Error('Security Steering Committee must be a string')
+  }
+  
+  // Validate arrays if provided
   validateMeetingMinutesArrays(data)
 } 

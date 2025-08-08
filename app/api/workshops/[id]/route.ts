@@ -20,7 +20,7 @@ export async function GET(
       // If not found by workshop ID, try by MongoDB _id
       try {
         workshop = await collection.findOne({ _id: new ObjectId(id) })
-      } catch (objectIdError) {
+      } catch {
         // Invalid ObjectId format, continue with null workshop
       }
     }
@@ -81,7 +81,7 @@ export async function PUT(
     console.log('API: MongoDB connected successfully')
     
     // Add updatedAt timestamp, but exclude _id field as it's immutable
-    const { _id, ...bodyWithoutId } = body
+    const { _id: _unused, ...bodyWithoutId } = body
     const updateData = {
       ...bodyWithoutId,
       updatedAt: new Date().toISOString()
@@ -107,8 +107,7 @@ export async function PUT(
           { $set: updateData }
         )
         console.log('API: Second update attempt result:', result)
-      } catch (objectIdError) {
-        console.log('API: ObjectId error:', objectIdError)
+      } catch {
         // Invalid ObjectId format, continue with result
       }
     }
@@ -155,7 +154,7 @@ export async function DELETE(
       // If not found by workshop ID, try by MongoDB _id
       try {
         result = await collection.deleteOne({ _id: new ObjectId(id) })
-      } catch (objectIdError) {
+      } catch {
         // Invalid ObjectId format, continue with result
       }
     }

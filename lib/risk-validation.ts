@@ -42,14 +42,14 @@ export interface RiskData {
 export interface ValidationResult {
   isValid: boolean
   errors: string[]
-  transformedData?: any
+  transformedData?: RiskData
 }
 
 /**
  * Validates and transforms informationAsset field to ensure consistent array of ID strings format
  */
 export function validateAndTransformInformationAsset(
-  informationAsset: any,
+  informationAsset: string | string[] | null | undefined,
   availableAssetIds: Set<string> = new Set()
 ): { isValid: boolean; errors: string[]; transformedData: string[] } {
   const errors: string[] = []
@@ -72,7 +72,7 @@ export function validateAndTransformInformationAsset(
   // Handle array format
   else if (Array.isArray(informationAsset)) {
     transformedData = informationAsset
-      .map((item: any) => {
+      .map((item: string | { id?: string; name?: string }) => {
         if (typeof item === 'string') {
           return item.trim()
         } else if (item && typeof item === 'object' && item.id) {
@@ -84,7 +84,7 @@ export function validateAndTransformInformationAsset(
         }
         return null
       })
-      .filter(Boolean)
+      .filter((item): item is string => item !== null)
   }
   // Handle invalid format
   else {
@@ -124,7 +124,7 @@ export function validateAndTransformRiskData(
   availableAssetIds: Set<string> = new Set()
 ): ValidationResult {
   const errors: string[] = []
-  const transformedData: any = { ...data }
+  const transformedData: RiskData = { ...data }
 
   // Validate required fields
   if (!data.riskId || typeof data.riskId !== 'string' || data.riskId.trim() === '') {
@@ -143,54 +143,42 @@ export function validateAndTransformRiskData(
     transformedData.informationAsset = infoAssetValidation.transformedData
   }
 
-  // Validate risk ratings
-  const validRatings = ['Low', 'Moderate', 'High', 'Extreme']
-  if (data.currentRiskRating && !validRatings.includes(data.currentRiskRating)) {
-    errors.push(`Invalid current risk rating: ${data.currentRiskRating}. Must be one of: ${validRatings.join(', ')}`)
-  }
-  if (data.residualRiskRating && !validRatings.includes(data.residualRiskRating)) {
-    errors.push(`Invalid residual risk rating: ${data.residualRiskRating}. Must be one of: ${validRatings.join(', ')}`)
+  // Validate other required fields
+  if (!data.riskStatement || typeof data.riskStatement !== 'string' || data.riskStatement.trim() === '') {
+    errors.push('Risk statement is required and must be a non-empty string')
   }
 
-  // Validate consequence ratings
-  const validConsequences = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Critical']
-  if (data.consequence && !validConsequences.includes(data.consequence)) {
-    errors.push(`Invalid consequence rating: ${data.consequence}. Must be one of: ${validConsequences.join(', ')}`)
-  }
-  if (data.residualConsequence && !validConsequences.includes(data.residualConsequence)) {
-    errors.push(`Invalid residual consequence rating: ${data.residualConsequence}. Must be one of: ${validConsequences.join(', ')}`)
+  if (!data.threat || typeof data.threat !== 'string' || data.threat.trim() === '') {
+    errors.push('Threat is required and must be a non-empty string')
   }
 
-  // Validate likelihood ratings
-  const validLikelihoods = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain']
-  if (data.likelihood && !validLikelihoods.includes(data.likelihood)) {
-    errors.push(`Invalid likelihood rating: ${data.likelihood}. Must be one of: ${validLikelihoods.join(', ')}`)
-  }
-  if (data.residualLikelihood && !validLikelihoods.includes(data.residualLikelihood)) {
-    errors.push(`Invalid residual likelihood rating: ${data.residualLikelihood}. Must be one of: ${validLikelihoods.join(', ')}`)
+  if (!data.vulnerability || typeof data.vulnerability !== 'string' || data.vulnerability.trim() === '') {
+    errors.push('Vulnerability is required and must be a non-empty string')
   }
 
-  // Validate phases
-  const validPhases = ['Draft', 'Identification', 'Analysis', 'Evaluation', 'Treatment', 'Monitoring']
-  if (data.currentPhase && !validPhases.includes(data.currentPhase)) {
-    errors.push(`Invalid current phase: ${data.currentPhase}. Must be one of: ${validPhases.join(', ')}`)
+  if (!data.consequence || typeof data.consequence !== 'string' || data.consequence.trim() === '') {
+    errors.push('Consequence is required and must be a non-empty string')
   }
 
-  // Validate dates
-  const dateFields = [
-    'dateRiskRaised', 'dateOfSSCApproval', 'dateRiskTreatmentsApproved',
-    'dateResidualRiskAccepted', 'dateRiskTreatmentCompleted'
-  ]
-  
-  dateFields.forEach(field => {
-    const value = data[field as keyof RiskData]
-    if (value && typeof value === 'string') {
-      const date = new Date(value)
-      if (isNaN(date.getTime())) {
-        errors.push(`Invalid date format for ${field}: ${value}`)
-      }
-    }
-  })
+  if (!data.likelihood || typeof data.likelihood !== 'string' || data.likelihood.trim() === '') {
+    errors.push('Likelihood is required and must be a non-empty string')
+  }
+
+  if (!data.currentRiskRating || typeof data.currentRiskRating !== 'string' || data.currentRiskRating.trim() === '') {
+    errors.push('Current risk rating is required and must be a non-empty string')
+  }
+
+  if (!data.riskOwner || typeof data.riskOwner !== 'string' || data.riskOwner.trim() === '') {
+    errors.push('Risk owner is required and must be a non-empty string')
+  }
+
+  if (!data.raisedBy || typeof data.raisedBy !== 'string' || data.raisedBy.trim() === '') {
+    errors.push('Raised by is required and must be a non-empty string')
+  }
+
+  if (!data.functionalUnit || typeof data.functionalUnit !== 'string' || data.functionalUnit.trim() === '') {
+    errors.push('Functional unit is required and must be a non-empty string')
+  }
 
   return {
     isValid: errors.length === 0,
@@ -200,44 +188,55 @@ export function validateAndTransformRiskData(
 }
 
 /**
- * Transforms risk data from database format to API response format
+ * Validates risk ID format
  */
-export function transformRiskForResponse(risk: any, assetMap: Map<string, InformationAsset>): any {
-  const transformed = { ...risk }
+export function validateRiskId(riskId: string): string | null {
+  if (!riskId || typeof riskId !== 'string') {
+    return null
+  }
 
-  // Transform informationAsset to objects with id and name
-  if (risk.informationAsset) {
-    if (Array.isArray(risk.informationAsset)) {
-      transformed.informationAsset = risk.informationAsset.map((assetId: string) => {
-        const foundAsset = assetMap.get(assetId)
-        return foundAsset 
-          ? { id: assetId, name: foundAsset.informationAsset }
-          : { id: assetId, name: assetId }
-      })
-    } else if (typeof risk.informationAsset === 'string') {
-      // Handle old string format
-      const assetIds = risk.informationAsset.split(',').map((id: string) => id.trim())
-      transformed.informationAsset = assetIds.map((id: string) => {
-        const foundAsset = assetMap.get(id)
-        return foundAsset 
-          ? { id, name: foundAsset.informationAsset }
-          : { id, name: id }
-      })
+  const trimmedId = riskId.trim()
+  
+  // Check if it's already in the correct format
+  if (/^RISK-\d{3}$/.test(trimmedId)) {
+    return trimmedId
+  }
+
+  // Try to extract a number from the string
+  const numberMatch = trimmedId.match(/\d+/)
+  if (numberMatch) {
+    const number = parseInt(numberMatch[0], 10)
+    if (number >= 1 && number <= 999) {
+      return `RISK-${number.toString().padStart(3, '0')}`
     }
-  } else {
-    transformed.informationAsset = []
   }
 
-  // Transform impact array to impactCIA string for frontend compatibility
-  if (risk.impact && Array.isArray(risk.impact)) {
-    transformed.impactCIA = risk.impact.join(', ')
-  }
-
-  return transformed
+  return null
 }
 
 /**
- * Creates a map of available information asset IDs for validation
+ * Transforms a risk object for API response, including information asset details
+ */
+export function transformRiskForResponse(risk: RiskData & { _id?: string | ObjectId }, assetMap: Map<string, InformationAsset>): RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] } {
+  const transformedRisk = { ...risk } as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
+  
+  // Convert ObjectId to string if present
+  if (transformedRisk._id && typeof transformedRisk._id === 'object') {
+    transformedRisk._id = (transformedRisk._id as any).toString()
+  }
+
+  // Add information asset details if we have asset IDs
+  if (transformedRisk.informationAsset && Array.isArray(transformedRisk.informationAsset)) {
+    transformedRisk.informationAssetDetails = transformedRisk.informationAsset
+      .map(assetId => assetMap.get(assetId))
+      .filter((asset): asset is InformationAsset => asset !== undefined)
+  }
+
+  return transformedRisk
+}
+
+/**
+ * Creates a map of asset IDs for quick lookup
  */
 export function createAssetIdMap(assets: InformationAsset[]): Set<string> {
   return new Set(assets.map(asset => asset.id))

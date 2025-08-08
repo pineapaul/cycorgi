@@ -12,7 +12,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, messages })
   } catch (error: unknown) {
-    console.error('MongoDB connection error:', error.message || error)
+    console.error('MongoDB connection error:', error instanceof Error ? error.message : String(error))
     return NextResponse.json({ success: false, error: 'Failed to connect to MongoDB' }, { status: 500 })
   }
 }

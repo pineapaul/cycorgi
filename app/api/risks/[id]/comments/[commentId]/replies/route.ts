@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { id, commentId } = await params
+    const { commentId } = await params
     const { content } = await request.json()
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json({ success: false, error: 'Reply content is required' }, { status: 400 })
@@ -21,7 +21,7 @@ export async function POST(
     }
     const result = await db.collection('comments').updateOne(
       { _id: new ObjectId(commentId) },
-      { $push: { replies: reply } }
+      { $push: { replies: reply } } as any
     )
     if (result.matchedCount === 0) {
       return NextResponse.json({ success: false, error: 'Comment not found' }, { status: 404 })

@@ -3,14 +3,15 @@ import clientPromise from '@/lib/mongodb'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('third-parties')
     
-    const thirdParty = await collection.findOne({ id: params.id })
+    const thirdParty = await collection.findOne({ id })
     
     if (!thirdParty) {
       return NextResponse.json(
@@ -49,9 +50,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const client = await clientPromise
     const db = client.db('cycorgi')
@@ -63,7 +65,7 @@ export async function PUT(
     }
     
     const result = await collection.updateOne(
-      { id: params.id },
+      { id },
       { $set: updatedThirdParty }
     )
     
@@ -89,14 +91,15 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('third-parties')
     
-    const result = await collection.deleteOne({ id: params.id })
+    const result = await collection.deleteOne({ id })
     
     if (result.deletedCount === 0) {
       return NextResponse.json(

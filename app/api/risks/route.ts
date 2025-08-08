@@ -18,7 +18,7 @@ export async function GET() {
     const risks = await risksCollection.find({}).toArray()
     
     // Fetch all information assets for reference
-    const informationAssets = await informationAssetsCollection.find({}).toArray()
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const assetMap = new Map(informationAssets.map(asset => [asset.id, asset]))
     
     // Transform risks to include information asset details
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     
     // Fetch available information assets for validation
     const informationAssetsCollection = db.collection('information-assets')
-    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const availableAssetIds = createAssetIdMap(informationAssets)
     
     // Validate and transform the request data
@@ -60,11 +60,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
-    const result = await collection.insertOne(validation.transformedData)
+    const result = await collection.insertOne(validation.transformedData!)
     
     return NextResponse.json({
       success: true,
-      data: { ...validation.transformedData, _id: result.insertedId }
+      data: { ...validation.transformedData!, _id: result.insertedId }
     })
   } catch (error) {
     console.error('Error creating risk:', error)
@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
     
     // Fetch available information assets for validation
     const informationAssetsCollection = db.collection('information-assets')
-    const informationAssets = await informationAssetsCollection.find({}).toArray() as InformationAsset[]
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const availableAssetIds = createAssetIdMap(informationAssets)
     
     // Validate and transform the update data

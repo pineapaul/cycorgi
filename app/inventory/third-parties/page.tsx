@@ -278,14 +278,14 @@ export default function ThirdPartiesPage() {
       label: 'Start Date',
       sortable: true,
       width: '110px',
-      render: (value) => formatDate(value)
+      render: (value) => formatDate(String(value))
     },
     {
       key: 'endDate',
       label: 'End Date',
       sortable: true,
       width: '110px',
-      render: (value) => formatDate(value)
+      render: (value) => formatDate(String(value))
     },
     {
       key: 'riskAssessmentJiraTicket',
@@ -325,7 +325,7 @@ export default function ThirdPartiesPage() {
       label: 'Last Security Review Date',
       sortable: true,
       width: '160px',
-      render: (value) => formatDate(value)
+      render: (value) => formatDate(String(value))
     },
     {
       key: 'status',
@@ -349,8 +349,8 @@ export default function ThirdPartiesPage() {
         }
         
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
-            {escapeHtml(value)}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(String(value))}`}>
+            {escapeHtml(String(value))}
           </span>
         )
       }

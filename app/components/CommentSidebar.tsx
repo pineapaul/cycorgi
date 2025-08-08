@@ -50,17 +50,17 @@ export default function CommentSidebar({ isOpen, onClose, riskId, onCommentCount
       
       if (result.success) {
         // Transform the data to match our interface
-        const transformedComments: Comment[] = result.data.map((comment: any) => ({
-          id: comment._id || comment.id,
+        const transformedComments: Comment[] = result.data.map((comment: { _id?: string; id?: string; content: string; author: string; timestamp: string; replies?: Array<{ content: string; author: string; timestamp: string }> }) => ({
+          id: comment._id || comment.id || '',
           content: comment.content,
           author: comment.author,
           timestamp: comment.timestamp,
-          replies: (comment.replies || []).map((reply: any, index: number) => ({
-            id: `${comment._id || comment.id}-${index}`,
+          replies: (comment.replies || []).map((reply: { content: string; author: string; timestamp: string }, index: number) => ({
+            id: `${comment._id || comment.id || ''}-${index}`,
             content: reply.content,
             author: reply.author,
             timestamp: reply.timestamp,
-            parentId: comment._id || comment.id
+            parentId: comment._id || comment.id || ''
           }))
         }))
         setComments(transformedComments)

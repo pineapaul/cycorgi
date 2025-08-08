@@ -10,7 +10,7 @@ export interface Column {
   sortable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
-  render?: (value: unknown, row: any) => React.ReactNode
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode
 }
 
 export interface Filter {
@@ -24,12 +24,12 @@ export interface PhaseButton {
   icon: string
 }
 
-export interface DataTableProps {
+export interface DataTableProps<T = Record<string, unknown>> {
   columns: Column[]
-  data: any[]
+  data: T[]
   title?: string
   searchPlaceholder?: string
-  onRowClick?: (row: any) => void
+  onRowClick?: (row: T) => void
   selectable?: boolean
   selectedRows?: Set<number>
   onSelectionChange?: (selectedRows: Set<number>) => void
@@ -40,10 +40,9 @@ export interface DataTableProps {
   className?: string
 }
 
-export default function DataTable({ 
+export default function DataTable<T = Record<string, unknown>>({ 
   columns, 
   data, 
-  title, 
   searchPlaceholder = "Search...",
   onRowClick,
   selectable = false,
@@ -54,7 +53,7 @@ export default function DataTable({
   selectedPhase,
   onPhaseSelect,
   className
-}: DataTableProps) {
+}: DataTableProps<T>) {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
@@ -88,7 +87,7 @@ export default function DataTable({
 
   // Get unique values for a column
   const getUniqueValues = (columnKey: string) => {
-    const values = data.map(row => row[columnKey]).filter(value => value != null && value !== '')
+    const values = data.map(row => (row as any)[columnKey]).filter(value => value != null && value !== '')
     return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)))
   }
 
@@ -143,22 +142,22 @@ export default function DataTable({
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
     let filtered = data.filter(row =>
-      Object.values(row).some(value =>
+      Object.values(row as any).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     )
 
     // Apply filters
-    filters.forEach(filter => {
-      filtered = filtered.filter(row => 
-        String(row[filter.column]).toLowerCase() === String(filter.value).toLowerCase()
+        filters.forEach(filter => {
+      filtered = filtered.filter(row =>
+        String((row as any)[filter.column]).toLowerCase() === String(filter.value).toLowerCase()
       )
     })
 
     if (sortColumn) {
       filtered.sort((a, b) => {
-        const aValue = a[sortColumn]
-        const bValue = b[sortColumn]
+        const aValue = (a as any)[sortColumn]
+        const bValue = (b as any)[sortColumn]
         
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
@@ -551,7 +550,7 @@ export default function DataTable({
                           <div className="max-h-32 overflow-y-auto border border-gray-300 rounded">
                             {getUniqueValues(selectedFilterColumn).map((value) => (
                               <button
-                                key={value}
+                                key={String(value)}
                                 onClick={() => handleAddFilter(selectedFilterColumn, String(value))}
                                 className="block w-full text-left px-2 py-1 text-xs hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-b-0"
                               >
@@ -734,7 +733,7 @@ export default function DataTable({
                     </td>
                   )}
                   {columns.filter(column => visibleColumns.has(column.key)).map((column) => {
-                    const cellValue = row[column.key]
+                    const cellValue = (row as any)[column.key]
                     return (
                     <td
                       key={column.key}
@@ -756,8 +755,8 @@ export default function DataTable({
                         column.align === 'center' ? 'flex justify-center' : 
                         column.align === 'right' ? 'flex justify-end' : ''
                       }`}>
-                        {column.render 
-                            ? column.render(cellValue, row)
+                                                {column.render
+                            ? column.render(cellValue, row as any)
                             : (
                                 <Tooltip content={cellValue ? String(cellValue) : '-'} theme="dark">
                                   <span className="truncate block max-w-full">

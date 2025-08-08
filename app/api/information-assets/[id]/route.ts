@@ -56,7 +56,7 @@ export async function PUT(
     const collection = db.collection('information-assets')
     
     // Update the asset with new data and timestamp, excluding _id field
-    const { _id: _, ...bodyWithoutId } = body
+    const { _id: _unused, ...bodyWithoutId } = body
     const updatedAsset = {
       ...bodyWithoutId,
       updatedAt: new Date().toISOString()

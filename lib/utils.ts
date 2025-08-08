@@ -120,7 +120,7 @@ export function formatInformationAssets(informationAsset: string | Array<{ id: s
   if (!informationAsset) return '-'
   
   if (Array.isArray(informationAsset)) {
-    return informationAsset.map((asset: any) => {
+    return informationAsset.map((asset: string | { id: string; name: string }) => {
       // Handle both new format (objects with id/name) and old format (strings)
       if (typeof asset === 'object' && asset !== null) {
         return escapeHtml(asset.name || asset.id || JSON.stringify(asset))
@@ -147,7 +147,7 @@ export function formatDateForCSV(dateString: string): string {
       month: '2-digit',
       year: 'numeric'
     })
-  } catch (error) {
+  } catch {
     return dateString
   }
 } 

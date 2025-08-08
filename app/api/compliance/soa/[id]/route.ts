@@ -3,14 +3,14 @@ import clientPromise from '../../../../../lib/mongodb'
 import { ObjectId } from 'mongodb'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const client = await clientPromise
     const db = client.db('cycorgi')
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')

@@ -87,7 +87,7 @@ export default function InformationAssetsPage() {
           }}
           className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
         >
-          {value}
+          {String(value)}
         </button>
       )
     },
@@ -103,7 +103,7 @@ export default function InformationAssetsPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                window.location.href = `/inventory/information-assets/${row.id}`
+                window.location.href = `/inventory/information-assets/${String(row.id)}`
               }}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-blue-100 bg-white border border-gray-300"
             >
@@ -114,7 +114,7 @@ export default function InformationAssetsPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                const url = `${window.location.origin}/inventory/information-assets/${row.id}`
+                const url = `${window.location.origin}/inventory/information-assets/${String(row.id)}`
                 navigator.clipboard.writeText(url).then(() => {
                   showToast({
                     type: 'success',
@@ -137,7 +137,7 @@ export default function InformationAssetsPage() {
               onClick={(e) => {
                 e.stopPropagation()
                 if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
-                  handleDeleteAsset(row.id)
+                  handleDeleteAsset(String(row.id))
                 }
               }}
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 hover:bg-red-100 bg-white border border-gray-300"
@@ -301,7 +301,7 @@ export default function InformationAssetsPage() {
           value === 'non-critical' ? 'bg-green-100 text-green-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {value.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+          {String(value).replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
         </span>
       )
     },

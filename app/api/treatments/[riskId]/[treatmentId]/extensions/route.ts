@@ -76,7 +76,7 @@ export async function POST(
         riskId: riskId
       },
       {
-        $push: { extensions: extension },
+        $push: { extensions: extension } as any,
         $inc: { numberOfExtensions: 1 },
         $set: { 
           extendedDueDate: extendedDueDate,

@@ -76,6 +76,14 @@ export const LIKELIHOOD_RATINGS = {
   RARE: 'Rare'
 } as const
 
+export const VALID_STATUSES = [
+  'Pending Agenda',
+  'Planned',
+  'Scheduled', 
+  'Finalising Meeting Minutes',
+  'Completed'
+] as const
+
 // Data parsing constants
 export const CIA_DELIMITERS = {
   PRIMARY: ', ',
@@ -94,3 +102,4 @@ export type RiskAction = typeof RISK_ACTIONS[keyof typeof RISK_ACTIONS]
 export type ConfidentialityLevel = typeof CONFIDENTIALITY_LEVELS[keyof typeof CONFIDENTIALITY_LEVELS]
 export type IntegrityLevel = typeof INTEGRITY_LEVELS[keyof typeof INTEGRITY_LEVELS]
 export type AvailabilityLevel = typeof AVAILABILITY_LEVELS[keyof typeof AVAILABILITY_LEVELS]
+export type WorkshopStatus = typeof VALID_STATUSES[number]

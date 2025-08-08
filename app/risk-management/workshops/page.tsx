@@ -83,7 +83,7 @@ export default function Workshops() {
             className="workshop-id-button"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="tracking-wide">{value || '-'}</span>
+            <span className="tracking-wide">{String(value) || '-'}</span>
             <Icon name="arrow-right" size={10} className="arrow-icon" />
           </Link>
         )
@@ -96,8 +96,8 @@ export default function Workshops() {
       width: '140px',
       render: (value) => {
         if (!value) return '-'
-        const date = new Date(value)
-        if (isNaN(date.getTime())) return value // Return original value if invalid date
+        const date = new Date(String(value))
+        if (isNaN(date.getTime())) return String(value) // Return original value if invalid date
         
         const day = date.getDate().toString().padStart(2, '0')
         const month = date.toLocaleDateString('en-US', { month: 'short' })
@@ -116,8 +116,8 @@ export default function Workshops() {
       sortable: true,
       width: '200px',
       render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}>
-          {getStatusDisplayName(value)}
+        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(String(value))}`}>
+          {getStatusDisplayName(String(value))}
         </span>
       )
     },
@@ -129,7 +129,7 @@ export default function Workshops() {
       render: (value) => {
         return (
           <span className="whitespace-nowrap">
-            {value || '-'}
+            {String(value) || '-'}
           </span>
         )
       }

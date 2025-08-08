@@ -301,17 +301,17 @@ export default function EditTreatment() {
                   <input
                     type="text"
                     id="treatmentJiraTicket"
-                    value={formData.treatmentJiraTicket}
-                    onChange={(e) => handleInputChange('treatmentJiraTicket', e.target.value)}
+                    value={formData.treatmentJira}
+                    onChange={(e) => handleInputChange('treatmentJira', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.treatmentJiraTicket 
+                                              errors.treatmentJira 
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
                         : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
                     }`}
                     placeholder="e.g., TREAT-001-01"
                   />
-                  {errors.treatmentJiraTicket && (
-                    <p className="mt-1 text-sm text-red-600">{errors.treatmentJiraTicket}</p>
+                  {errors.treatmentJira && (
+                    <p className="mt-1 text-sm text-red-600">{errors.treatmentJira}</p>
                   )}
                 </div>
 

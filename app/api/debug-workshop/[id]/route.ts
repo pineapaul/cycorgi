@@ -3,14 +3,15 @@ import clientPromise from '../../../../lib/mongodb'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('workshops')
     
-    const workshop = await collection.findOne({ id: params.id })
+    const workshop = await collection.findOne({ id })
     
     if (!workshop) {
       return NextResponse.json({

@@ -682,13 +682,13 @@ export default function TreatmentInformation() {
                        key: 'extendedDueDate',
                        label: 'Extended Due Date',
                        sortable: true,
-                       render: (value) => formatDate(value)
+                       render: (value) => formatDate(String(value))
                      },
                      {
                        key: 'justification',
                        label: 'Justification',
                        sortable: true,
-                       render: (value) => value || 'Not specified'
+                       render: (value) => String(value) || 'Not specified'
                      },
                      {
                        key: 'approver',
@@ -699,7 +699,7 @@ export default function TreatmentInformation() {
                        key: 'dateApproved',
                        label: 'Approved Date',
                        sortable: true,
-                       render: (value) => formatDate(value)
+                       render: (value) => formatDate(String(value))
                      }
                    ]}
                    data={treatment.extensions}
