@@ -32,6 +32,26 @@ loadEnvFile();
 // MongoDB connection string from environment
 const MONGODB_URI = process.env.MONGODB_URI;
 
+// CIA Constants matching the constants file
+const CONFIDENTIALITY_LEVELS = {
+  PUBLIC: 'Public',
+  INTERNAL_USE: 'Internal Use',
+  CONFIDENTIAL: 'Confidential',
+  STRICTLY_CONFIDENTIAL: 'Strictly Confidential'
+};
+
+const INTEGRITY_LEVELS = {
+  LOW: 'Low',
+  MODERATE: 'Moderate',
+  HIGH: 'High'
+};
+
+const AVAILABILITY_LEVELS = {
+  LOW: 'Low',
+  MODERATE: 'Moderate',
+  HIGH: 'High'
+};
+
 // Generate additional fake data
 function generateAdditionalAssets() {
   const categories = ['Customer Data', 'HR Data', 'Financial Data', 'Intellectual Property', 'Infrastructure', 'Security', 'Marketing', 'Legal', 'Communication', 'Operations'];
@@ -41,9 +61,9 @@ function generateAdditionalAssets() {
   const smes = ['Sarah Johnson', 'David Brown', 'Emily Wilson', 'Carlos Martinez', 'Amanda White', 'Daniel Kim', 'James Wilson', 'Mark Johnson', 'Anna Davis', 'Kevin Thompson', 'Helen Rodriguez', 'Jennifer Lee', 'Tom Wilson', 'Robert Davis', 'Lisa Wang', 'John Smith', 'Patricia Garcia', 'David Brown', 'Rachel Green', 'Steve Johnson'];
   const administrators = ['Mike Chen', 'Alex Rodriguez', 'Tom Anderson', 'Rachel Green', 'Steve Johnson', 'Maria Lopez', 'Amanda White', 'Rachel Green', 'Lisa Chen', 'Rachel Green', 'Mike Chen', 'Steve Johnson', 'Rachel Green', 'Tom Anderson', 'Alex Rodriguez', 'Mike Chen', 'Maria Lopez', 'Steve Johnson', 'Rachel Green', 'Amanda White'];
   const agileReleaseTrains = ['ART-1', 'ART-2', 'ART-3', 'ART-4', 'ART-5', 'ART-6', 'ART-7', 'ART-8'];
-  const confidentialityLevels = ['High', 'Medium', 'Low'];
-  const integrityLevels = ['High', 'Medium', 'Low'];
-  const availabilityLevels = ['Critical', 'High', 'Medium', 'Low'];
+  const confidentialityLevels = Object.values(CONFIDENTIALITY_LEVELS);
+  const integrityLevels = Object.values(INTEGRITY_LEVELS);
+  const availabilityLevels = Object.values(AVAILABILITY_LEVELS);
   const criticalityLevels = ['mission-critical', 'business-critical', 'standard', 'non-critical'];
 
   const additionalAssets = [];
@@ -113,7 +133,7 @@ function generateAdditionalAssets() {
   return additionalAssets;
 }
 
-// Original fake data
+// Original fake data with updated CIA values
 const fakeInformationAssets = [
   {
     id: '1',
@@ -126,9 +146,9 @@ const fakeInformationAssets = [
     sme: 'Sarah Johnson',
     administrator: 'Mike Chen',
     agileReleaseTrain: 'ART-1',
-    confidentiality: 'High',
-    integrity: 'High',
-    availability: 'High',
+    confidentiality: CONFIDENTIALITY_LEVELS.STRICTLY_CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'mission-critical',
     additionalInfo: 'Requires encryption at rest and in transit'
   },
@@ -143,9 +163,9 @@ const fakeInformationAssets = [
     sme: 'David Brown',
     administrator: 'Alex Rodriguez',
     agileReleaseTrain: 'ART-2',
-    confidentiality: 'High',
-    integrity: 'Medium',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.MODERATE,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'business-critical',
     additionalInfo: 'Contains sensitive HR information'
   },
@@ -160,9 +180,9 @@ const fakeInformationAssets = [
     sme: 'Emily Wilson',
     administrator: 'Tom Anderson',
     agileReleaseTrain: 'ART-3',
-    confidentiality: 'Medium',
-    integrity: 'High',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.INTERNAL_USE,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'business-critical',
     additionalInfo: 'Regulatory compliance required'
   },
@@ -177,9 +197,9 @@ const fakeInformationAssets = [
     sme: 'Carlos Martinez',
     administrator: 'Rachel Green',
     agileReleaseTrain: 'ART-1',
-    confidentiality: 'Medium',
-    integrity: 'High',
-    availability: 'High',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'mission-critical',
     additionalInfo: 'Contains proprietary algorithms'
   },
@@ -194,9 +214,9 @@ const fakeInformationAssets = [
     sme: 'Amanda White',
     administrator: 'Steve Johnson',
     agileReleaseTrain: 'ART-4',
-    confidentiality: 'Low',
-    integrity: 'High',
-    availability: 'Critical',
+    confidentiality: CONFIDENTIALITY_LEVELS.PUBLIC,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'mission-critical',
     additionalInfo: 'Critical for business operations'
   },
@@ -211,9 +231,9 @@ const fakeInformationAssets = [
     sme: 'Daniel Kim',
     administrator: 'Maria Lopez',
     agileReleaseTrain: 'ART-2',
-    confidentiality: 'High',
-    integrity: 'High',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.STRICTLY_CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'business-critical',
     additionalInfo: 'Rotated quarterly'
   },
@@ -228,9 +248,9 @@ const fakeInformationAssets = [
     sme: 'Amanda White',
     administrator: 'Steve Johnson',
     agileReleaseTrain: 'ART-4',
-    confidentiality: 'High',
-    integrity: 'High',
-    availability: 'Critical',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'mission-critical',
     additionalInfo: 'Encrypted and geo-replicated'
   },
@@ -245,9 +265,9 @@ const fakeInformationAssets = [
     sme: 'Emily Wilson',
     administrator: 'Rachel Green',
     agileReleaseTrain: 'ART-3',
-    confidentiality: 'Low',
-    integrity: 'Medium',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.PUBLIC,
+    integrity: INTEGRITY_LEVELS.MODERATE,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'standard',
     additionalInfo: 'Publicly accessible for partners'
   },
@@ -262,9 +282,9 @@ const fakeInformationAssets = [
     sme: 'James Wilson',
     administrator: 'Lisa Chen',
     agileReleaseTrain: 'ART-5',
-    confidentiality: 'High',
-    integrity: 'High',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'business-critical',
     additionalInfo: 'Audit trail required'
   },
@@ -279,9 +299,9 @@ const fakeInformationAssets = [
     sme: 'Carlos Martinez',
     administrator: 'Rachel Green',
     agileReleaseTrain: 'ART-1',
-    confidentiality: 'Medium',
-    integrity: 'Medium',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.INTERNAL_USE,
+    integrity: INTEGRITY_LEVELS.MODERATE,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'standard',
     additionalInfo: 'Non-production data only'
   },
@@ -296,9 +316,9 @@ const fakeInformationAssets = [
     sme: 'Sarah Johnson',
     administrator: 'Mike Chen',
     agileReleaseTrain: 'ART-2',
-    confidentiality: 'Medium',
-    integrity: 'High',
-    availability: 'High',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'business-critical',
     additionalInfo: 'Contains customer PII'
   },
@@ -313,9 +333,9 @@ const fakeInformationAssets = [
     sme: 'Amanda White',
     administrator: 'Steve Johnson',
     agileReleaseTrain: 'ART-4',
-    confidentiality: 'Medium',
-    integrity: 'High',
-    availability: 'High',
+    confidentiality: CONFIDENTIALITY_LEVELS.INTERNAL_USE,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'standard',
     additionalInfo: 'Retention policy: 1 year'
   },
@@ -330,9 +350,9 @@ const fakeInformationAssets = [
     sme: 'James Wilson',
     administrator: 'Lisa Chen',
     agileReleaseTrain: 'ART-5',
-    confidentiality: 'High',
-    integrity: 'High',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'business-critical',
     additionalInfo: 'Legal review required'
   },
@@ -347,9 +367,9 @@ const fakeInformationAssets = [
     sme: 'Carlos Martinez',
     administrator: 'Rachel Green',
     agileReleaseTrain: 'ART-1',
-    confidentiality: 'Medium',
-    integrity: 'High',
-    availability: 'Critical',
+    confidentiality: CONFIDENTIALITY_LEVELS.CONFIDENTIAL,
+    integrity: INTEGRITY_LEVELS.HIGH,
+    availability: AVAILABILITY_LEVELS.HIGH,
     criticality: 'mission-critical',
     additionalInfo: 'Real-time processing required'
   },
@@ -364,9 +384,9 @@ const fakeInformationAssets = [
     sme: 'Emily Wilson',
     administrator: 'Rachel Green',
     agileReleaseTrain: 'ART-3',
-    confidentiality: 'Medium',
-    integrity: 'Medium',
-    availability: 'Medium',
+    confidentiality: CONFIDENTIALITY_LEVELS.INTERNAL_USE,
+    integrity: INTEGRITY_LEVELS.MODERATE,
+    availability: AVAILABILITY_LEVELS.MODERATE,
     criticality: 'standard',
     additionalInfo: '7-year retention policy'
   }

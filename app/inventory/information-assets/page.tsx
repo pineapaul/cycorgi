@@ -6,6 +6,14 @@ import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { useToast } from '@/app/components/Toast'
+import { 
+  CONFIDENTIALITY_LEVELS, 
+  INTEGRITY_LEVELS, 
+  AVAILABILITY_LEVELS,
+  type ConfidentialityLevel,
+  type IntegrityLevel,
+  type AvailabilityLevel
+} from '@/lib/constants'
 
 interface InformationAsset {
   id: string
@@ -202,49 +210,83 @@ export default function InformationAssetsPage() {
       label: 'Confidentiality',
       sortable: true,
       width: '130px',
-      render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'High' ? 'bg-red-100 text-red-800' :
-          value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-          value === 'Low' ? 'bg-green-100 text-green-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value) => {
+        const confidentialityValue = value as ConfidentialityLevel
+        const getConfidentialityColor = (level: ConfidentialityLevel) => {
+          switch (level) {
+            case CONFIDENTIALITY_LEVELS.STRICTLY_CONFIDENTIAL:
+              return 'bg-red-100 text-red-800'
+            case CONFIDENTIALITY_LEVELS.CONFIDENTIAL:
+              return 'bg-orange-100 text-orange-800'
+            case CONFIDENTIALITY_LEVELS.INTERNAL_USE:
+              return 'bg-yellow-100 text-yellow-800'
+            case CONFIDENTIALITY_LEVELS.PUBLIC:
+              return 'bg-green-100 text-green-800'
+            default:
+              return 'bg-gray-100 text-gray-800'
+          }
+        }
+        
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidentialityColor(confidentialityValue)}`}>
+            {confidentialityValue}
+          </span>
+        )
+      }
     },
     {
       key: 'integrity',
       label: 'Integrity',
       sortable: true,
       width: '100px',
-      render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'High' ? 'bg-red-100 text-red-800' :
-          value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-          value === 'Low' ? 'bg-green-100 text-green-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value) => {
+        const integrityValue = value as IntegrityLevel
+        const getIntegrityColor = (level: IntegrityLevel) => {
+          switch (level) {
+            case INTEGRITY_LEVELS.HIGH:
+              return 'bg-red-100 text-red-800'
+            case INTEGRITY_LEVELS.MODERATE:
+              return 'bg-yellow-100 text-yellow-800'
+            case INTEGRITY_LEVELS.LOW:
+              return 'bg-green-100 text-green-800'
+            default:
+              return 'bg-gray-100 text-gray-800'
+          }
+        }
+        
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getIntegrityColor(integrityValue)}`}>
+            {integrityValue}
+          </span>
+        )
+      }
     },
     {
       key: 'availability',
       label: 'Availability',
       sortable: true,
       width: '120px',
-      render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Critical' ? 'bg-red-100 text-red-800' :
-          value === 'High' ? 'bg-orange-100 text-orange-800' :
-          value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-          value === 'Low' ? 'bg-green-100 text-green-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {value}
-        </span>
-      )
+      render: (value) => {
+        const availabilityValue = value as AvailabilityLevel
+        const getAvailabilityColor = (level: AvailabilityLevel) => {
+          switch (level) {
+            case AVAILABILITY_LEVELS.HIGH:
+              return 'bg-red-100 text-red-800'
+            case AVAILABILITY_LEVELS.MODERATE:
+              return 'bg-yellow-100 text-yellow-800'
+            case AVAILABILITY_LEVELS.LOW:
+              return 'bg-green-100 text-green-800'
+            default:
+              return 'bg-gray-100 text-gray-800'
+          }
+        }
+        
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(availabilityValue)}`}>
+            {availabilityValue}
+          </span>
+        )
+      }
     },
     {
       key: 'criticality',
@@ -259,7 +301,7 @@ export default function InformationAssetsPage() {
           value === 'non-critical' ? 'bg-green-100 text-green-800' :
           'bg-gray-100 text-gray-800'
         }`}>
-          {value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          {value.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
         </span>
       )
     },
