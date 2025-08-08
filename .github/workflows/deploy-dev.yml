@@ -42,4 +42,6 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra/environments/dev
+        env:
+          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
         run: terraform apply -auto-approve
