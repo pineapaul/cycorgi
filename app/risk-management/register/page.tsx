@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber, formatInformationAssets, formatDate } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, formatInformationAssets, formatDate, mapAssetIdsToNames } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
 import { useToast } from '@/app/components/Toast'
 
@@ -122,6 +122,7 @@ export default function RiskRegister() {
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [risks, setRisks] = useState<any[]>([])
+  const [informationAssets, setInformationAssets] = useState<Array<{ id: string; informationAsset: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -153,7 +154,7 @@ export default function RiskRegister() {
         return String(asset)
       }).filter(asset => asset && asset !== '[object Object]')
     } else if (typeof value === 'string') {
-      // Handle comma-separated string
+      // Handle comma-separated string (already mapped by mapAssetIdsToNames)
       assets = value
         .split(/[,;|]/)
         .map(item => item.trim())
@@ -367,16 +368,20 @@ export default function RiskRegister() {
       try {
         setLoading(true)
         
-        // Fetch both risks and treatments
-        const [risksResponse, treatmentsResponse] = await Promise.all([
+        // Fetch risks, treatments, and information assets
+        const [risksResponse, treatmentsResponse, informationAssetsResponse] = await Promise.all([
           fetch('/api/risks'),
-          fetch('/api/treatments')
+          fetch('/api/treatments'),
+          fetch('/api/information-assets')
         ])
         
         const risksResult = await risksResponse.json()
         const treatmentsResult = await treatmentsResponse.json()
+        const informationAssetsResult = await informationAssetsResponse.json()
         
-        if (risksResult.success && treatmentsResult.success) {
+        if (risksResult.success && treatmentsResult.success && informationAssetsResult.success) {
+          // Set information assets for mapping
+          setInformationAssets(informationAssetsResult.data || [])
           // Create a map of treatments by riskId for quick lookup
           const treatmentsByRiskId = new Map()
           treatmentsResult.data.forEach((treatment: any) => {
@@ -418,7 +423,7 @@ export default function RiskRegister() {
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner,
               affectedSites: 'All Sites',
-              informationAssets: risk.informationAsset || '',
+              informationAssets: mapAssetIdsToNames(risk.informationAsset, informationAssetsResult.data || []),
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,
@@ -446,7 +451,7 @@ export default function RiskRegister() {
           })
           setRisks(transformedRisks)
         } else {
-          setError(risksResult.error || treatmentsResult.error || 'Failed to fetch data')
+          setError(risksResult.error || treatmentsResult.error || informationAssetsResult.error || 'Failed to fetch data')
         }
               } catch (err) {
           if (err instanceof TypeError) {
