@@ -14,6 +14,12 @@ terraform {
   required_version = ">= 1.7.0"
 }
 
+variable "mongodb_uri" {
+  description = "MongoDB connection URI"
+  type        = string
+  sensitive   = true
+}
+
 resource "google_cloud_run_service" "grc_dev" {
   name     = "grc-dev"
   location = "us-central1"
@@ -24,6 +30,10 @@ resource "google_cloud_run_service" "grc_dev" {
         image = "us-central1-docker.pkg.dev/cycorgi-grc-platform/grc-containers/grc-dev:latest"
         ports {
           container_port = 8080
+        }
+        env {
+          name  = "MONGODB_URI"
+          value = var.mongodb_uri
         }
       }
     }

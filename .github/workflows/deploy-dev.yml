@@ -16,6 +16,8 @@ jobs:
   deploy:
     name: Deploy Dev Infra to GCP
     runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
     steps:
       - name: Checkout code
