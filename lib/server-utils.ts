@@ -39,3 +39,10 @@ export async function findSoAControlsByRiskId(riskId: string): Promise<SoAContro
     throw new Error(`Failed to find SOA controls for risk ID: ${riskId}`)
   }
 }
+
+// Export collection for compatibility
+const serverUtils = {
+  findSoAControlsByRiskId
+}
+
+export default serverUtils
