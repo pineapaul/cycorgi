@@ -217,4 +217,4 @@ export function mapAssetIdsToNames(assetIds: AssetIdInput, informationAssets: Ar
 export function formatOptionText(...parts: unknown[]): string {
   const concatenated = parts.map(part => String(part || '')).join('')
   return escapeHtml(concatenated)
-} 
+}
