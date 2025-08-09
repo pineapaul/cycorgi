@@ -94,7 +94,7 @@ export default function Topbar() {
         <div className="flex items-center space-x-2 md:space-x-3">
           <div className="text-right hidden sm:block">
             <div className="text-xs md:text-sm font-medium text-gray-900 truncate">Paul Admin</div>
-            <div className="text-xs text-gray-500 truncate">paul@company.com</div>
+            <div className="text-xs text-gray-500 truncate">admin@cycorgi.org</div>
           </div>
           <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 rounded-full flex items-center justify-center">
             <span className="text-gray-600 text-xs md:text-sm font-medium">P</span>

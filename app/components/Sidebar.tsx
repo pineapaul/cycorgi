@@ -443,7 +443,7 @@ export default function Sidebar() {
             <span className="text-white text-xs md:text-sm font-medium">P</span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs md:text-sm font-medium truncate">Paul Admin</div>
+            <div className="text-xs md:text-sm font-medium truncate">Admin</div>
             <div className="text-xs" style={{ color: '#C0C9EE' }}>Administrator</div>
           </div>
         </div>
