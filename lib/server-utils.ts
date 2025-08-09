@@ -19,7 +19,7 @@ export async function findSoAControlsByRiskId(riskId: string): Promise<SoAContro
   }
 
   try {
-    const client = await clientPromise()
+    const client = await clientPromise
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')
     
