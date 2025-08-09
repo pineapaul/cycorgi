@@ -19,7 +19,7 @@ export async function findSoAControlsByRiskId(riskId: string): Promise<SoAContro
   }
 
   try {
-    const client = await clientPromise
+    const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')
     
@@ -33,9 +33,16 @@ export async function findSoAControlsByRiskId(riskId: string): Promise<SoAContro
     return controls.map(control => ({
       id: control.id,
       title: control.title
-    return controls
+    }))
   } catch (error) {
     console.error('Error finding SOA controls by risk ID:', error)
     throw new Error(`Failed to find SOA controls for risk ID: ${riskId}`)
   }
 }
+
+// Export collection for compatibility
+const serverUtils = {
+  findSoAControlsByRiskId
+}
+
+export default serverUtils
