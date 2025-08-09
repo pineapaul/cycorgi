@@ -1,986 +1,905 @@
-const { MongoClient } = require('mongodb');
 require('dotenv').config({ path: '.env.local' });
+const { MongoClient } = require('mongodb');
 
+/**
+ * Comprehensive ISO 27001:2022 SOA Controls Seeding Script
+ * 
+ * Seeds all 93 controls from ISO 27001:2022 Annex A with:
+ * - Proper control categorization (Organizational, People, Physical, Technological)
+ * - Multiple justifications per control (array-based)
+ * - Realistic implementation status and applicability
+ * - Related risks linking (3-6 risks per control)
+ * - Implementation notes and guidance
+ */
+
+// CONTROL_JUSTIFICATION constants
+const CONTROL_JUSTIFICATION = {
+  BEST_PRACTICE: 'Best Practice',
+  LEGAL_REQUIREMENT: 'Legal Requirement',
+  REGULATORY_REQUIREMENT: 'Regulatory Requirement',
+  BUSINESS_REQUIREMENT: 'Business Requirement',
+  RISK_MANAGEMENT_REQUIREMENT: 'Risk Management Requirement'
+};
+
+// Helper functions
+function getRandomElements(array, min, max) {
+  const count = Math.floor(Math.random() * (max - min + 1)) + min;
+  const shuffled = array.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+function getRandomRelatedRisksCount() {
+  return Math.floor(Math.random() * 4) + 3; // 3-6 related risks
+}
+
+// Complete ISO 27001:2022 Annex A Controls (93 controls)
 const iso27001Controls = [
   {
     id: 'A.5',
-    title: 'Organizational Controls',
-    description: 'Controls that set the organizational context for information security',
+    title: 'Organisational Controls',
+    description: 'Information security policies and organizational security measures',
     controls: [
       {
         id: 'A.5.1',
-        title: 'Information security policies',
-        description: 'Information security policy and topic-specific policies',
+        title: 'Policies for information security',
+        description: 'A set of policies for information security shall be defined, approved by management, published and communicated to employees and relevant external parties.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        justification: 'Best Practice',
-        relatedRisks: [],
-        implementationNotes: 'Policies reviewed annually and communicated to all staff'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Information security policy framework established with annual review cycle'
       },
       {
         id: 'A.5.2',
         title: 'Information security roles and responsibilities',
-        description: 'Define and allocate information security responsibilities',
+        description: 'Information security roles and responsibilities shall be defined and allocated in accordance with the organization needs.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        justification: 'Best Practice',
-        implementationNotes: 'RACI matrix maintained and updated quarterly'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'RACI matrix maintained with clear accountability structure'
       },
       {
         id: 'A.5.3',
         title: 'Segregation of duties',
-        description: 'Conflicting duties and responsibilities segregated',
+        description: 'Conflicting duties and areas of responsibility shall be segregated to reduce opportunities for unauthorized or unintentional modification or misuse of the organization assets.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Critical functions have appropriate segregation',
-        implementationNotes: 'Regular access reviews conducted to ensure compliance'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Dual approval processes implemented for critical operations'
       },
       {
         id: 'A.5.4',
         title: 'Management responsibilities',
-        description: 'Management support for information security',
+        description: 'Management shall require all personnel to apply information security in accordance with the established policies and procedures of the organization.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Executive management actively supports security initiatives',
-        implementationNotes: 'Monthly security briefings provided to leadership'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Regular management reviews and security performance monitoring'
       },
       {
         id: 'A.5.5',
         title: 'Contact with authorities',
-        description: 'Maintain appropriate contacts with authorities',
+        description: 'Appropriate contacts with relevant authorities shall be maintained.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Established relationships with relevant authorities',
-        implementationNotes: 'Contact list maintained and updated annually'
+        justification: [CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT, CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT],
+        implementationDetails: 'Contact registry maintained for law enforcement and regulatory bodies'
       },
       {
         id: 'A.5.6',
         title: 'Contact with special interest groups',
-        description: 'Maintain contacts with special interest groups',
+        description: 'Appropriate contacts with special interest groups or other specialist security forums and professional associations shall be maintained.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Active participation in industry security groups',
-        implementationNotes: 'Membership in relevant professional associations'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Active participation in cybersecurity forums and threat intelligence sharing'
       },
       {
         id: 'A.5.7',
         title: 'Threat intelligence',
-        description: 'Receive and analyze threat intelligence',
+        description: 'Information relating to information security threats shall be collected and analyzed to produce threat intelligence.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Threat intelligence feeds integrated into security monitoring',
-        implementationNotes: 'Automated threat intelligence processing and alerting'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Automated threat intelligence feeds integrated with security monitoring'
       },
       {
         id: 'A.5.8',
         title: 'Information security in project management',
-        description: 'Address information security in project management',
+        description: 'Information security shall be integrated into project management.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security requirements integrated into project lifecycle',
-        implementationNotes: 'Security gates implemented in project methodology'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Security requirements integrated into project lifecycle methodology'
       },
       {
         id: 'A.5.9',
         title: 'Inventory of information and other associated assets',
-        description: 'Identify and document information assets',
+        description: 'An inventory of information and other associated assets, including owners, shall be developed and maintained.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive asset inventory maintained',
-        implementationNotes: 'Automated asset discovery and classification tools deployed'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Automated asset discovery and CMDB integration'
       },
       {
         id: 'A.5.10',
         title: 'Acceptable use of information and other associated assets',
-        description: 'Rules for acceptable use of assets',
+        description: 'Rules for the acceptable use of information and other associated assets shall be identified, documented and implemented.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Acceptable use policies clearly defined',
-        implementationNotes: 'Regular training on acceptable use requirements'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT],
+        implementationDetails: 'Acceptable use policy with regular acknowledgment requirements'
       },
       {
         id: 'A.5.11',
         title: 'Return of assets',
-        description: 'Return of assets upon change or termination',
+        description: 'Personnel and other interested parties shall return all organizational assets in their possession upon termination of their employment, contract or agreement.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Formal asset return procedures established',
-        implementationNotes: 'Exit procedures include asset recovery checklist'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Formal asset return process integrated with HR offboarding'
       },
       {
         id: 'A.5.12',
         title: 'Classification of information',
-        description: 'Classify information based on security needs',
+        description: 'Information shall be classified in terms of legal requirements, value, criticality and sensitivity to unauthorized disclosure or modification.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Information classification scheme implemented',
-        implementationNotes: 'Automated classification tools deployed for sensitive data'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Four-tier classification scheme with automated labeling tools'
       },
       {
         id: 'A.5.13',
         title: 'Labelling of information',
-        description: 'Appropriate labelling procedures for information',
+        description: 'An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the information classification scheme adopted by the organization.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Labelling procedures aligned with classification scheme',
-        implementationNotes: 'Digital and physical labelling systems in place'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Automated labeling system with visual indicators'
       },
       {
         id: 'A.5.14',
         title: 'Information transfer',
-        description: 'Secure procedures for information transfer',
+        description: 'Information transfer rules, procedures or agreements shall be in place for all types of transfer facilities within the organization and between the organization and other parties.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure transfer protocols and tools implemented',
-        implementationNotes: 'Encrypted channels used for sensitive information transfer'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Secure file transfer protocols and encryption requirements'
       },
       {
         id: 'A.5.15',
         title: 'Access control',
-        description: 'Rules and procedures for access control',
+        description: 'Rules to control physical and logical access to information and other associated assets shall be established and implemented based on business and information security requirements.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive access control framework established',
-        implementationNotes: 'Role-based access control with regular reviews'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Role-based access control with least privilege principle'
       },
       {
         id: 'A.5.16',
-        title: 'Identity verification',
-        description: 'Verify identity of users and entities',
+        title: 'Identity management',
+        description: 'The full life cycle of identities shall be managed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Multi-factor authentication implemented',
-        implementationNotes: 'Identity verification procedures documented and tested'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Centralized identity management system with automated provisioning'
       },
       {
         id: 'A.5.17',
         title: 'Authentication information',
-        description: 'Manage authentication information securely',
+        description: 'Allocation and management of authentication information shall be controlled by a management process, including advising personnel on appropriate handling of authentication information.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure authentication information management',
-        implementationNotes: 'Password policies and secure storage implemented'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Password policy enforcement with multi-factor authentication'
       },
       {
         id: 'A.5.18',
         title: 'Access rights',
-        description: 'Allocate and review access rights',
+        description: 'Access rights to information and other associated assets shall be provisioned, reviewed, modified and removed in accordance with the organization access control policy and rules.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Formal access rights management process',
-        implementationNotes: 'Regular access reviews and privilege management'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Quarterly access reviews with automated workflow'
       },
       {
         id: 'A.5.19',
         title: 'Information security in supplier relationships',
-        description: 'Address security in supplier relationships',
+        description: 'Processes and procedures shall be defined and implemented to manage the information security risks associated with the use of supplier products or services.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Supplier security requirements and assessments',
-        implementationNotes: 'Supplier security questionnaires and monitoring'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Supplier security assessment program with ongoing monitoring'
       },
       {
         id: 'A.5.20',
         title: 'Addressing information security within supplier agreements',
-        description: 'Include security requirements in agreements',
+        description: 'Relevant information security requirements shall be established and agreed with each supplier that may access, process, store, communicate, or provide IT infrastructure components for, the organization information.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security clauses included in supplier contracts',
-        implementationNotes: 'Standard security terms and conditions template'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Standard security clauses in all supplier contracts'
       },
       {
         id: 'A.5.21',
         title: 'Managing information security in the ICT supply chain',
-        description: 'Manage security risks in ICT supply chain',
+        description: 'Processes and procedures shall be defined and implemented to manage the information security risks associated with the ICT products and services supply chain.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'ICT supply chain security assessment process',
-        implementationNotes: 'Vendor security assessments and monitoring'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Supply chain risk assessment with security requirements validation'
       },
       {
         id: 'A.5.22',
         title: 'Monitoring, review and change management of supplier services',
-        description: 'Monitor and manage supplier service changes',
+        description: 'The organization shall regularly monitor, review and audit supplier service delivery.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Supplier service monitoring and change management',
-        implementationNotes: 'Regular supplier performance reviews and updates'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Quarterly supplier performance reviews with security metrics'
       },
       {
         id: 'A.5.23',
         title: 'Information security for use of cloud services',
-        description: 'Address security for cloud service usage',
+        description: 'Processes for acquisition, use, management and exit from cloud services shall be established in accordance with the organization information security requirements.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Cloud security requirements and controls implemented',
-        implementationNotes: 'Cloud security assessment and monitoring procedures'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Cloud security framework with shared responsibility model'
       },
       {
         id: 'A.5.24',
         title: 'Information security incident management planning and preparation',
-        description: 'Plan and prepare for security incidents',
+        description: 'The organization shall plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Incident management plan and procedures established',
-        implementationNotes: 'Regular incident response exercises and training'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Comprehensive incident response plan with regular tabletop exercises'
       },
       {
         id: 'A.5.25',
         title: 'Assessment and decision on information security events',
-        description: 'Assess and decide on security events',
+        description: 'The organization shall assess information security events and decide if they are to be categorized as information security incidents.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Event assessment and escalation procedures',
-        implementationNotes: 'Automated event correlation and analysis tools'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Event correlation system with automated severity assessment'
       },
       {
         id: 'A.5.26',
         title: 'Response to information security incidents',
-        description: 'Respond to security incidents',
+        description: 'Information security incidents shall be responded to in accordance with the documented procedures.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Incident response procedures and team established',
-        implementationNotes: 'Documented response procedures and communication plans'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Incident response team with defined escalation procedures'
       },
       {
         id: 'A.5.27',
         title: 'Learning from information security incidents',
-        description: 'Learn from security incidents',
+        description: 'Knowledge gained from analyzing and resolving information security incidents shall be used to reduce the likelihood or impact of future incidents.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Post-incident review and lessons learned process',
-        implementationNotes: 'Incident analysis and improvement procedures'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Post-incident review process with lessons learned documentation'
       },
       {
         id: 'A.5.28',
         title: 'Collection of evidence',
-        description: 'Collect and preserve evidence',
+        description: 'The organization shall establish and implement procedures for the identification, collection, acquisition and preservation of information that can serve as evidence.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Evidence collection and preservation procedures',
-        implementationNotes: 'Forensic capabilities and evidence handling training'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Digital forensics capability with chain of custody procedures'
       },
       {
         id: 'A.5.29',
         title: 'Information security during disruption',
-        description: 'Maintain security during business disruption',
+        description: 'The organization shall plan how to maintain information security at an appropriate level during disruption.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Business continuity security procedures',
-        implementationNotes: 'Security controls integrated into BCP/DRP'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Business continuity plan with security controls integration'
       },
       {
         id: 'A.5.30',
         title: 'ICT readiness for business continuity',
-        description: 'Ensure ICT readiness for business continuity',
+        description: 'ICT readiness shall be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'ICT continuity planning and testing',
-        implementationNotes: 'Regular ICT continuity exercises and validation'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Disaster recovery testing with quarterly validation exercises'
       },
       {
         id: 'A.5.31',
         title: 'Legal, statutory, regulatory and contractual requirements',
-        description: 'Identify and comply with legal requirements',
+        description: 'Legal, statutory, regulatory and contractual requirements relevant to information security and the organization approach to meet these requirements shall be identified, documented and kept up to date.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Legal and regulatory compliance framework',
-        implementationNotes: 'Regular compliance assessments and updates'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Legal compliance register with regular updates and monitoring'
       },
       {
         id: 'A.5.32',
         title: 'Intellectual property rights',
-        description: 'Protect intellectual property rights',
+        description: 'The organization shall implement appropriate procedures to protect intellectual property rights.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'IP protection procedures and awareness',
-        implementationNotes: 'IP rights management and protection measures'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT],
+        implementationDetails: 'IP protection policies with software license management'
       },
       {
         id: 'A.5.33',
         title: 'Protection of records',
-        description: 'Protect important records',
+        description: 'Records shall be protected from loss, destruction, falsification, unauthorized access and unauthorized release.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Records protection and retention procedures',
-        implementationNotes: 'Electronic records management system deployed'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Records management system with retention schedule compliance'
       },
       {
         id: 'A.5.34',
-        title: 'Privacy and protection of PII',
-        description: 'Protect privacy and personal data',
+        title: 'Privacy and protection of personally identifiable information',
+        description: 'The organization shall identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Privacy protection framework and procedures',
-        implementationNotes: 'GDPR compliance and PII protection measures'
+        justification: [CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT, CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT],
+        implementationDetails: 'GDPR compliance framework with privacy impact assessments'
       },
       {
         id: 'A.5.35',
         title: 'Independent review of information security',
-        description: 'Independent review of security practices',
+        description: 'The organization approach to managing information security and its implementation shall be reviewed independently at planned intervals or when significant changes occur.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Regular independent security assessments',
-        implementationNotes: 'Annual third-party security audits conducted'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Annual third-party security assessments and internal audits'
       },
       {
         id: 'A.5.36',
-        title: 'Compliance with policies, rules and standards',
-        description: 'Ensure compliance with policies and standards',
+        title: 'Compliance with policies, rules and standards for information security',
+        description: 'Compliance with the organization information security policy, topic-specific policies, rules and standards shall be regularly reviewed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Compliance monitoring and enforcement procedures',
-        implementationNotes: 'Automated compliance checking and reporting'
+        justification: [CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Compliance monitoring with automated policy enforcement'
       },
       {
         id: 'A.5.37',
         title: 'Documented operating procedures',
-        description: 'Document and maintain operating procedures',
+        description: 'Operating procedures for information processing facilities shall be documented and made available to personnel who need them.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive procedure documentation',
-        implementationNotes: 'Centralized procedure repository and version control'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Centralized procedure repository with version control'
       }
     ]
   },
   {
     id: 'A.6',
     title: 'People Controls',
-    description: 'Controls that address human resource security',
+    description: 'Human resource security controls and personnel management',
     controls: [
       {
         id: 'A.6.1',
         title: 'Screening',
-        description: 'Background verification checks',
+        description: 'Background verification checks on all candidates for employment shall be carried out in accordance with relevant laws, regulations and ethics and shall be proportional to the business requirements, the classification of the information to be accessed and the perceived risks.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive background screening procedures',
-        implementationNotes: 'Pre-employment screening for all staff and contractors'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Multi-level background screening based on access requirements'
       },
       {
         id: 'A.6.2',
         title: 'Terms and conditions of employment',
-        description: 'Security responsibilities in employment terms',
+        description: 'The employment contractual agreements shall state the personnel and the organization responsibilities for information security.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security responsibilities included in employment contracts',
-        implementationNotes: 'Standard security clauses in all employment agreements'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Standard security clauses in employment contracts'
       },
       {
         id: 'A.6.3',
         title: 'Information security awareness, education and training',
-        description: 'Security awareness and training programs',
+        description: 'Personnel of the organization and relevant interested parties shall receive appropriate information security awareness, education and training and regular updates of the organization information security policy, topic-specific policies and procedures.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive security awareness program',
-        implementationNotes: 'Regular training sessions and awareness campaigns'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Comprehensive security awareness program with role-based training'
       },
       {
         id: 'A.6.4',
         title: 'Disciplinary process',
-        description: 'Process for security violations',
+        description: 'A formal and communicated disciplinary process shall be in place to take action against personnel who have committed an information security breach.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Formal disciplinary procedures for security violations',
-        implementationNotes: 'Clear escalation and disciplinary action procedures'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Formal disciplinary procedures with progressive enforcement'
       },
       {
         id: 'A.6.5',
         title: 'Responsibilities after termination or change of employment',
-        description: 'Post-employment security responsibilities',
+        description: 'Information security responsibilities and duties that remain valid after termination or change of employment shall be defined, enforced and communicated to relevant personnel and other interested parties.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Clear post-employment security procedures',
-        implementationNotes: 'Exit procedures include security responsibilities'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Comprehensive offboarding process with security checklist'
       },
       {
         id: 'A.6.6',
         title: 'Confidentiality or non-disclosure agreements',
-        description: 'Confidentiality agreements for staff',
+        description: 'Confidentiality or non-disclosure agreements reflecting the organization needs for the protection of information shall be identified, documented, regularly reviewed and signed by personnel and relevant interested parties.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Confidentiality agreements for all staff',
-        implementationNotes: 'Standard confidentiality agreement templates'
+        justification: [CONTROL_JUSTIFICATION.LEGAL_REQUIREMENT],
+        implementationDetails: 'Standard confidentiality agreements with regular review cycle'
       },
       {
         id: 'A.6.7',
         title: 'Remote working',
-        description: 'Security for remote working',
+        description: 'Security measures shall be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organization premises.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Remote working security policies and procedures',
-        implementationNotes: 'Secure remote access and device management'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Remote work security policy with VPN and endpoint protection'
       },
       {
         id: 'A.6.8',
         title: 'Information security event reporting',
-        description: 'Security event reporting procedures',
+        description: 'Personnel shall report observed or suspected information security events through appropriate management channels as quickly as possible.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Clear security event reporting procedures',
-        implementationNotes: 'Multiple reporting channels and escalation procedures'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Multiple reporting channels with 24/7 incident hotline'
       }
     ]
   },
   {
     id: 'A.7',
-    title: 'Physical Controls',
-    description: 'Controls that address physical security',
+    title: 'Physical and Environmental Security',
+    description: 'Protection of physical facilities and equipment',
     controls: [
       {
         id: 'A.7.1',
         title: 'Physical security perimeters',
-        description: 'Define and use security perimeters',
+        description: 'Physical security perimeters shall be defined and used to protect areas that contain either sensitive or critical information and information processing facilities.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Physical security perimeters established',
-        implementationNotes: 'Multi-layer physical security controls'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Multi-layered perimeter security with access zones'
       },
       {
         id: 'A.7.2',
         title: 'Physical entry',
-        description: 'Secure physical entry controls',
+        description: 'Secure areas shall be protected by appropriate entry controls to ensure that only authorized personnel are allowed access.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Controlled physical entry systems',
-        implementationNotes: 'Access control systems and visitor management'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Card-based access control with biometric verification for sensitive areas'
       },
       {
         id: 'A.7.3',
-        title: 'Securing offices, rooms and facilities',
-        description: 'Secure design and protection of facilities',
+        title: 'Protection against environmental threats',
+        description: 'Protection against environmental threats such as natural disasters, malicious attack or accidents shall be designed and applied.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure facility design and protection',
-        implementationNotes: 'Security measures for offices and critical areas'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Environmental monitoring systems with automated alerts'
       },
       {
         id: 'A.7.4',
-        title: 'Physical security monitoring',
-        description: 'Physical security monitoring systems',
+        title: 'Working in secure areas',
+        description: 'Physical protection and guidelines for working in secure areas shall be designed and applied.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Physical security monitoring and surveillance',
-        implementationNotes: 'CCTV systems and security monitoring procedures'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Secure area protocols with escort requirements'
       },
       {
         id: 'A.7.5',
-        title: 'Protecting against physical and environmental threats',
-        description: 'Protection against physical threats',
+        title: 'Clear desk and clear screen',
+        description: 'A clear desk policy for papers and removable storage media and a clear screen policy for information processing facilities shall be adopted.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Protection against physical and environmental threats',
-        implementationNotes: 'Environmental controls and threat mitigation'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Clear desk policy with regular compliance checks'
       },
       {
         id: 'A.7.6',
-        title: 'Working in secure areas',
-        description: 'Procedures for working in secure areas',
+        title: 'Equipment siting and protection',
+        description: 'Equipment shall be sited and protected to reduce the risks from environmental threats and hazards, and opportunities for unauthorized access.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Procedures for secure area operations',
-        implementationNotes: 'Secure area access and working procedures'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Equipment placement guidelines with environmental protection'
       },
       {
         id: 'A.7.7',
-        title: 'Clear desk and clear screen',
-        description: 'Clear desk and screen policies',
+        title: 'Secure disposal or reuse of equipment',
+        description: 'All items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or reuse.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Clear desk and screen policies implemented',
-        implementationNotes: 'Regular compliance checks and awareness training'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Certified data destruction procedures with audit trail'
       },
       {
         id: 'A.7.8',
-        title: 'Equipment siting and protection',
-        description: 'Secure equipment placement and protection',
+        title: 'Unattended user equipment',
+        description: 'Users shall ensure that unattended equipment has appropriate protection.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure equipment siting and protection measures',
-        implementationNotes: 'Equipment placement guidelines and protection'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Automatic screen lock policies with user awareness training'
       },
       {
         id: 'A.7.9',
-        title: 'Security of assets off-premises',
-        description: 'Security for off-premises assets',
+        title: 'Storage media',
+        description: 'Storage media shall be managed in accordance with the classification scheme adopted by the organization.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security measures for off-premises assets',
-        implementationNotes: 'Mobile device and asset security policies'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Media handling procedures with tracking and disposal protocols'
       },
       {
         id: 'A.7.10',
-        title: 'Storage media',
-        description: 'Secure storage media management',
+        title: 'Supporting utilities',
+        description: 'Information processing facilities shall be protected from power failures and other disruptions caused by failures in supporting utilities.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure storage media procedures',
-        implementationNotes: 'Media handling and disposal procedures'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'UPS systems and backup generators with regular testing'
       },
       {
         id: 'A.7.11',
-        title: 'Supporting utilities',
-        description: 'Protect supporting utilities',
+        title: 'Cabling security',
+        description: 'Power and telecommunications cabling carrying data or supporting information services shall be protected from interception, interference or damage.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Protection of critical utilities',
-        implementationNotes: 'UPS systems and utility protection measures'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Protected cable runs with physical security measures'
       },
       {
         id: 'A.7.12',
-        title: 'Power cabling',
-        description: 'Protect power cabling',
+        title: 'Equipment maintenance',
+        description: 'Equipment shall be correctly maintained to ensure its continued availability and integrity.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Power cabling protection measures',
-        implementationNotes: 'Power cabling security and redundancy'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Preventive maintenance schedules with authorized service providers'
       },
       {
         id: 'A.7.13',
-        title: 'Equipment maintenance',
-        description: 'Secure equipment maintenance',
+        title: 'Secure disposal or reuse of equipment',
+        description: 'All items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or reuse.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure equipment maintenance procedures',
-        implementationNotes: 'Maintenance access controls and procedures'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Secure disposal procedures with certificate of destruction'
       },
       {
         id: 'A.7.14',
-        title: 'Secure disposal or re-use of equipment',
-        description: 'Secure equipment disposal and reuse',
+        title: 'Off-premises assets',
+        description: 'Protection measures for off-premises assets shall consider the different risks of working outside the organization premises.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure equipment disposal procedures',
-        implementationNotes: 'Data sanitization and equipment disposal processes'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Asset tracking and protection policies for remote equipment'
       }
     ]
   },
   {
     id: 'A.8',
     title: 'Technological Controls',
-    description: 'Controls that address technical security measures',
+    description: 'Technical security controls for information systems and networks',
     controls: [
       {
         id: 'A.8.1',
         title: 'User endpoint devices',
-        description: 'Security for user endpoint devices',
+        description: 'Information stored on, processed by or accessible via user endpoint devices shall be protected.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Endpoint security controls implemented',
-        implementationNotes: 'Endpoint protection and management systems'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Endpoint protection suite with device management and encryption'
       },
       {
         id: 'A.8.2',
         title: 'Privileged access rights',
-        description: 'Manage privileged access rights',
+        description: 'The allocation and use of privileged access rights shall be restricted and controlled.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Privileged access management system',
-        implementationNotes: 'Just-in-time access and privilege escalation controls'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Privileged access management with just-in-time elevation'
       },
       {
         id: 'A.8.3',
         title: 'Information access restriction',
-        description: 'Restrict information access',
+        description: 'Access to information and application system functions shall be restricted in accordance with the access control policy.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Information access restriction controls',
-        implementationNotes: 'Role-based access control and data classification'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Role-based access control with attribute-based enhancements'
       },
       {
         id: 'A.8.4',
         title: 'Access to source code',
-        description: 'Control access to source code',
+        description: 'Read and write access to source code, development tools and software libraries shall be appropriately managed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Source code access controls implemented',
-        implementationNotes: 'Version control and code access management'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Source code repository protection with branch policies'
       },
       {
         id: 'A.8.5',
         title: 'Secure authentication',
-        description: 'Secure authentication systems',
+        description: 'Secure authentication technologies and procedures shall be implemented based on access restrictions and the topic-specific policy on access control.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Multi-factor authentication implemented',
-        implementationNotes: 'MFA for all critical systems and applications'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Multi-factor authentication with risk-based assessment'
       },
       {
         id: 'A.8.6',
         title: 'Capacity management',
-        description: 'Manage system capacity',
+        description: 'The use of resources shall be monitored and tuned, and projections of future capacity requirements shall be made to ensure the required system performance.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Capacity management procedures',
-        implementationNotes: 'Automated capacity monitoring and scaling'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Automated capacity monitoring with predictive scaling'
       },
       {
         id: 'A.8.7',
         title: 'Protection against malware',
-        description: 'Malware protection measures',
+        description: 'Protection against malware shall be implemented and supported by appropriate user awareness.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive malware protection',
-        implementationNotes: 'Anti-malware tools and regular scanning'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Multi-layered malware protection with behavioral analysis'
       },
       {
         id: 'A.8.8',
         title: 'Management of technical vulnerabilities',
-        description: 'Technical vulnerability management',
+        description: 'Information about technical vulnerabilities of information systems being used shall be obtained in a timely fashion, the organization exposure to such vulnerabilities evaluated and appropriate measures taken to address the associated risk.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Vulnerability management program',
-        implementationNotes: 'Regular vulnerability scanning and patching'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Vulnerability management program with automated scanning'
       },
       {
         id: 'A.8.9',
         title: 'Configuration management',
-        description: 'Configuration management controls',
+        description: 'Configurations, including security configurations, of hardware, software, services and networks shall be established, documented, implemented, monitored and reviewed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Configuration management procedures',
-        implementationNotes: 'Automated configuration management tools'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Configuration management system with baseline enforcement'
       },
       {
         id: 'A.8.10',
         title: 'Information deletion',
-        description: 'Secure information deletion',
+        description: 'Information stored in information systems, devices or in any other storage media shall be deleted when no longer required.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure deletion procedures',
-        implementationNotes: 'Data sanitization and secure deletion tools'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Automated data retention policies with secure deletion procedures'
       },
       {
         id: 'A.8.11',
         title: 'Data masking',
-        description: 'Data masking techniques',
+        description: 'Data masking shall be used in accordance with the organization topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Data masking for sensitive information',
-        implementationNotes: 'Automated data masking in development and testing'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Dynamic data masking for non-production environments'
       },
       {
         id: 'A.8.12',
         title: 'Data leakage prevention',
-        description: 'Data leakage prevention measures',
+        description: 'Data leakage prevention measures shall be applied to systems, networks and any other devices that process, store or transmit sensitive information.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'DLP controls implemented',
-        implementationNotes: 'DLP tools and monitoring systems'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'DLP solution with content inspection and policy enforcement'
       },
       {
         id: 'A.8.13',
         title: 'Information backup',
-        description: 'Information backup procedures',
+        description: 'Backup copies of information, software and systems shall be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive backup procedures',
-        implementationNotes: 'Automated backup systems and testing'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Automated backup system with regular restore testing'
       },
       {
         id: 'A.8.14',
         title: 'Redundancy of information processing facilities',
-        description: 'Redundant processing facilities',
+        description: 'Information processing facilities shall be implemented with redundancy sufficient to meet availability requirements.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Redundant processing facilities',
-        implementationNotes: 'High availability and disaster recovery systems'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'High availability architecture with geographic distribution'
       },
       {
         id: 'A.8.15',
         title: 'Logging',
-        description: 'System logging procedures',
+        description: 'Logs that record activities, exceptions, faults and other relevant events shall be produced, stored, protected and analyzed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive logging procedures',
-        implementationNotes: 'Centralized logging and monitoring systems'
+        justification: [CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Centralized logging with SIEM integration and retention policies'
       },
       {
         id: 'A.8.16',
         title: 'Monitoring activities',
-        description: 'System monitoring activities',
+        description: 'Networks, systems and applications shall be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'System monitoring and alerting',
-        implementationNotes: 'Real-time monitoring and automated alerting'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Real-time monitoring with AI-based anomaly detection'
       },
       {
         id: 'A.8.17',
-        title: 'Clock synchronization',
-        description: 'Clock synchronization',
+        title: 'Clock synchronisation',
+        description: 'The clocks of information processing systems used by the organization shall be synchronised to approved time sources.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Clock synchronization procedures',
-        implementationNotes: 'NTP servers and time synchronization'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'NTP infrastructure with authoritative time sources'
       },
       {
         id: 'A.8.18',
         title: 'Use of privileged utility programs',
-        description: 'Control use of privileged utilities',
+        description: 'The use of utility programs that might be capable of overriding system and application controls shall be restricted and tightly controlled.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Privileged utility program controls',
-        implementationNotes: 'Restricted access to privileged utilities'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Restricted access to system utilities with logging and approval'
       },
       {
         id: 'A.8.19',
         title: 'Installation of software on operational systems',
-        description: 'Control software installation',
+        description: 'Procedures shall be implemented to control the installation of software on operational systems.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Software installation controls',
-        implementationNotes: 'Change management and software approval process'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Software deployment pipeline with security scanning and approval'
       },
       {
         id: 'A.8.20',
-        title: 'Networks security',
-        description: 'Network security controls',
+        title: 'Networks security management',
+        description: 'Networks and network devices shall be managed and controlled to protect information in systems and applications.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Comprehensive network security',
-        implementationNotes: 'Network segmentation and security controls'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Network segmentation with micro-segmentation and monitoring'
       },
       {
         id: 'A.8.21',
         title: 'Security of network services',
-        description: 'Secure network services',
+        description: 'Security mechanisms, service levels and service requirements of network services shall be identified, implemented and monitored.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Network service security',
-        implementationNotes: 'Secure network service configuration'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Network service hardening with security configuration baselines'
       },
       {
         id: 'A.8.22',
-        title: 'Web filtering',
-        description: 'Web filtering controls',
+        title: 'Segregation of networks',
+        description: 'Groups of information services, users and information systems shall be segregated on networks.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Web filtering implemented',
-        implementationNotes: 'Web content filtering and monitoring'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'VLAN segmentation with firewall enforcement between segments'
       },
       {
         id: 'A.8.23',
-        title: 'Security of network services',
-        description: 'Secure network services',
+        title: 'Web filtering',
+        description: 'Access to external websites shall be managed to reduce exposure to malicious content.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Network service security controls',
-        implementationNotes: 'Secure network service management'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Web content filtering with category-based blocking and monitoring'
       },
       {
         id: 'A.8.24',
-        title: 'Network routing control',
-        description: 'Network routing controls',
+        title: 'Use of cryptography',
+        description: 'Rules for the effective use of cryptography, including cryptographic key management, shall be defined and implemented.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Network routing control measures',
-        implementationNotes: 'Secure routing and network path control'
+        justification: [CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Cryptographic standards with centralized key management system'
       },
       {
         id: 'A.8.25',
-        title: 'Secure system architecture and engineering principles',
-        description: 'Secure system architecture',
+        title: 'Secure system development life cycle',
+        description: 'Rules for the secure development of software and systems shall be established and applied.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure architecture principles',
-        implementationNotes: 'Security by design and secure development'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Secure SDLC with security gates and code review requirements'
       },
       {
         id: 'A.8.26',
-        title: 'Secure coding',
-        description: 'Secure coding practices',
+        title: 'Application security requirements',
+        description: 'Information security requirements shall be identified, specified and approved when developing or acquiring applications.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure coding standards and practices',
-        implementationNotes: 'Secure development lifecycle and code review'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Security requirements framework integrated into development process'
       },
       {
         id: 'A.8.27',
-        title: 'Security testing in development and acceptance',
-        description: 'Security testing procedures',
+        title: 'Secure system architecture and engineering principles',
+        description: 'Principles for engineering secure systems shall be established, documented, maintained and applied to any information system development activities.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security testing in development',
-        implementationNotes: 'Automated security testing and code analysis'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Security architecture principles with threat modeling integration'
       },
       {
         id: 'A.8.28',
-        title: 'Protection of test data',
-        description: 'Protect test data',
+        title: 'Secure coding',
+        description: 'Secure coding principles shall be applied to software development.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Test data protection measures',
-        implementationNotes: 'Test data anonymization and protection'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Secure coding standards with static and dynamic analysis tools'
       },
       {
         id: 'A.8.29',
-        title: 'Interoperability and portability',
-        description: 'System interoperability and portability',
+        title: 'Security testing in development and acceptance',
+        description: 'Security testing processes shall be defined and implemented in the development life cycle.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Interoperability and portability controls',
-        implementationNotes: 'Standard interfaces and data formats'
+        justification: [CONTROL_JUSTIFICATION.BEST_PRACTICE],
+        implementationDetails: 'Automated security testing integrated into CI/CD pipeline'
       },
       {
         id: 'A.8.30',
-        title: 'Eradication of data',
-        description: 'Secure data eradication',
+        title: 'Outsourced development',
+        description: 'The organization shall direct, monitor and review the activities related to outsourced system development.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure data eradication procedures',
-        implementationNotes: 'Data sanitization and secure disposal'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Vendor management program with security oversight for development'
       },
       {
         id: 'A.8.31',
-        title: 'Data leakage prevention',
-        description: 'Data leakage prevention',
+        title: 'Separation of development, test and production environments',
+        description: 'Development, testing and production environments shall be separated and secured.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'DLP controls and monitoring',
-        implementationNotes: 'DLP tools and data flow monitoring'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.RISK_MANAGEMENT_REQUIREMENT],
+        implementationDetails: 'Environment segregation with different security controls per environment'
       },
       {
         id: 'A.8.32',
-        title: 'Web filtering',
-        description: 'Web filtering controls',
+        title: 'Change management',
+        description: 'Changes to information processing facilities and information systems shall be subject to change management procedures.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Web filtering and content control',
-        implementationNotes: 'Web content filtering and access control'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'ITIL-based change management with security review gates'
       },
       {
         id: 'A.8.33',
-        title: 'Secure coding',
-        description: 'Secure coding practices',
+        title: 'Test information',
+        description: 'Test information shall be appropriately selected, protected and managed.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Secure coding standards',
-        implementationNotes: 'Secure development practices and training'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT, CONTROL_JUSTIFICATION.REGULATORY_REQUIREMENT],
+        implementationDetails: 'Test data management with anonymization and synthetic data generation'
       },
       {
         id: 'A.8.34',
-        title: 'Security testing in development and acceptance',
-        description: 'Security testing procedures',
+        title: 'Protection of information systems during audit testing',
+        description: 'Audit tests and other assurance activities involving assessment of operational systems shall be planned and agreed between the tester and appropriate management.',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Security testing in development lifecycle',
-        implementationNotes: 'Automated security testing and validation'
-      },
-      {
-        id: 'A.8.35',
-        title: 'Protection of test data',
-        description: 'Protect test data',
-        controlStatus: 'Implemented',
-        controlApplicability: 'Applicable',
-        relatedRisks: [],
-        justification: 'Test data protection measures',
-        implementationNotes: 'Test data anonymization and secure handling'
+        justification: [CONTROL_JUSTIFICATION.BUSINESS_REQUIREMENT],
+        implementationDetails: 'Audit testing procedures with impact assessment and approval process'
       }
     ]
   }
 ];
-
-// Function to get random elements from an array
-function getRandomElements(array, count) {
-  const shuffled = [...array].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.min(count, array.length));
-}
-
-// Function to generate random number of related risks (3-6 risks per control)
-function getRandomRelatedRisksCount() {
-  return Math.floor(Math.random() * 4) + 3; // 3 to 6 risks
-}
 
 async function seedSoAControls() {
   const uri = process.env.MONGODB_URI;
@@ -993,72 +912,129 @@ async function seedSoAControls() {
 
   try {
     await client.connect();
-    console.log('Connected to MongoDB');
+    console.log('✅ Connected to MongoDB');
 
     const db = client.db('cycorgi');
     const collection = db.collection('soa_controls');
-    const risksCollection = db.collection('risks');
 
-    // Fetch existing risks to get their IDs
-    console.log('Fetching existing risks...');
-    const existingRisks = await risksCollection.find({}, { projection: { riskId: 1 } }).toArray();
-    const riskIds = existingRisks.map(risk => risk.riskId);
+    // Fetch existing risks for relationships
+    console.log('🔍 Fetching existing risks...');
+    const risksCollection = db.collection('risks');
+    const risks = await risksCollection.find({}, { projection: { riskId: 1 } }).toArray();
+    const existingRiskIds = risks.map(risk => risk.riskId).filter(Boolean);
     
-    if (riskIds.length === 0) {
-      console.warn('No risks found in database. Related risks will be empty. Consider running seed-risks-and-treatments.js first.');
+    if (existingRiskIds.length > 0) {
+      console.log(`📋 Found ${existingRiskIds.length} existing risks: ${existingRiskIds.slice(0, 5).join(', ')}${existingRiskIds.length > 5 ? '...' : ''}`);
     } else {
-      console.log(`Found ${riskIds.length} existing risks: ${riskIds.slice(0, 5).join(', ')}${riskIds.length > 5 ? '...' : ''}`);
+      console.log('⚠️  No existing risks found - controls will be created without risk associations');
     }
 
-    // Clear existing data
+    // Clear existing controls
     await collection.deleteMany({});
-    console.log('Cleared existing SoA controls');
+    console.log('🗑️  Cleared existing SoA controls');
 
-    // Flatten the control sets into individual control documents
+    // Prepare controls for insertion
     const controlsToInsert = [];
-    
+    let totalRiskAssociations = 0;
+
     for (const controlSet of iso27001Controls) {
       for (const control of controlSet.controls) {
-        // Generate random related risks for this control
-        const relatedRisksCount = getRandomRelatedRisksCount();
-        const relatedRisks = riskIds.length > 0 ? getRandomElements(riskIds, relatedRisksCount) : [];
-        
-        controlsToInsert.push({
+        // Assign random related risks if available
+        if (existingRiskIds.length > 0) {
+          const relatedRisksCount = getRandomRelatedRisksCount();
+          control.relatedRisks = getRandomElements(existingRiskIds, 3, Math.min(6, existingRiskIds.length));
+          totalRiskAssociations += control.relatedRisks.length;
+        } else {
+          control.relatedRisks = [];
+        }
+
+        const controlDocument = {
           ...control,
-          relatedRisks, // Override the empty array with actual risk IDs
           controlSetId: controlSet.id,
           controlSetTitle: controlSet.title,
           controlSetDescription: controlSet.description,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        controlsToInsert.push(controlDocument);
       }
     }
 
     // Insert all controls
     const result = await collection.insertMany(controlsToInsert);
-    console.log(`Successfully seeded ${result.insertedCount} SoA controls`);
+    console.log(`✅ Successfully seeded ${result.insertedCount} ISO 27001:2022 SoA controls`);
 
-    // Log some statistics
-    const totalRelatedRisks = controlsToInsert.reduce((acc, control) => acc + control.relatedRisks.length, 0);
-    const avgRelatedRisks = totalRelatedRisks / controlsToInsert.length;
-    console.log(`Total related risk associations: ${totalRelatedRisks}`);
-    console.log(`Average related risks per control: ${avgRelatedRisks.toFixed(1)}`);
+    if (existingRiskIds.length > 0) {
+      console.log(`🔗 Total related risk associations: ${totalRiskAssociations}`);
+      console.log(`📊 Average related risks per control: ${(totalRiskAssociations / controlsToInsert.length).toFixed(1)}`);
+    }
 
     // Create indexes for better performance
-    await collection.createIndex({ id: 1 });
-    await collection.createIndex({ controlSetId: 1 });
+    console.log('🔧 Creating database indexes...');
+    await collection.createIndex({ id: 1 }, { unique: true });
     await collection.createIndex({ controlStatus: 1 });
     await collection.createIndex({ controlApplicability: 1 });
+    await collection.createIndex({ justification: 1 });
     await collection.createIndex({ relatedRisks: 1 });
-    console.log('Created indexes for SoA controls');
+    await collection.createIndex({ controlSetId: 1 });
+    console.log('✅ Created indexes for SoA controls');
+
+    // Show summary statistics
+    console.log('\n📊 Seeding Summary:');
+    console.log(`   📋 Total Controls: ${controlsToInsert.length}`);
+    console.log(`   🏢 Control Sets: ${iso27001Controls.length}`);
+    
+    // Show control set breakdown
+    console.log('\n📂 Control Set Breakdown:');
+    iso27001Controls.forEach(set => {
+      console.log(`   ${set.id}: ${set.controls.length} controls - ${set.title}`);
+    });
+
+    // Show justification distribution
+    const justificationCounts = {};
+    controlsToInsert.forEach(control => {
+      control.justification.forEach(j => {
+        justificationCounts[j] = (justificationCounts[j] || 0) + 1;
+      });
+    });
+
+    console.log('\n🎯 Justification Distribution:');
+    Object.entries(justificationCounts)
+      .sort(([,a], [,b]) => b - a)
+      .forEach(([justification, count]) => {
+        console.log(`   ${justification}: ${count} controls`);
+      });
+
+    // Show status distribution
+    const statusCounts = {};
+    controlsToInsert.forEach(control => {
+      statusCounts[control.controlStatus] = (statusCounts[control.controlStatus] || 0) + 1;
+    });
+
+    console.log('\n📈 Control Status Distribution:');
+    Object.entries(statusCounts).forEach(([status, count]) => {
+      console.log(`   ${status}: ${count} controls`);
+    });
+
+    console.log('\n🎉 ISO 27001:2022 SOA controls seeding completed successfully!');
+    console.log('   ✅ All 93 controls from ISO 27001:2022 Annex A');
+    console.log('   ✅ Multi-justification support enabled');
+    console.log('   ✅ Risk associations configured');
+    console.log('   ✅ Database indexes optimized');
 
   } catch (error) {
-    console.error('Error seeding SoA controls:', error);
+    console.error('❌ Error seeding SoA controls:', error);
+    throw error;
   } finally {
     await client.close();
-    console.log('Disconnected from MongoDB');
+    console.log('\n✅ Disconnected from MongoDB');
   }
 }
 
-seedSoAControls().catch(console.error); 
+// Allow script to be run directly or imported
+if (require.main === module) {
+  seedSoAControls().catch(console.error);
+}
+
+module.exports = { seedSoAControls, iso27001Controls, CONTROL_JUSTIFICATION };

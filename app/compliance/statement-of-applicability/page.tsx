@@ -5,6 +5,7 @@ import Icon from '../../components/Icon';
 import { 
   CONTROL_STATUS, 
   CONTROL_APPLICABILITY,
+  CONTROL_JUSTIFICATION,
   type ControlStatus,
   type ControlApplicability,
   type ControlJustification
@@ -17,8 +18,8 @@ interface Control {
   description: string;
   controlStatus: ControlStatus;
   controlApplicability: ControlApplicability;
-  justification?: ControlJustification;
-  implementationNotes?: string;
+  justification?: ControlJustification[];
+  implementationDetails?: string;
   relatedRisks?: string[]; // Array of risk IDs
   controlSetId: string;
   controlSetTitle: string;
@@ -43,6 +44,8 @@ export default function StatementOfApplicabilityPage() {
   const [filterApplicability, setFilterApplicability] = useState<'all' | ControlApplicability>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
+  const [editingControl, setEditingControl] = useState<Control | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Fetch data from API
   useEffect(() => {
@@ -89,6 +92,92 @@ export default function StatementOfApplicabilityPage() {
         ? prev.filter(id => id !== setId)
         : [...prev, setId]
     );
+  };
+
+  const handleEditControl = (control: Control) => {
+    setEditingControl(control);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingControl(null);
+  };
+
+  const handleSaveControl = async (updatedControl: Control) => {
+    try {
+      console.log('Saving control:', updatedControl);
+      
+      // Clean the data - only send fields that can be updated
+      const cleanedControl = {
+        id: updatedControl.id,
+        controlStatus: updatedControl.controlStatus,
+        controlApplicability: updatedControl.controlApplicability,
+        justification: updatedControl.justification,
+        implementationDetails: updatedControl.implementationDetails,
+        relatedRisks: updatedControl.relatedRisks
+      };
+      
+      console.log('Cleaned control data:', cleanedControl);
+      
+      const response = await fetch('/api/compliance/soa', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanedControl),
+      });
+
+      console.log('Response status:', response.status);
+      
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+
+      if (!response.ok) {
+        throw new Error(`Failed to update control: ${responseData.error || response.statusText}`);
+      }
+
+      // Refresh the data
+      const fetchControls = async () => {
+        try {
+          const response = await fetch('/api/compliance/soa');
+          if (!response.ok) {
+            throw new Error('Failed to fetch controls');
+          }
+          const data = await response.json();
+          
+          if (data.success) {
+            // Transform the data to match our interface
+            const transformedData = data.data.reduce((acc: ControlSet[], control: any) => {
+              let controlSet = acc.find(set => set.id === control.controlSetId);
+              if (!controlSet) {
+                controlSet = {
+                  id: control.controlSetId,
+                  title: control.controlSetTitle,
+                  description: control.controlSetDescription,
+                  controls: []
+                };
+                acc.push(controlSet);
+              }
+              controlSet.controls.push(control);
+              return acc;
+            }, []);
+            
+            setIso27001Controls(transformedData);
+          }
+        } catch (error) {
+          console.error('Error refreshing controls:', error);
+        }
+      };
+
+      await fetchControls();
+      handleCloseEditModal();
+    } catch (error) {
+      console.error('Error updating control:', error);
+      // TODO: Replace with toast notification - avoid alert() in production
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to save control: ${errorMessage}`);
+    }
   };
 
   const getStatusIcon = (status: ControlStatus) => {
@@ -168,7 +257,7 @@ export default function StatementOfApplicabilityPage() {
           control.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           control.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           control.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (control.justification && control.justification.toLowerCase().includes(searchQuery.toLowerCase()));
+          (control.justification && control.justification.some(j => j.toLowerCase().includes(searchQuery.toLowerCase())));
         
         return matchesStatus && matchesApplicability && matchesSearch;
       })
@@ -417,10 +506,10 @@ export default function StatementOfApplicabilityPage() {
                       >
                         <Icon name="x-mark" size={16} />
                       </button>
-                    </div>
+          </div>
                   )}
-                </div>
-              </div>
+          </div>
+        </div>
 
               {/* Filters */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -430,18 +519,18 @@ export default function StatementOfApplicabilityPage() {
                   </label>
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setFilterStatus('all')}
+          <button
+            onClick={() => setFilterStatus('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          filterStatus === 'all' 
+              filterStatus === 'all' 
                             ? 'bg-blue-100 text-blue-800 border border-blue-200' 
                             : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                        }`}
-                      >
+            }`}
+          >
                         <Icon name="squares-2x2" size={16} className="inline mr-2" />
-                        All Controls
-                      </button>
-                      <button
+            All Controls
+          </button>
+          <button
                         onClick={() => setFilterStatus(CONTROL_STATUS.IMPLEMENTED)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           filterStatus === CONTROL_STATUS.IMPLEMENTED 
@@ -450,9 +539,9 @@ export default function StatementOfApplicabilityPage() {
                         }`}
                       >
                         <Icon name="check-circle" size={16} className="inline mr-2" />
-                        Implemented
-                      </button>
-                      <button
+            Implemented
+          </button>
+          <button
                         onClick={() => setFilterStatus(CONTROL_STATUS.PARTIALLY_IMPLEMENTED)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           filterStatus === CONTROL_STATUS.PARTIALLY_IMPLEMENTED 
@@ -473,8 +562,8 @@ export default function StatementOfApplicabilityPage() {
                       >
                         <Icon name="clock" size={16} className="inline mr-2" />
                         Planning
-                      </button>
-                      <button
+          </button>
+          <button
                         onClick={() => setFilterStatus(CONTROL_STATUS.NOT_IMPLEMENTED)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           filterStatus === CONTROL_STATUS.NOT_IMPLEMENTED 
@@ -484,10 +573,10 @@ export default function StatementOfApplicabilityPage() {
                       >
                         <Icon name="x-mark" size={16} className="inline mr-2" />
                         Not Implemented
-                      </button>
+          </button>
                     </div>
-                  </div>
-                </div>
+        </div>
+      </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -516,7 +605,7 @@ export default function StatementOfApplicabilityPage() {
                       <Icon name="check" size={16} className="inline mr-2" />
                       Applicable
                     </button>
-                    <button
+            <button
                       onClick={() => setFilterApplicability(CONTROL_APPLICABILITY.NOT_APPLICABLE)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         filterApplicability === CONTROL_APPLICABILITY.NOT_APPLICABLE 
@@ -632,30 +721,39 @@ export default function StatementOfApplicabilityPage() {
                         className="text-gray-400" 
                       />
                     </div>
-                  </button>
-                  
+            </button>
+            
                   {/* Control Set Content */}
-                  {expandedSets.includes(controlSet.id) && (
-                    <div className="border-t border-gray-200">
+            {expandedSets.includes(controlSet.id) && (
+              <div className="border-t border-gray-200">
                       {viewMode === 'expanded' ? (
                         <div className="divide-y divide-gray-100">
-                          {controlSet.controls.map((control) => (
+                {controlSet.controls.map((control) => (
                             <div key={control.id} className="p-6 hover:bg-gray-50 transition-colors">
                               <div className="space-y-4">
                                 {/* Control Header */}
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                      <h4 className="text-lg font-medium text-gray-900">{control.id}</h4>
-                                      <div className="flex items-center space-x-2">
-                                        {getStatusIcon(control.controlStatus)}
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(control.controlStatus)}`}>
-                                          {control.controlStatus}
-                                        </span>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApplicabilityColor(control.controlApplicability)}`}>
-                                          {control.controlApplicability}
-                                        </span>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center space-x-3">
+                                        <h4 className="text-lg font-medium text-gray-900">{control.id}</h4>
+                                        <div className="flex items-center space-x-2">
+                                          {getStatusIcon(control.controlStatus)}
+                                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(control.controlStatus)}`}>
+                                            {control.controlStatus}
+                                          </span>
+                                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApplicabilityColor(control.controlApplicability)}`}>
+                                            {control.controlApplicability}
+                                          </span>
+                                        </div>
                                       </div>
+                                      <button
+                                        onClick={() => handleEditControl(control)}
+                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Edit control"
+                                      >
+                                        <Icon name="pencil" size={16} />
+                                      </button>
                                     </div>
                                     <h5 className="text-base font-medium text-gray-900 mb-2">{control.title}</h5>
                                     <p className="text-sm text-gray-600 leading-relaxed">{control.description}</p>
@@ -664,44 +762,55 @@ export default function StatementOfApplicabilityPage() {
 
                                 {/* Control Details Grid */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                  {control.justification && (
+                                  {control.justification && control.justification.length > 0 && (
                                     <div className="bg-gray-50 rounded-lg p-4">
-                                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center space-x-2 mb-2">
                                         <Icon name="scale" size={16} className="text-gray-500" />
-                                        <span className="text-sm font-medium text-gray-700">Justification</span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                          Justification{control.justification.length > 1 ? 's' : ''}
+                                        </span>
                                       </div>
-                                      <p className="text-sm text-gray-600">{control.justification}</p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {control.justification.map((justification, index) => (
+                                          <span 
+                                            key={index}
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                          >
+                                            {justification}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
                                   )}
-                                  
-                                  {control.implementationNotes && (
+                        
+                                  {control.implementationDetails && (
                                     <div className="bg-blue-50 rounded-lg p-4">
                                       <div className="flex items-center space-x-2 mb-2">
                                         <Icon name="document-text" size={16} className="text-blue-500" />
-                                        <span className="text-sm font-medium text-blue-700">Implementation Notes</span>
+                                        <span className="text-sm font-medium text-blue-700">Implementation Details</span>
                                       </div>
-                                      <p className="text-sm text-blue-600">{control.implementationNotes}</p>
+                                      <p className="text-sm text-blue-600">{control.implementationDetails}</p>
+                                    </div>
+                                  )}
+
+                                  {/* Related Risks */}
+                                  {control.relatedRisks && control.relatedRisks.length > 0 && (
+                                    <div className="bg-purple-50 rounded-lg p-4">
+                                      <div className="flex items-center space-x-2 mb-3">
+                                        <Icon name="exclamation-triangle" size={16} className="text-purple-500" />
+                                        <span className="text-sm font-medium text-purple-700">Related Risks</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {control.relatedRisks.map((riskId, index) => (
+                                          <span key={index} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
+                                            <Icon name="link" size={12} className="mr-1" />
+                                            {riskId}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
                                   )}
                                 </div>
-
-                                {/* Related Risks */}
-                                {control.relatedRisks && control.relatedRisks.length > 0 && (
-                                  <div className="bg-purple-50 rounded-lg p-4">
-                                    <div className="flex items-center space-x-2 mb-3">
-                                      <Icon name="exclamation-triangle" size={16} className="text-purple-500" />
-                                      <span className="text-sm font-medium text-purple-700">Related Risks</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {control.relatedRisks.map((riskId, index) => (
-                                        <span key={index} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
-                                          <Icon name="link" size={12} className="mr-1" />
-                                          {riskId}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           ))}
@@ -717,16 +826,23 @@ export default function StatementOfApplicabilityPage() {
                                   <span className="text-sm text-gray-600 truncate">{control.title}</span>
                                 </div>
                                 <div className="flex items-center space-x-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => handleEditControl(control)}
+                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit control"
+                                  >
+                                    <Icon name="pencil" size={14} />
+                                  </button>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(control.controlStatus)}`}>
                                     {control.controlStatus}
                                   </span>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApplicabilityColor(control.controlApplicability)}`}>
                                     {control.controlApplicability}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
                         </div>
                       )}
                     </div>
@@ -737,6 +853,217 @@ export default function StatementOfApplicabilityPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Control Modal */}
+      {showEditModal && editingControl && (
+        <EditControlModal
+          control={editingControl}
+          onSave={handleSaveControl}
+          onClose={handleCloseEditModal}
+        />
+      )}
     </div>
+  );
+}
+
+// Edit Control Modal Component
+interface EditControlModalProps {
+  control: Control;
+  onSave: (control: Control) => Promise<void>;
+  onClose: () => void;
+}
+
+function EditControlModal({ control, onSave, onClose }: EditControlModalProps) {
+  const [formData, setFormData] = useState<Control>({
+    ...control,
+    justification: control.justification || [CONTROL_JUSTIFICATION.BEST_PRACTICE]
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  console.log('Modal initialized with control:', control);
+  console.log('Form data:', formData);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Submitting form with data:', formData);
+    setIsSaving(true);
+    try {
+      await onSave(formData);
+    } catch (error) {
+      console.error('Error saving control:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleJustificationChange = (index: number, value: string) => {
+    const newJustifications = [...(formData.justification || [])];
+    newJustifications[index] = value as ControlJustification;
+    setFormData({ ...formData, justification: newJustifications });
+  };
+
+  const addJustification = () => {
+    const newJustifications = [...(formData.justification || []), CONTROL_JUSTIFICATION.BEST_PRACTICE as ControlJustification];
+    setFormData({ ...formData, justification: newJustifications });
+  };
+
+  const removeJustification = (index: number) => {
+    const newJustifications = formData.justification?.filter((_, i) => i !== index) || [];
+    setFormData({ ...formData, justification: newJustifications });
+  };
+
+  return (
+    <>
+      {/* Background overlay with blur */}
+      <div 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Edit Control</h2>
+              <p className="text-sm text-gray-600 mt-1">{control.id} - {control.title}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            >
+              <Icon name="times" size={20} />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Control Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Control Status
+              </label>
+              <select
+                value={formData.controlStatus}
+                onChange={(e) => setFormData({ ...formData, controlStatus: e.target.value as ControlStatus })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {Object.values(CONTROL_STATUS).map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Control Applicability */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Control Applicability
+              </label>
+              <select
+                value={formData.controlApplicability}
+                onChange={(e) => setFormData({ ...formData, controlApplicability: e.target.value as ControlApplicability })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {Object.values(CONTROL_APPLICABILITY).map((applicability) => (
+                  <option key={applicability} value={applicability}>{applicability}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Justifications */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Justifications
+                </label>
+                <button
+                  type="button"
+                  onClick={addJustification}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
+                >
+                  Add Justification
+                </button>
+              </div>
+              <div className="space-y-2">
+                {formData.justification?.map((justification, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <select
+                      value={justification}
+                      onChange={(e) => handleJustificationChange(index, e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {Object.values(CONTROL_JUSTIFICATION).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {formData.justification && formData.justification.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeJustification(index)}
+                        className="p-2 text-red-400 hover:text-red-600 rounded-lg transition-colors"
+                      >
+                        <Icon name="times" size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Implementation Details */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Implementation Details
+              </label>
+              <textarea
+                value={formData.implementationDetails || ''}
+                onChange={(e) => setFormData({ ...formData, implementationDetails: e.target.value })}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Describe how this control is implemented..."
+              />
+            </div>
+
+            {/* Related Risks */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Related Risks
+              </label>
+              <div className="text-sm text-gray-600">
+                Currently linked to {formData.relatedRisks?.length || 0} risk(s)
+              </div>
+              {formData.relatedRisks && formData.relatedRisks.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.relatedRisks.map((riskId) => (
+                    <span key={riskId} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                      {riskId}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
   );
 } 
