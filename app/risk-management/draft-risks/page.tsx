@@ -112,7 +112,7 @@ export default function DraftRisks() {
   const router = useRouter()
   const { showToast } = useToast()
 
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+
   const [risks, setRisks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -205,7 +205,7 @@ export default function DraftRisks() {
             router.push(`/risk-management/risks/${row.riskId}`)
   }
 
-  const handleExportCSV = (selectedRows: Set<number>) => {
+  const handleExportCSV = () => {
     
   }
 
@@ -480,9 +480,7 @@ export default function DraftRisks() {
           title="Draft Risks"
           searchPlaceholder="Search draft risks..."
           onRowClick={handleRowClick}
-          selectable={true}
-          selectedRows={selectedRows}
-          onSelectionChange={setSelectedRows}
+          selectable={false}
           onExportCSV={handleExportCSV}
         />
       )}

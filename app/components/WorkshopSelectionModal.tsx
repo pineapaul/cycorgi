@@ -33,6 +33,10 @@ interface WorkshopSelectionModalProps {
   isOpen: boolean
   onClose: () => void
   risk: Risk | null
+  treatment?: {
+    treatmentId: string
+    riskId: string
+  }
 }
 
 type TopicType = 'extensions' | 'closure' | 'newRisks'
@@ -45,7 +49,7 @@ const TOPIC_OPTIONS = [
 
 const SELECTABLE_STATUSES = ['Planned', 'Scheduled', 'Pending Agenda']
 
-export default function WorkshopSelectionModal({ isOpen, onClose, risk }: WorkshopSelectionModalProps) {
+export default function WorkshopSelectionModal({ isOpen, onClose, risk, treatment }: WorkshopSelectionModalProps) {
   const { showToast } = useToast()
   
   const [workshops, setWorkshops] = useState<Workshop[]>([])
@@ -176,8 +180,8 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
       return
     }
 
-    // For extensions and closure, require treatment selection
-    if ((selectedTopic === 'extensions' || selectedTopic === 'closure') && selectedTreatments.size === 0) {
+    // For extensions and closure, require treatment selection (unless we already have a specific treatment)
+    if ((selectedTopic === 'extensions' || selectedTopic === 'closure') && !treatment && selectedTreatments.size === 0) {
       showToast({
         type: 'error',
         title: 'Please select at least one treatment',
@@ -196,7 +200,13 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
 
       // Add selected treatments for extensions/closure
       if (selectedTopic === 'extensions' || selectedTopic === 'closure') {
-        requestBody.selectedTreatments = Array.from(selectedTreatments)
+        if (treatment) {
+          // When we have a specific treatment, use that treatment ID
+          requestBody.selectedTreatments = [treatment.treatmentId]
+        } else {
+          // When selecting from multiple treatments, use the selected ones
+          requestBody.selectedTreatments = Array.from(selectedTreatments)
+        }
       }
 
       const response = await fetch(`/api/workshops/${selectedWorkshop}/agenda`, {
@@ -210,9 +220,11 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
       const result = await response.json()
       
       if (result.success) {
+        const entityType = treatment ? 'Treatment' : 'Risk'
+        const entityId = treatment ? treatment.treatmentId : risk.riskId
         showToast({
           type: 'success',
-          title: `Risk ${risk.riskId} added to workshop agenda!`,
+          title: `${entityType} ${entityId} added to workshop agenda!`,
           message: `Added to ${selectedTopic} section of the workshop.`
         })
         onClose()
@@ -262,10 +274,12 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
 
   const availableTopics = getAvailableTopics()
 
-  const modalTitle = "Add Risk to Workshop Agenda"
-  const modalSubtitle = risk 
-    ? `Risk ID: ${risk.riskId} • Phase: ${risk.currentPhase}`
-    : undefined
+  const modalTitle = treatment ? "Add Treatment to Workshop Agenda" : "Add Risk to Workshop Agenda"
+  const modalSubtitle = treatment 
+    ? `Treatment ID: ${treatment.treatmentId} • Risk ID: ${treatment.riskId}`
+    : risk 
+      ? `Risk ID: ${risk.riskId} • Phase: ${risk.currentPhase}`
+      : undefined
 
   return (
     <Modal
@@ -320,7 +334,7 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
           </div>
 
           {/* Treatment Selection for Extensions/Closure */}
-          {(selectedTopic === 'extensions' || selectedTopic === 'closure') && (
+          {(selectedTopic === 'extensions' || selectedTopic === 'closure') && !treatment && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Select Treatments
@@ -493,7 +507,7 @@ export default function WorkshopSelectionModal({ isOpen, onClose, risk }: Worksh
               !selectedTopic || 
               isSubmitting || 
               workshops.length === 0 ||
-              ((selectedTopic === 'extensions' || selectedTopic === 'closure') && selectedTreatments.size === 0)
+              ((selectedTopic === 'extensions' || selectedTopic === 'closure') && !treatment && selectedTreatments.size === 0)
             }
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >

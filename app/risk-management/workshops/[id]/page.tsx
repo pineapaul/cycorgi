@@ -862,8 +862,8 @@ function RiskCard({ item, risk, treatments, sectionType, onUpdate, onUpdateTreat
                               className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-colors"
                               title="Request due date extension"
                             >
-                              <Icon name="calendar-plus" size={12} className="mr-1" />
-                              Request Extension
+                              <Icon name="edit" size={12} className="mr-1" />
+                              Modify Risk Treatment
                             </button>
                           )}
                         </div>
@@ -1044,23 +1044,35 @@ function ApprovalInputField({
   )
 }
 
-// Extension Modal Component
-interface ExtensionModalProps {
+// Modify Treatment Modal Component
+interface ModifyTreatmentModalProps {
   isOpen: boolean
   onClose: () => void
   treatment: Treatment
-  onSubmit: (data: { extendedDueDate: string; justification: string }) => Promise<void>
+  onSubmit: (data: { 
+    riskTreatment: string
+    riskTreatmentOwner: string
+    dateRiskTreatmentDue: string
+    treatmentJira?: string
+    notes?: string
+  }) => Promise<void>
   submitting: boolean
 }
 
-function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: ExtensionModalProps) {
+function ModifyTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting }: ModifyTreatmentModalProps) {
   const [formData, setFormData] = useState({
-    extendedDueDate: '',
-    justification: ''
+    riskTreatment: '',
+    riskTreatmentOwner: '',
+    dateRiskTreatmentDue: '',
+    treatmentJira: '',
+    notes: ''
   })
   const [errors, setErrors] = useState<{
-    extendedDueDate?: string
-    justification?: string
+    riskTreatment?: string
+    riskTreatmentOwner?: string
+    dateRiskTreatmentDue?: string
+    treatmentJira?: string
+    notes?: string
   }>({})
 
   const { modalRef, handleTabKey, handleBackdropClick } = useModal({ isOpen, onClose })
@@ -1069,43 +1081,50 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
   const hasErrors = useMemo(() => Object.values(errors).some(error => error !== undefined), [errors])
 
   useEffect(() => {
-    if (isOpen) {
-      // Reset form when modal opens
+    if (isOpen && treatment) {
+      // Pre-populate form with current treatment data
       setFormData({
-        extendedDueDate: '',
-        justification: ''
+        riskTreatment: treatment.riskTreatment || '',
+        riskTreatmentOwner: treatment.riskTreatmentOwner || '',
+        dateRiskTreatmentDue: treatment.dateRiskTreatmentDue ? new Date(treatment.dateRiskTreatmentDue).toISOString().split('T')[0] : '',
+        treatmentJira: treatment.treatmentJira || '',
+        notes: (treatment as any).notes || ''
       })
       setErrors({})
     }
-  }, [isOpen])
+  }, [isOpen, treatment])
 
   const validateForm = () => {
-    const newErrors: { extendedDueDate?: string; justification?: string } = {}
+    const newErrors: { 
+      riskTreatment?: string
+      riskTreatmentOwner?: string
+      dateRiskTreatmentDue?: string
+      treatmentJira?: string
+      notes?: string
+    } = {}
 
-    // Validate extended due date
-    if (!formData.extendedDueDate) {
-      newErrors.extendedDueDate = 'Extended due date is required'
-    } else {
-      const selectedDate = new Date(formData.extendedDueDate)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      selectedDate.setHours(0, 0, 0, 0)
-
-      if (isNaN(selectedDate.getTime())) {
-        newErrors.extendedDueDate = 'Please enter a valid date'
-      } else if (selectedDate < today) {
-        newErrors.extendedDueDate = 'Extended due date must be today or a future date'
-      }
+    // Validate risk treatment
+    const trimmedTreatment = formData.riskTreatment.trim()
+    if (!trimmedTreatment) {
+      newErrors.riskTreatment = 'Risk treatment description is required'
+    } else if (trimmedTreatment.length < 10) {
+      newErrors.riskTreatment = `Treatment description must be at least 10 characters long (currently ${trimmedTreatment.length} characters)`
     }
 
-    // Validate justification
-    const trimmedJustification = formData.justification.trim()
-    if (!trimmedJustification) {
-      newErrors.justification = 'Justification is required'
-    } else if (trimmedJustification.length < 10) {
-      newErrors.justification = `Justification must be at least 10 characters long (currently ${trimmedJustification.length} characters)`
-    } else if (trimmedJustification.length > 1000) {
-      newErrors.justification = 'Justification must be less than 1000 characters'
+    // Validate treatment owner
+    const trimmedOwner = formData.riskTreatmentOwner.trim()
+    if (!trimmedOwner) {
+      newErrors.riskTreatmentOwner = 'Treatment owner is required'
+    }
+
+    // Validate due date
+    if (!formData.dateRiskTreatmentDue) {
+      newErrors.dateRiskTreatmentDue = 'Due date is required'
+    } else {
+      const selectedDate = new Date(formData.dateRiskTreatmentDue)
+      if (isNaN(selectedDate.getTime())) {
+        newErrors.dateRiskTreatmentDue = 'Please enter a valid date'
+      }
     }
 
     setErrors(newErrors)
@@ -1134,23 +1153,18 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       }))
     }
 
-    // Real-time validation for justification field
-    if (field === 'justification') {
+    // Real-time validation for treatment description field
+    if (field === 'riskTreatment') {
       const trimmedValue = value.trim()
       if (trimmedValue && trimmedValue.length < 10) {
         setErrors(prev => ({
           ...prev,
-          justification: `Justification must be at least 10 characters long (currently ${trimmedValue.length} characters)`
-        }))
-      } else if (trimmedValue && trimmedValue.length > 1000) {
-        setErrors(prev => ({
-          ...prev,
-          justification: 'Justification must be less than 1000 characters'
+          riskTreatment: `Treatment description must be at least 10 characters long (currently ${trimmedValue.length} characters)`
         }))
       } else if (trimmedValue) {
         setErrors(prev => ({
           ...prev,
-          justification: undefined
+          riskTreatment: undefined
         }))
       }
     }
@@ -1173,7 +1187,7 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">Request Extension</h2>
+          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">Modify Risk Treatment</h2>
           <button
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors"
@@ -1202,72 +1216,113 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
           </div>
 
           <div>
-            <label htmlFor="extendedDueDate" className="block text-sm font-medium text-gray-700 mb-2">
-              Extended Due Date <span className="text-red-500" aria-label="required">*</span>
+            <label htmlFor="riskTreatment" className="block text-sm font-medium text-gray-700 mb-2">
+              Treatment Description <span className="text-red-500" aria-label="required">*</span>
             </label>
-            <input
-              type="date"
-              id="extendedDueDate"
-              name="extendedDueDate"
-              value={formData.extendedDueDate}
-              onChange={(e) => handleInputChange('extendedDueDate', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${errors.extendedDueDate
+            <textarea
+              id="riskTreatment"
+              name="riskTreatment"
+              value={formData.riskTreatment}
+              onChange={(e) => handleInputChange('riskTreatment', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${errors.riskTreatment
                   ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-purple-500'
                 }`}
+              rows={3}
+              placeholder="Describe the risk treatment..."
               required
-              min={new Date().toISOString().split('T')[0]}
-              aria-invalid={errors.extendedDueDate ? 'true' : 'false'}
-              aria-describedby={errors.extendedDueDate ? 'date-error' : 'date-help'}
+              aria-invalid={errors.riskTreatment ? 'true' : 'false'}
+              aria-describedby={errors.riskTreatment ? 'riskTreatment-error' : undefined}
               aria-required="true"
             />
-            {errors.extendedDueDate ? (
-              <p id="date-error" className="text-xs text-red-600 mt-1" role="alert">
-                {errors.extendedDueDate}
-              </p>
-            ) : (
-              <p id="date-help" className="text-xs text-gray-500 mt-1">
-                Must be today or a future date
+            {errors.riskTreatment && (
+              <p id="riskTreatment-error" className="text-xs text-red-600 mt-1" role="alert" aria-live="polite">
+                {errors.riskTreatment}
               </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-2">
-              Justification <span className="text-red-500" aria-label="required">*</span>
+            <label htmlFor="riskTreatmentOwner" className="block text-sm font-medium text-gray-700 mb-2">
+              Treatment Owner <span className="text-red-500" aria-label="required">*</span>
             </label>
-            <textarea
-              id="justification"
-              name="justification"
-              value={formData.justification}
-              onChange={(e) => handleInputChange('justification', e.target.value)}
-              rows={4}
-              maxLength={1000}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${errors.justification
+            <input
+              type="text"
+              id="riskTreatmentOwner"
+              name="riskTreatmentOwner"
+              value={formData.riskTreatmentOwner}
+              onChange={(e) => handleInputChange('riskTreatmentOwner', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${errors.riskTreatmentOwner
                   ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-purple-500'
                 }`}
-              placeholder="Please provide a detailed justification for the extension request..."
+              placeholder="Enter treatment owner name..."
               required
-              aria-invalid={errors.justification ? 'true' : 'false'}
-              aria-describedby={errors.justification ? 'justification-error' : 'justification-help'}
+              aria-invalid={errors.riskTreatmentOwner ? 'true' : 'false'}
+              aria-describedby={errors.riskTreatmentOwner ? 'riskTreatmentOwner-error' : undefined}
               aria-required="true"
-              aria-label="Justification for extension request"
             />
-            <div className="flex justify-between items-center mt-1">
-              {errors.justification ? (
-                <p id="justification-error" className="text-xs text-red-600" role="alert" aria-live="polite">
-                  {errors.justification}
-                </p>
-              ) : (
-                <p id="justification-help" className="text-xs text-gray-500">
-                  Provide a detailed explanation for why the extension is needed (minimum 10 characters)
-                </p>
-              )}
-              <span className="text-xs text-gray-400" aria-label="Character count">
-                {formData.justification.trim().length}/1000
-              </span>
-            </div>
+            {errors.riskTreatmentOwner && (
+              <p id="riskTreatmentOwner-error" className="text-xs text-red-600 mt-1" role="alert" aria-live="polite">
+                {errors.riskTreatmentOwner}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="dateRiskTreatmentDue" className="block text-sm font-medium text-gray-700 mb-2">
+              Due Date <span className="text-red-500" aria-label="required">*</span>
+            </label>
+            <input
+              type="date"
+              id="dateRiskTreatmentDue"
+              name="dateRiskTreatmentDue"
+              value={formData.dateRiskTreatmentDue}
+              onChange={(e) => handleInputChange('dateRiskTreatmentDue', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${errors.dateRiskTreatmentDue
+                  ? 'border-red-300 focus:ring-red-500'
+                  : 'border-gray-300 focus:ring-purple-500'
+                }`}
+              required
+              aria-invalid={errors.dateRiskTreatmentDue ? 'true' : 'false'}
+              aria-describedby={errors.dateRiskTreatmentDue ? 'dateRiskTreatmentDue-error' : undefined}
+              aria-required="true"
+            />
+            {errors.dateRiskTreatmentDue && (
+              <p id="dateRiskTreatmentDue-error" className="text-xs text-red-600 mt-1" role="alert" aria-live="polite">
+                {errors.dateRiskTreatmentDue}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="treatmentJira" className="block text-sm font-medium text-gray-700 mb-2">
+              Jira Reference (Optional)
+            </label>
+            <input
+              type="text"
+              id="treatmentJira"
+              name="treatmentJira"
+              value={formData.treatmentJira}
+              onChange={(e) => handleInputChange('treatmentJira', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="e.g., JIRA-1234"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+              Notes (Optional)
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              rows={2}
+              placeholder="Additional notes..."
+            />
           </div>
 
           {/* Form Actions */}
@@ -1284,16 +1339,16 @@ function ExtensionModal({ isOpen, onClose, treatment, onSubmit, submitting }: Ex
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              disabled={submitting || !formData.extendedDueDate || !formData.justification.trim() || hasErrors}
-              aria-label="Submit extension request"
+              disabled={submitting || !formData.riskTreatment.trim() || !formData.riskTreatmentOwner.trim() || !formData.dateRiskTreatmentDue || hasErrors}
+              aria-label="Save treatment modifications"
             >
               {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                  Submitting...
+                  Saving...
                 </>
               ) : (
-                'Submit Request'
+                'Save Changes'
               )}
             </button>
           </div>
@@ -1467,7 +1522,7 @@ export default function WorkshopDetails() {
   const [selectedCloseRisk, setSelectedCloseRisk] = useState<Risk | null>(null)
   const [submittingCloseRisk, setSubmittingCloseRisk] = useState(false)
   // Global collapse state for all risk cards
-  const [allCardsCollapsed, setAllCardsCollapsed] = useState(false)
+  const [allCardsCollapsed, setAllCardsCollapsed] = useState(true)
 
   // Toggle all risk cards collapse state
   const toggleAllCards = () => {
@@ -1698,30 +1753,23 @@ export default function WorkshopDetails() {
     fetchRiskAndTreatmentData()
   }, [fetchRiskAndTreatmentData])
 
-  // Handle extension request
-  const handleExtensionRequest = async (data: { extendedDueDate: string; justification: string }) => {
+
+
+  // Handle modify treatment request
+  const handleModifyTreatment = async (data: { 
+    riskTreatment: string
+    riskTreatmentOwner: string
+    dateRiskTreatmentDue: string
+    treatmentJira?: string
+    notes?: string
+  }) => {
     if (!selectedTreatment) return
 
     setSubmittingExtension(true)
 
-    // Store original treatment data for potential rollback
-    let originalTreatmentData: any = null
-    let extensionApproved = false
-
     try {
-      // First, get the current treatment data for potential rollback
-      const getTreatmentResponse = await fetch(`/api/treatments/treatment/${selectedTreatment._id}`)
-      const treatmentData = await getTreatmentResponse.json()
-      if (treatmentData.success) {
-        originalTreatmentData = {
-          extendedDueDate: treatmentData.treatment.extendedDueDate,
-          numberOfExtensions: treatmentData.treatment.numberOfExtensions,
-          extensions: treatmentData.treatment.extensions
-        }
-      }
-
-      const response = await fetch(`/api/treatments/${selectedTreatment.riskId}/${selectedTreatment.treatmentId}/extensions?directApproval=true`, {
-        method: 'POST',
+      const response = await fetch(`/api/treatments/treatment/${selectedTreatment._id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1731,62 +1779,28 @@ export default function WorkshopDetails() {
       const result = await response.json()
 
       if (result.success) {
-        extensionApproved = true
-
-        // Update the outcome field for the specific treatment
-        await updateTreatmentOutcomeAfterExtension(data.extendedDueDate, data.justification)
+        // Refresh the data to get the updated information
+        await fetchRiskAndTreatmentData()
 
         showToast({
           type: 'success',
-          title: 'Extension Approved',
-          message: result.message || 'Extension approved and recorded successfully'
+          title: 'Treatment Updated',
+          message: 'Risk treatment has been successfully updated'
         })
         closeExtensionModal()
       } else {
-        throw new Error(result.error || 'Failed to submit extension request')
+        throw new Error(result.error || 'Failed to update treatment')
       }
     } catch (error) {
-      console.error('Error submitting extension request:', error)
-
-      // If extension was approved but outcome update failed, rollback the extension
-      if (extensionApproved && originalTreatmentData) {
-        try {
-          await fetch(`/api/treatments/treatment/${selectedTreatment._id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              extendedDueDate: originalTreatmentData.extendedDueDate,
-              numberOfExtensions: originalTreatmentData.numberOfExtensions,
-              extensions: originalTreatmentData.extensions
-            }),
-          })
-
-          showToast({
-            type: 'error',
-            title: 'Extension Failed',
-            message: 'Failed to update outcome field. Extension has been rolled back to maintain data consistency.'
-          })
-        } catch (rollbackError) {
-          console.error('Error rolling back extension:', rollbackError)
-          showToast({
-            type: 'error',
-            title: 'Extension Failed',
-            message: 'Failed to process extension and rollback failed. Please contact support to resolve data inconsistency.'
-          })
-        }
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Request Failed',
-          message: error instanceof Error ? error.message : 'Failed to submit extension request'
-        })
-      }
+      console.error('Error updating treatment:', error)
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+    } finally {
+      setSubmittingExtension(false)
     }
-
-    // Always reset submitting state, regardless of success or failure
-    setSubmittingExtension(false)
   }
 
   // Handle close treatment
@@ -2028,32 +2042,7 @@ export default function WorkshopDetails() {
     setSubmittingCloseRisk(false)
   }
 
-  const updateTreatmentOutcomeAfterExtension = async (extendedDueDate: string, justification: string) => {
-    if (!workshop || !selectedTreatment) return
 
-    // Format the extended due date for display
-    const formattedDate = formatDate(extendedDueDate)
-
-    // Create the outcome message
-    const outcomeMessage = `Risk treatment due date extended until ${formattedDate} due to ${justification}`
-
-    // Find the risk item in the extensions section that contains this treatment
-    const extensionsSection = workshop.extensions || []
-    const riskIndex = extensionsSection.findIndex(item => item.riskId === selectedTreatment.riskId)
-
-    if (riskIndex !== -1) {
-      // Get the current outcome text
-      const currentOutcome = getTreatmentMinutes(selectedTreatment.treatmentId, extensionsSection[riskIndex].selectedTreatments)?.outcome || ''
-
-      // Combine existing outcome with new extension message
-      const combinedOutcome = currentOutcome
-        ? `${currentOutcome}\n\n${outcomeMessage}`
-        : outcomeMessage
-
-      // Update the treatment's outcome field with combined text
-      await updateTreatmentMinutes('extensions', riskIndex, selectedTreatment.treatmentId, 'outcome', combinedOutcome)
-    }
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -2551,13 +2540,13 @@ export default function WorkshopDetails() {
         </div>
       </div>
 
-      {/* Extension Modal */}
+      {/* Modify Treatment Modal */}
       {selectedTreatment && (
-        <ExtensionModal
+        <ModifyTreatmentModal
           isOpen={showExtensionModal}
           onClose={closeExtensionModal}
           treatment={selectedTreatment}
-          onSubmit={handleExtensionRequest}
+          onSubmit={handleModifyTreatment}
           submitting={submittingExtension}
         />
       )}

@@ -6,16 +6,19 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { useToast } from '@/app/components/Toast'
+
 import { formatInformationAssets } from '@/lib/utils'
+import WorkshopSelectionModal from '@/app/components/WorkshopSelectionModal'
 
 export default function Treatments() {
   const router = useRouter()
-  const { showToast } = useToast()
+
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [treatments, setTreatments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [workshopModalOpen, setWorkshopModalOpen] = useState(false)
+  const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<any>(null)
 
   // Helper function to calculate time remaining
   const calculateTimeRemaining = (dueDate: string | null, extendedDueDate: string | null, status: string | null) => {
@@ -134,8 +137,28 @@ export default function Treatments() {
     router.push(`/risk-management/treatments/${row.riskId}/${row.treatmentId}`)
   }
 
-  const handleExportCSV = (_selectedRows: Set<number>) => {
+  const handleExportCSV = () => {
     
+  }
+
+  const handleAddToWorkshop = (treatment: any) => {
+    // Create a risk-like object from treatment data for the modal
+    const treatmentAsRisk = {
+      riskId: treatment.riskId,
+      currentPhase: 'Treatment' // Treatments are always in Treatment phase for workshop purposes
+    }
+    // Also pass the specific treatment information
+    const treatmentInfo = {
+      treatmentId: treatment.treatmentId,
+      riskId: treatment.riskId
+    }
+    setSelectedTreatmentForWorkshop({ risk: treatmentAsRisk, treatment: treatmentInfo })
+    setWorkshopModalOpen(true)
+  }
+
+  const handleCloseWorkshopModal = () => {
+    setWorkshopModalOpen(false)
+    setSelectedTreatmentForWorkshop(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -155,7 +178,7 @@ export default function Treatments() {
 
   const columns: Column[] = [
     { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
-    { key: 'actions', label: 'Actions', sortable: false, width: '120px' },
+    { key: 'actions', label: 'Add to workshop agenda', sortable: false, width: '120px' },
     { key: 'treatmentType', label: 'Treatment', sortable: true },
     { key: 'treatmentStatus', label: 'Status', sortable: true, width: '100px' },
     { key: 'timeRemaining', label: 'Time Remaining', sortable: true, width: '140px' },
@@ -182,49 +205,32 @@ export default function Treatments() {
            </Link>
          )
        }
-             if (col.key === 'actions') {
-         return (
-           <div className="flex items-center space-x-2">
-             <Tooltip content="Copy Link">
-               <button
-                 onClick={(e) => {
-                   e.stopPropagation()
-                   const url = `${window.location.origin}/risk-management/treatments/${row.riskId}/${row.treatmentId}`
-                   navigator.clipboard.writeText(url).then(() => {
-                     showToast({
-                       type: 'success',
-                       title: 'Link copied to clipboard!'
-                     })
-                   }).catch(() => {
-                     showToast({
-                       type: 'error',
-                       title: 'Failed to copy link to clipboard'
-                     })
-                   })
-                 }}
-                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors"
-               >
-                 <Icon name="link" size={12} />
-               </button>
-             </Tooltip>
-             <Tooltip content="Add to Workshop Agenda">
-               <button
-                 onClick={(e) => {
-                   e.stopPropagation()
-   
-                   showToast({
-                     type: 'success',
-                     title: `Treatment ${row.treatmentId} added to workshop agenda!`
-                   })
-                 }}
-                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
-               >
-                 <Icon name="calendar-plus" size={12} className="mr-1" />
-                 Workshop
-               </button>
-             </Tooltip>
-           </div>
-         )
+                          if (col.key === 'actions') {
+        const isApproved = row.treatmentStatus && row.treatmentStatus.toLowerCase() === 'approved'
+        
+        return (
+          <div className="flex items-center space-x-2">
+            <Tooltip content={isApproved ? "Cannot add approved treatments to workshop agenda" : "Add to Workshop Agenda"}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!isApproved) {
+                    handleAddToWorkshop(row)
+                  }
+                }}
+                disabled={isApproved}
+                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
+                  isApproved 
+                    ? 'text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed opacity-50'
+                    : 'text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100'
+                }`}
+              >
+                <Icon name="calendar-plus" size={12} className="mr-1" />
+                Workshop
+              </button>
+            </Tooltip>
+          </div>
+        )
        }
              if (col.key === 'riskId') {
          return (
@@ -382,6 +388,14 @@ export default function Treatments() {
           onExportCSV={handleExportCSV}
         />
       )}
+
+      {/* Workshop Selection Modal */}
+      <WorkshopSelectionModal
+        isOpen={workshopModalOpen}
+        onClose={handleCloseWorkshopModal}
+        risk={selectedTreatmentForWorkshop?.risk || null}
+        treatment={selectedTreatmentForWorkshop?.treatment || undefined}
+      />
     </div>
   )
 } 

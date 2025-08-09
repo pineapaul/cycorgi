@@ -10,6 +10,7 @@ import DataTable from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import CommentSidebar from '@/app/components/CommentSidebar'
+import WorkshopSelectionModal from '@/app/components/WorkshopSelectionModal'
 
 interface InformationAsset {
   id: string
@@ -59,6 +60,7 @@ interface Treatment {
   completionDate: string
   closureApproval: string
   closureApprovedBy: string
+  riskId?: string
 }
 
 // Robust date parsing utility
@@ -168,6 +170,10 @@ export default function RiskInformation() {
   const [searchTerm, setSearchTerm] = useState('')
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
   const [selectedLetter, setSelectedLetter] = useState<string>('')
+
+  // Workshop selection modal state
+  const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
+  const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -957,6 +963,18 @@ export default function RiskInformation() {
       return asset.informationAsset.toLowerCase().startsWith(selectedLetter.toLowerCase())
     })
     .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
+
+  // Handler for adding treatment to workshop
+  const handleAddTreatmentToWorkshop = (treatment: Treatment) => {
+    setSelectedTreatmentForWorkshop(treatment)
+    setIsWorkshopModalOpen(true)
+  }
+
+  // Handler for closing workshop modal
+  const handleCloseWorkshopModal = () => {
+    setIsWorkshopModalOpen(false)
+    setSelectedTreatmentForWorkshop(null)
+  }
 
   if (loading) {
     return (
@@ -1813,7 +1831,7 @@ export default function RiskInformation() {
             data={treatments}
             columns={[
               { key: 'riskTreatment', label: 'Risk Treatment', sortable: true, width: 'auto' },
-              { key: 'actions', label: 'Add to Workshop Agenda', sortable: false, width: '120px', align: 'center' as const },
+              { key: 'actions', label: 'Add to Workshop Agenda', sortable: false, width: '180px', align: 'center' as const },
               { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
               { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true, width: '180px' },
               { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true, width: '160px' },
@@ -1851,20 +1869,23 @@ export default function RiskInformation() {
                   return <span className="text-sm font-medium">{formatDate(value)}</span>
                 }
                 if (col.key === 'actions') {
+                  const isApproved = row.closureApproval === 'Approved'
                   return (
                     <div className="flex items-center justify-center">
-                      <Tooltip content="Add to Workshop Agenda">
+                      <Tooltip content={isApproved ? "Cannot add approved treatments to agenda" : "Add to Workshop Agenda"}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-
-                            showToast({
-                              title: 'Success',
-                              message: `Treatment ${row.treatmentId} added to workshop agenda!`,
-                              type: 'success'
-                            })
+                            if (!isApproved) {
+                              handleAddTreatmentToWorkshop(row)
+                            }
                           }}
-                          className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+                          disabled={isApproved}
+                          className={`inline-flex items-center justify-center w-8 h-8 text-xs font-medium border rounded transition-colors ${
+                            isApproved
+                              ? 'text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed'
+                              : 'text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100'
+                          }`}
                         >
                           <Icon name="calendar-plus" size={12} />
                         </button>
@@ -2068,6 +2089,20 @@ export default function RiskInformation() {
         onClose={() => setIsCommentSidebarOpen(false)}
         riskId={validateRiskId(params.id) || ''}
         onCommentCountChange={setCommentCount}
+      />
+
+      {/* Workshop Selection Modal */}
+      <WorkshopSelectionModal
+        isOpen={isWorkshopModalOpen}
+        onClose={handleCloseWorkshopModal}
+        risk={riskDetails ? {
+          riskId: riskDetails.riskId,
+          currentPhase: riskDetails.currentPhase
+        } : null}
+        treatment={selectedTreatmentForWorkshop ? {
+          treatmentId: selectedTreatmentForWorkshop.treatmentId,
+          riskId: selectedTreatmentForWorkshop.riskId || riskDetails?.riskId || ''
+        } : undefined}
       />
     </div>
   )
