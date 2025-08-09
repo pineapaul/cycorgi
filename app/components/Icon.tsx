@@ -73,7 +73,8 @@ import {
   faWrench,
   faArrowTrendUp,
   faBullseye,
-  faFileLines
+  faFileLines,
+  faEllipsisVertical
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -163,6 +164,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'arrow-trending-up': faArrowTrendUp,
     target: faBullseye,
     'document-text': faFileLines,
+    'ellipsis-vertical': faEllipsisVertical,
   }
 
   const icon = icons[name]
@@ -258,6 +260,7 @@ function getFallbackEmoji(name: string): string {
     'arrow-trending-up': '📈',
     target: '🎯',
     'document-text': '📄',
+    'ellipsis-vertical': '⋮',
   }
   return emojiMap[name] || '📄'
 } 
