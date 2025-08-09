@@ -47,7 +47,7 @@ export async function POST(
           { id: id }
         ]
       })
-    } catch (error) {
+    } catch {
       // If ObjectId conversion fails, try with just the id field
       workshop = await workshopsCollection.findOne({ id: id })
     }

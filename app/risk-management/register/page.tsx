@@ -121,7 +121,7 @@ export default function RiskRegister() {
   const { showToast } = useToast()
 
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+
   const [risks, setRisks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -477,7 +477,7 @@ export default function RiskRegister() {
             router.push(`/risk-management/risks/${row.riskId}`)
   }
 
-  const handleExportCSV = (selectedRows: Set<number>) => {
+  const handleExportCSV = () => {
     
   }
 
@@ -804,9 +804,7 @@ export default function RiskRegister() {
            title={`${selectedPhase ? `${RISK_PHASES.find(p => p.id === selectedPhase)?.name} Phase` : 'All'} Risks`}
            searchPlaceholder="Search risks..."
            onRowClick={handleRowClick}
-           selectable={true}
-           selectedRows={selectedRows}
-           onSelectionChange={setSelectedRows}
+           selectable={false}
            onExportCSV={handleExportCSV}
            phaseButtons={RISK_PHASES}
            selectedPhase={selectedPhase}
