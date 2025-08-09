@@ -622,7 +622,7 @@ export default function StatementOfApplicabilityPage() {
                           const count = controlSet.statusCounts[status];
                           if (count === 0) return null;
                           return (
-                            <div key={status} className={`w-2 h-2 rounded-full ${getStatusColor(status).split(' ')[0].replace('bg-', 'bg-').replace('-100', '-500')}`} title={`${count} ${status}`}></div>
+                            <div key={status} className={`w-2 h-2 rounded-full ${getStatusColor(status).split(' ')[0].replace('-100', '-500')}`} title={`${count} ${status}`}></div>
                           );
                         })}
                       </div>

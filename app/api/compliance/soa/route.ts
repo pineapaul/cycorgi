@@ -146,7 +146,7 @@ export async function PUT(request: NextRequest) {
     }
     
     const result = await collection.updateOne(
-      { id: id },
+      { id },
       { $set: dataToUpdate }
     )
     
