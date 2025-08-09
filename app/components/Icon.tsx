@@ -74,7 +74,12 @@ import {
   faArrowTrendUp,
   faBullseye,
   faFileLines,
-  faEllipsisVertical
+  faEllipsisVertical,
+  faListDots,
+  faMinusCircle,
+  faClock,
+  faQuestionCircle,
+  faBan
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -165,6 +170,14 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     target: faBullseye,
     'document-text': faFileLines,
     'ellipsis-vertical': faEllipsisVertical,
+    'shield-check': faShield,
+    'list-bullet': faListDots,
+    'squares-2x2': faCubes,
+    'minus-circle': faMinusCircle,
+    clock: faClock,
+    'question-mark-circle': faQuestionCircle,
+    'no-symbol': faBan,
+    scale: faFileInvoice,
   }
 
   const icon = icons[name]
@@ -261,6 +274,14 @@ function getFallbackEmoji(name: string): string {
     target: '🎯',
     'document-text': '📄',
     'ellipsis-vertical': '⋮',
+    'shield-check': '🛡️✅',
+    'list-bullet': '📝',
+    'squares-2x2': '⏹️',
+    'minus-circle': '⭕',
+    clock: '🕐',
+    'question-mark-circle': '❓',
+    'no-symbol': '🚫',
+    scale: '⚖️',
   }
   return emojiMap[name] || '📄'
 } 

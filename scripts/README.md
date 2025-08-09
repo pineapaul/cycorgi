@@ -38,10 +38,18 @@ npm run seed
 ### `seed-soa-controls.js`
 Populates the `soa-controls` collection with Statement of Applicability controls.
 
+**Features:**
+- Creates all ISO 27001:2022 Annex A controls
+- Links controls to existing risks via `relatedRisks` field (3-6 risks per control)
+- Automatically fetches existing risk IDs from the risks collection
+- Provides statistical feedback on risk associations
+
 **Usage:**
 ```bash
 npm run seed-soa
 ```
+
+**Note:** For best results, run `seed-risks-and-treatments.js` first to populate the risks collection.
 
 ## Environment Setup
 

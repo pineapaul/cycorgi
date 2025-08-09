@@ -17,6 +17,7 @@ export const IMPACT_CIA = {
   INTEGRITY: 'Integrity',
   AVAILABILITY: 'Availability'
 } as const
+
 export const CONFIDENTIALITY_LEVELS = {
   PUBLIC: 'Public',
   INTERNAL_USE: 'Internal Use',
@@ -79,10 +80,30 @@ export const LIKELIHOOD_RATINGS = {
 export const VALID_STATUSES = [
   'Pending Agenda',
   'Planned',
-  'Scheduled', 
+  'Scheduled',
   'Finalising Meeting Minutes',
   'Completed'
 ] as const
+
+export const CONTROL_JUSTIFICATION = {
+  BEST_PRACTICE: 'Best Practice',
+  LEGAL_REQUIREMENT: 'Legal Requirement',
+  REGULATORY_REQUIREMENT: 'Regulatory Requirement',
+  BUSINESS_REQUIREMENT: 'Business Requirement',
+  RISK_MANAGEMENT_REQUIREMENT: 'Risk Management Requirement'
+} as const
+
+export const CONTROL_STATUS = {
+  IMPLEMENTED: 'Implemented',
+  NOT_IMPLEMENTED: 'Not Implemented',
+  PARTIALLY_IMPLEMENTED: 'Partially Implemented',
+  PLANNING_IMPLEMENTATION: 'Planning Implementation'
+} as const
+
+export const CONTROL_APPLICABILITY = {
+  APPLICABLE: 'Applicable',
+  NOT_APPLICABLE: 'Not Applicable'
+} as const
 
 // Data parsing constants
 export const CIA_DELIMITERS = {
@@ -96,10 +117,13 @@ export type ExtensionStatus = typeof EXTENSION_STATUS[keyof typeof EXTENSION_STA
 export type RiskPhase = typeof RISK_PHASES[keyof typeof RISK_PHASES]
 export type RiskRating = typeof RISK_RATINGS[keyof typeof RISK_RATINGS]
 export type ConsequenceRating = typeof CONSEQUENCE_RATINGS[keyof typeof CONSEQUENCE_RATINGS]
-export type LikelihoodRating = typeof LIKELIHOOD_RATINGS[keyof typeof LIKELIHOOD_RATINGS] 
+export type LikelihoodRating = typeof LIKELIHOOD_RATINGS[keyof typeof LIKELIHOOD_RATINGS]
 export type ImpactCIA = typeof IMPACT_CIA[keyof typeof IMPACT_CIA]
 export type RiskAction = typeof RISK_ACTIONS[keyof typeof RISK_ACTIONS]
 export type ConfidentialityLevel = typeof CONFIDENTIALITY_LEVELS[keyof typeof CONFIDENTIALITY_LEVELS]
 export type IntegrityLevel = typeof INTEGRITY_LEVELS[keyof typeof INTEGRITY_LEVELS]
 export type AvailabilityLevel = typeof AVAILABILITY_LEVELS[keyof typeof AVAILABILITY_LEVELS]
 export type WorkshopStatus = typeof VALID_STATUSES[number]
+export type ControlJustification = typeof CONTROL_JUSTIFICATION[keyof typeof CONTROL_JUSTIFICATION]
+export type ControlStatus = typeof CONTROL_STATUS[keyof typeof CONTROL_STATUS]
+export type ControlApplicability = typeof CONTROL_APPLICABILITY[keyof typeof CONTROL_APPLICABILITY]
