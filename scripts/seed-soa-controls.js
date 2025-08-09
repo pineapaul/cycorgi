@@ -23,7 +23,6 @@ const iso27001Controls = [
         description: 'Define and allocate information security responsibilities',
         controlStatus: 'Implemented',
         controlApplicability: 'Applicable',
-        relatedRisks: [],
         justification: 'Best Practice',
         implementationNotes: 'RACI matrix maintained and updated quarterly'
       },
