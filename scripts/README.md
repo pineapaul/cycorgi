@@ -35,21 +35,78 @@ Populates the `information-assets` collection with sample asset data.
 npm run seed
 ```
 
-### `seed-soa-controls.js`
-Populates the `soa-controls` collection with Statement of Applicability controls.
+### `seed-soa-controls.js` ⭐ **UPDATED - Complete ISO 27001:2022**
+Seeds the `soa_controls` collection with **all 93 controls** from ISO 27001:2022 Annex A.
 
-**Features:**
-- Creates all ISO 27001:2022 Annex A controls
-- Links controls to existing risks via `relatedRisks` field (3-6 risks per control)
-- Automatically fetches existing risk IDs from the risks collection
-- Provides statistical feedback on risk associations
+**Key Features:**
+- **✅ Complete Coverage**: All 93 controls from ISO 27001:2022 standard
+- **✅ Four Control Categories**: Organisational (37), People (8), Physical (14), Technological (34)
+- **✅ Array-Based Justifications**: Multiple justifications per control for comprehensive coverage
+- **✅ Realistic Implementation**: Proper control status and applicability settings
+- **✅ Risk Linking**: Connects controls to existing risks (3-6 per control)
+- **✅ Rich Metadata**: Implementation notes, control set groupings, and timestamps
+- **✅ Performance Optimized**: Creates proper database indexes
+
+**Control Set Breakdown:**
+- **A.5 - Organisational Controls**: 37 controls (Policies, roles, incident management, compliance)
+- **A.6 - People Controls**: 8 controls (Screening, training, remote work, reporting)
+- **A.7 - Physical and Environmental**: 14 controls (Perimeters, access, equipment, utilities)
+- **A.8 - Technological Controls**: 34 controls (Endpoints, access, crypto, development, networks)
+
+**Enhanced Justification Examples:**
+```javascript
+// Multi-justification examples:
+"A.5.1": ["Business Requirement", "Regulatory Requirement"]
+"A.6.1": ["Legal Requirement", "Risk Management Requirement"]
+"A.8.24": ["Risk Management Requirement", "Regulatory Requirement"]
+```
 
 **Usage:**
 ```bash
 npm run seed-soa
+# or
+node scripts/seed-soa-controls.js
 ```
 
-**Note:** For best results, run `seed-risks-and-treatments.js` first to populate the risks collection.
+**Note:** For complete risk associations, run `seed-risks-and-treatments.js` first.
+
+### `setup-soa-complete.js` ⭐ **RECOMMENDED**
+**Combined script that replaces `migrate-soa-controls.js`, `migrate-soa-justifications.js`, and `seed-soa-controls.js`**
+
+Complete SOA setup script that handles migration, justification updates, and seeding in one operation.
+
+**Key Features:**
+- **Array Justifications**: Supports multiple justifications per control for comprehensive coverage
+- **Complete Migration**: Handles field renames (`status` → `controlStatus`) and new fields (`controlApplicability`, `relatedRisks`)
+- **Smart Justification Mapping**: Automatically converts old single justifications to new array format
+- **Fresh Seeding**: Populates controls with realistic multi-justification data
+- **Risk Linking**: Connects controls to existing risks (3-6 per control)
+- **Index Optimization**: Creates proper database indexes for performance
+
+**Usage:**
+```bash
+node scripts/setup-soa-complete.js
+```
+
+**Note:** This script can be run on fresh databases or existing ones - it handles both migration and seeding intelligently.
+
+---
+
+### Legacy Scripts (Use `setup-soa-complete.js` instead)
+
+### `migrate-soa-justifications.js` *(Legacy)*
+Migration script to update SOA control justifications to use proper CONTROL_JUSTIFICATION constants.
+
+**Features:**
+- Maps invalid justification values to valid CONTROL_JUSTIFICATION constants
+- Updates all controls with standardized justification values
+- Provides comprehensive mapping for common justification patterns
+- Validates all justifications after migration
+
+**Usage:**
+```bash
+node scripts/migrate-soa-justifications.js
+```
 
 ## Environment Setup
 

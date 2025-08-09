@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import Icon from './Icon'
 
 export interface ToastProps {
@@ -23,6 +23,13 @@ export const Toast: React.FC<ToastProps> = ({
   const [isVisible, setIsVisible] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
 
+  const handleClose = useCallback(() => {
+    setIsExiting(true)
+    setTimeout(() => {
+      onClose(id)
+    }, 300) // Match the exit animation duration
+  }, [id, onClose])
+
   useEffect(() => {
     // Animate in
     const timer = setTimeout(() => setIsVisible(true), 100)
@@ -36,14 +43,7 @@ export const Toast: React.FC<ToastProps> = ({
       clearTimeout(timer)
       clearTimeout(dismissTimer)
     }
-  }, [duration])
-
-  const handleClose = () => {
-    setIsExiting(true)
-    setTimeout(() => {
-      onClose(id)
-    }, 300) // Match the exit animation duration
-  }
+  }, [duration, handleClose])
 
   const getToastStyles = () => {
     const baseStyles = "relative flex items-start p-4 rounded-lg shadow-lg border-l-4 transform transition-all duration-300 ease-in-out"

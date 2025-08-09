@@ -56,9 +56,16 @@ export async function POST(request: NextRequest) {
       validationErrors.push(`Invalid control applicability. Must be one of: ${Object.values(CONTROL_APPLICABILITY).join(', ')}`)
     }
     
-    // Validate justification if provided
-    if (body.justification && !Object.values(CONTROL_JUSTIFICATION).includes(body.justification)) {
-      validationErrors.push(`Invalid justification. Must be one of: ${Object.values(CONTROL_JUSTIFICATION).join(', ')}`)
+    // Validate justification if provided (now array)
+    if (body.justification) {
+      if (!Array.isArray(body.justification)) {
+        validationErrors.push('Justification must be an array')
+      } else {
+        const invalidJustifications = body.justification.filter((j: string) => !Object.values(CONTROL_JUSTIFICATION).includes(j as any))
+        if (invalidJustifications.length > 0) {
+          validationErrors.push(`Invalid justifications: ${invalidJustifications.join(', ')}. Must be one of: ${Object.values(CONTROL_JUSTIFICATION).join(', ')}`)
+        }
+      }
     }
     
     // Validate relatedRisks if provided
@@ -99,11 +106,15 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('PUT request body:', body)
+    
     const client = await clientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('soa_controls')
     
     const { id, ...updateData } = body
+    console.log('Extracted id:', id)
+    console.log('Update data:', updateData)
     
     if (!id) {
       return NextResponse.json({
@@ -123,8 +134,15 @@ export async function PUT(request: NextRequest) {
       validationErrors.push(`Invalid control applicability. Must be one of: ${Object.values(CONTROL_APPLICABILITY).join(', ')}`)
     }
     
-    if (updateData.justification && !Object.values(CONTROL_JUSTIFICATION).includes(updateData.justification)) {
-      validationErrors.push(`Invalid justification. Must be one of: ${Object.values(CONTROL_JUSTIFICATION).join(', ')}`)
+    if (updateData.justification) {
+      if (!Array.isArray(updateData.justification)) {
+        validationErrors.push('Justification must be an array')
+      } else {
+        const invalidJustifications = updateData.justification.filter((j: string) => !Object.values(CONTROL_JUSTIFICATION).includes(j as any))
+        if (invalidJustifications.length > 0) {
+          validationErrors.push(`Invalid justifications: ${invalidJustifications.join(', ')}. Must be one of: ${Object.values(CONTROL_JUSTIFICATION).join(', ')}`)
+        }
+      }
     }
     
     if (updateData.relatedRisks && !Array.isArray(updateData.relatedRisks)) {
