@@ -38,6 +38,7 @@ interface Treatment {
   }>
   createdAt: string
   updatedAt: string
+  notes?: string
 }
 
 // Discriminated union for selectedTreatments
@@ -47,6 +48,15 @@ interface TreatmentMinutes {
   actionsTaken?: string
   toDo?: string
   outcome?: string
+}
+
+// Interface for workshop agenda items
+interface WorkshopAgendaItem {
+  riskId: string
+  selectedTreatments?: SelectedTreatments
+  actionsTaken: string
+  toDo: string
+  outcome: string
 }
 
 type SelectedTreatments = string[] | TreatmentMinutes[]
@@ -69,6 +79,12 @@ const isTreatmentMinutesArray = (selectedTreatments: SelectedTreatments): select
 
 
 
+// Type for workshop participants
+type WorkshopParticipant = string | {
+  name: string
+  position?: string
+}
+
 interface Workshop {
   _id: string
   id: string
@@ -76,10 +92,7 @@ interface Workshop {
   status: 'Pending Agenda' | 'Planned' | 'Scheduled' | 'Finalising Meeting Minutes' | 'Completed'
   facilitator: string
   facilitatorPosition?: string
-  participants: Array<string | {
-    name: string
-    position?: string
-  }>
+  participants: WorkshopParticipant[]
   risks: string[]
   outcomes?: string
   securitySteeringCommittee: 'Core Systems Engineering' | 'Software Engineering' | 'IP Engineering'
@@ -87,27 +100,9 @@ interface Workshop {
   toDo?: string
   notes?: string
   // Meeting Minutes subsections
-  extensions?: Array<{
-    riskId: string
-    selectedTreatments?: SelectedTreatments
-    actionsTaken: string
-    toDo: string
-    outcome: string
-  }>
-  closure?: Array<{
-    riskId: string
-    selectedTreatments?: SelectedTreatments
-    actionsTaken: string
-    toDo: string
-    outcome: string
-  }>
-  newRisks?: Array<{
-    riskId: string
-    selectedTreatments?: SelectedTreatments
-    actionsTaken: string
-    toDo: string
-    outcome: string
-  }>
+  extensions?: WorkshopAgendaItem[]
+  closure?: WorkshopAgendaItem[]
+  newRisks?: WorkshopAgendaItem[]
   createdAt?: string
   updatedAt?: string
 }
@@ -325,7 +320,7 @@ const generatePDFHTML = (
   }
 
   const generateRiskCardHTML = (
-    item: any,
+    item: WorkshopAgendaItem,
     sectionType: 'extensions' | 'closure' | 'newRisks'
   ) => {
     const risk = risks[item.riskId]
@@ -587,7 +582,7 @@ const generatePDFHTML = (
                 <p>${workshop.facilitator}${workshop.facilitatorPosition ? ` (${workshop.facilitatorPosition})` : ''}</p>
                 <h4 style="margin-top: 16px;">Participants</h4>
                 ${workshop.participants.length > 0 ?
-      workshop.participants.map((participant: any) => {
+      workshop.participants.map((participant: WorkshopParticipant) => {
         if (typeof participant === 'string') {
           const parts = participant.split(', ')
           const name = parts[0]
@@ -621,7 +616,7 @@ const generatePDFHTML = (
             <div class="subsection">
               <h4>Extensions</h4>
               ${workshop.extensions && workshop.extensions.length > 0 ?
-      workshop.extensions.map((item: any) => generateRiskCardHTML(item, 'extensions')).join('') :
+      workshop.extensions.map((item: WorkshopAgendaItem) => generateRiskCardHTML(item, 'extensions')).join('') :
       '<div class="empty-state">No extensions recorded</div>'
     }
             </div>
@@ -629,7 +624,7 @@ const generatePDFHTML = (
             <div class="subsection">
               <h4>Closure</h4>
               ${workshop.closure && workshop.closure.length > 0 ?
-      workshop.closure.map((item: any) => generateRiskCardHTML(item, 'closure')).join('') :
+      workshop.closure.map((item: WorkshopAgendaItem) => generateRiskCardHTML(item, 'closure')).join('') :
       '<div class="empty-state">No closures recorded</div>'
     }
             </div>
@@ -637,7 +632,7 @@ const generatePDFHTML = (
             <div class="subsection">
               <h4>New Risks</h4>
               ${workshop.newRisks && workshop.newRisks.length > 0 ?
-      workshop.newRisks.map((item: any) => generateRiskCardHTML(item, 'newRisks')).join('') :
+      workshop.newRisks.map((item: WorkshopAgendaItem) => generateRiskCardHTML(item, 'newRisks')).join('') :
       '<div class="empty-state">No new risks recorded</div>'
     }
             </div>
@@ -1088,7 +1083,7 @@ function ModifyTreatmentModal({ isOpen, onClose, treatment, onSubmit, submitting
         riskTreatmentOwner: treatment.riskTreatmentOwner || '',
         dateRiskTreatmentDue: treatment.dateRiskTreatmentDue ? new Date(treatment.dateRiskTreatmentDue).toISOString().split('T')[0] : '',
         treatmentJira: treatment.treatmentJira || '',
-        notes: (treatment as any).notes || ''
+        notes: treatment.notes || ''
       })
       setErrors({})
     }
@@ -1834,7 +1829,11 @@ export default function WorkshopDetails() {
     setSubmittingCloseTreatment(true)
 
     // Store original treatment data for potential rollback
-    let originalTreatmentData: any = null
+    let originalTreatmentData: {
+      closureApproval: string
+      completionDate?: string
+      closureApprovedBy?: string
+    } | null = null
     let treatmentStatusUpdated = false
 
     try {
