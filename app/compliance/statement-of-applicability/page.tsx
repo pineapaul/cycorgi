@@ -132,8 +132,34 @@ export default function StatementOfApplicabilityPage() {
     }
   };
 
+  // Memoize control set statistics to avoid recalculating on each render
+  const controlSetsWithStats = useMemo(() => {
+    return iso27001Controls.map(set => {
+      const statusCounts = {
+        [CONTROL_STATUS.IMPLEMENTED]: 0,
+        [CONTROL_STATUS.PARTIALLY_IMPLEMENTED]: 0,
+        [CONTROL_STATUS.PLANNING_IMPLEMENTATION]: 0,
+        [CONTROL_STATUS.NOT_IMPLEMENTED]: 0,
+      };
+
+      // Pre-calculate all stats for this control set
+      set.controls.forEach(control => {
+        if (statusCounts.hasOwnProperty(control.controlStatus)) {
+          statusCounts[control.controlStatus]++;
+        }
+      });
+
+      return {
+        ...set,
+        statusCounts,
+        implementedCount: statusCounts[CONTROL_STATUS.IMPLEMENTED],
+        totalControls: set.controls.length,
+      };
+    });
+  }, [iso27001Controls]);
+
   const filteredControls = useMemo(() => {
-    return iso27001Controls.map(set => ({
+    return controlSetsWithStats.map(set => ({
       ...set,
       controls: set.controls.filter(control => {
         const matchesStatus = filterStatus === 'all' || control.controlStatus === filterStatus;
@@ -147,29 +173,36 @@ export default function StatementOfApplicabilityPage() {
         return matchesStatus && matchesApplicability && matchesSearch;
       })
     })).filter(set => set.controls.length > 0);
-  }, [iso27001Controls, filterStatus, filterApplicability, searchQuery]);
+  }, [controlSetsWithStats, filterStatus, filterApplicability, searchQuery]);
 
-  const stats = {
-    total: iso27001Controls.reduce((acc, set) => acc + set.controls.length, 0),
-    implemented: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlStatus === CONTROL_STATUS.IMPLEMENTED).length, 0
-    ),
-    notImplemented: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlStatus === CONTROL_STATUS.NOT_IMPLEMENTED).length, 0
-    ),
-    partiallyImplemented: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlStatus === CONTROL_STATUS.PARTIALLY_IMPLEMENTED).length, 0
-    ),
-    planningImplementation: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlStatus === CONTROL_STATUS.PLANNING_IMPLEMENTATION).length, 0
-    ),
-    applicable: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlApplicability === CONTROL_APPLICABILITY.APPLICABLE).length, 0
-    ),
-    notApplicable: iso27001Controls.reduce((acc, set) => 
-      acc + set.controls.filter(c => c.controlApplicability === CONTROL_APPLICABILITY.NOT_APPLICABLE).length, 0
-    ),
-  };
+  const stats = useMemo(() => {
+    return controlSetsWithStats.reduce((acc, set) => {
+      acc.total += set.totalControls;
+      acc.implemented += set.statusCounts[CONTROL_STATUS.IMPLEMENTED];
+      acc.notImplemented += set.statusCounts[CONTROL_STATUS.NOT_IMPLEMENTED];
+      acc.partiallyImplemented += set.statusCounts[CONTROL_STATUS.PARTIALLY_IMPLEMENTED];
+      acc.planningImplementation += set.statusCounts[CONTROL_STATUS.PLANNING_IMPLEMENTATION];
+      
+      // Calculate applicability stats
+      set.controls.forEach(control => {
+        if (control.controlApplicability === CONTROL_APPLICABILITY.APPLICABLE) {
+          acc.applicable++;
+        } else if (control.controlApplicability === CONTROL_APPLICABILITY.NOT_APPLICABLE) {
+          acc.notApplicable++;
+        }
+      });
+      
+      return acc;
+    }, {
+      total: 0,
+      implemented: 0,
+      notImplemented: 0,
+      partiallyImplemented: 0,
+      planningImplementation: 0,
+      applicable: 0,
+      notApplicable: 0,
+    });
+  }, [controlSetsWithStats]);
 
   if (loading) {
     return (
@@ -575,10 +608,10 @@ export default function StatementOfApplicabilityPage() {
                         <p className="text-sm text-gray-600 mt-1">{controlSet.description}</p>
                         <div className="flex items-center mt-2 space-x-4">
                           <span className="text-xs text-gray-500">
-                            {controlSet.controls.length} control{controlSet.controls.length !== 1 ? 's' : ''}
+                            {controlSet.totalControls} control{controlSet.totalControls !== 1 ? 's' : ''}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {controlSet.controls.filter(c => c.controlStatus === CONTROL_STATUS.IMPLEMENTED).length} implemented
+                            {controlSet.implementedCount} implemented
                           </span>
                         </div>
                       </div>
@@ -586,7 +619,7 @@ export default function StatementOfApplicabilityPage() {
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1">
                         {[CONTROL_STATUS.IMPLEMENTED, CONTROL_STATUS.PARTIALLY_IMPLEMENTED, CONTROL_STATUS.PLANNING_IMPLEMENTATION, CONTROL_STATUS.NOT_IMPLEMENTED].map((status) => {
-                          const count = controlSet.controls.filter(c => c.controlStatus === status).length;
+                          const count = controlSet.statusCounts[status];
                           if (count === 0) return null;
                           return (
                             <div key={status} className={`w-2 h-2 rounded-full ${getStatusColor(status).split(' ')[0].replace('bg-', 'bg-').replace('-100', '-500')}`} title={`${count} ${status}`}></div>
