@@ -174,6 +174,7 @@ export default function RiskInformation() {
   // Workshop selection modal state
   const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
   const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
+  const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false)
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -195,6 +196,21 @@ export default function RiskInformation() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOptionsMenuOpen) {
+        const target = event.target as Element
+        if (!target.closest('.options-menu-container')) {
+          setIsOptionsMenuOpen(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOptionsMenuOpen])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -976,6 +992,12 @@ export default function RiskInformation() {
     setSelectedTreatmentForWorkshop(null)
   }
 
+  // Handler for adding risk to workshop agenda
+  const handleAddRiskToWorkshop = () => {
+    setIsWorkshopModalOpen(true)
+    setIsOptionsMenuOpen(false) // Close options menu
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1038,46 +1060,77 @@ export default function RiskInformation() {
 
           <div className="flex items-center space-x-2">
             {!isEditing && (
-              <>
+              <div className="relative options-menu-container">
                 <button
-                  onClick={handleCopyLink}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Copy link to risk"
-                >
-                  <Icon name="link" size={16} className="mr-2" />
-                  Copy Link
-                </button>
-
-                <button
-                  onClick={handleEdit}
+                  onClick={() => setIsOptionsMenuOpen(!isOptionsMenuOpen)}
                   className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors"
                   style={{ backgroundColor: '#4C1D95' }}
-                  title="Edit risk"
+                  title="Options"
                 >
-                  <Icon name="pencil" size={16} className="mr-2" />
-                  Edit
-                </button>
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exportingPDF}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#4C1D95' }}
-                  title="Export to PDF"
-                >
-                  {exportingPDF ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Exporting...
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="file-pdf" size={16} className="mr-2" />
-                      Export PDF
-                    </>
-                  )}
+                  <Icon name="ellipsis-vertical" size={16} className="mr-2" />
+                  Options
                 </button>
 
-              </>
+                {/* Options Dropdown Menu */}
+                {isOptionsMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          handleCopyLink()
+                          setIsOptionsMenuOpen(false)
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Icon name="link" size={16} className="mr-3" />
+                        Copy Link
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          handleEdit()
+                          setIsOptionsMenuOpen(false)
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Icon name="pencil" size={16} className="mr-3" />
+                        Edit Risk
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          handleExportPDF()
+                          setIsOptionsMenuOpen(false)
+                        }}
+                        disabled={exportingPDF}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {exportingPDF ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-3"></div>
+                            Exporting PDF...
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="file-pdf" size={16} className="mr-3" />
+                            Export PDF
+                          </>
+                        )}
+                      </button>
+                      
+                      <div className="border-t border-gray-100 my-1"></div>
+                      
+                      <button
+                        onClick={handleAddRiskToWorkshop}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Icon name="calendar-plus" size={16} className="mr-3" />
+                        Add to workshop
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
             {isEditing && (
               <>

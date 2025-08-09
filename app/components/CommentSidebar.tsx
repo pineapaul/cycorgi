@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Icon from './Icon'
 import { useToast } from './Toast'
 
@@ -35,14 +35,7 @@ export default function CommentSidebar({ isOpen, onClose, riskId, onCommentCount
   const [loading, setLoading] = useState(false)
   const { showToast } = useToast()
 
-  // Load comments when sidebar opens
-  useEffect(() => {
-    if (isOpen && riskId) {
-      loadComments()
-    }
-  }, [isOpen, riskId])
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/risks/${riskId}/comments`)
@@ -107,7 +100,14 @@ export default function CommentSidebar({ isOpen, onClose, riskId, onCommentCount
     } finally {
       setLoading(false)
     }
-  }
+  }, [riskId, showToast, onCommentCountChange])
+
+  // Load comments when sidebar opens
+  useEffect(() => {
+    if (isOpen && riskId) {
+      loadComments()
+    }
+  }, [isOpen, riskId, loadComments])
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return
