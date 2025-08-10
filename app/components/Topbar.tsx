@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Icon from './Icon'
+import AuthButton from './AuthButton'
 
 export default function Topbar() {
   const [notifications] = useState(3)
@@ -91,15 +92,7 @@ export default function Topbar() {
         </button>
 
         {/* User Menu */}
-        <div className="flex items-center space-x-2 md:space-x-3">
-          <div className="text-right hidden sm:block">
-            <div className="text-xs md:text-sm font-medium text-gray-900 truncate">Paul Admin</div>
-            <div className="text-xs text-gray-500 truncate">paul@company.com</div>
-          </div>
-          <div className="w-6 h-6 md:w-8 md:h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-gray-600 text-xs md:text-sm font-medium">P</span>
-          </div>
-        </div>
+        <AuthButton />
       </div>
     </header>
   )

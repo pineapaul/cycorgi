@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Rubik, Poppins } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "./components/Toast";
+import Providers from "./components/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,9 +48,9 @@ export default function RootLayout({
       <body
         className={`${rubik.variable} ${poppins.variable} ${geistSans.variable} ${geistMono.variable} antialiased font-poppins`}
       >
-        <ToastProvider>
+        <Providers>
           {children}
-        </ToastProvider>
+        </Providers>
       </body>
     </html>
   );
