@@ -15,12 +15,6 @@ terraform {
   required_version = ">= 1.7.0"
 }
 
-variable "mongodb_uri" {
-  description = "MongoDB connection URI"
-  type        = string
-  sensitive   = true
-}
-
 variable "image_tag" {
   description = "Docker image tag for the Cloud Run service"
   type        = string
