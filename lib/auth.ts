@@ -1,12 +1,8 @@
 import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import getClientPromise from "./mongodb"
-import { MongoClient } from "mongodb"
 import { USER_ROLES, USER_STATUS } from "./constants"
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(getClientPromise()),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -44,28 +40,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',
-  },
-  events: {
-    async createUser({ user }) {
-      // Set default role when a new user is created
-      const client = new MongoClient(process.env.MONGODB_URI!)
-      await client.connect()
-      const db = client.db()
-      
-      await db.collection('users').updateOne(
-        { email: user.email },
-        {
-          $set: {
-            role: USER_ROLES.VIEWER, // Default role for new users
-            status: USER_STATUS.PENDING, // Require admin approval
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        }
-      )
-      
-      await client.close()
-    }
   }
 }
 
