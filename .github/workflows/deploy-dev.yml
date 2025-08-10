@@ -9,11 +9,14 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: cycorgi-dev
+  cancel-in-progress: false
+
 env:
   PROJECT_ID: cycorgi-grc-platform
   REGION: us-central1
   REPOSITORY: grc-containers
-  SERVICE_NAME: grc-dev
   IMAGE_NAME: grc-dev
 
 jobs:
@@ -25,12 +28,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker auth for Artifact Registry
-        run: |
-          gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
-
+      # Authenticate to GCP using Workload Identity Federation
       - name: Authenticate to Google Cloud (OIDC)
-        id: 'auth'
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
@@ -40,22 +40,29 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
+      # Configure Docker to push to Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Set IMAGE_TAG
+        id: vars
+        run: echo "tag=gh-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }} \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push \
+            $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }}
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.8.5
-
-      - name: Set IMAGE_TAG
-        id: vars
-        run: echo "tag=gh-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
-      - name: Build Docker image
-        run: |
-          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }} .
-
-      - name: Push Docker image
-        run: |
-          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:${{ steps.vars.outputs.tag }}
 
       - name: Terraform Init
         working-directory: infra/environments/dev
@@ -65,5 +72,4 @@ jobs:
         working-directory: infra/environments/dev
         env:
           TF_VAR_image_tag: ${{ steps.vars.outputs.tag }}
-          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -lock-timeout=120s

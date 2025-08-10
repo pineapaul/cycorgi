@@ -79,7 +79,13 @@ import {
   faMinusCircle,
   faClock,
   faQuestionCircle,
-  faBan
+  faBan,
+  faUser,
+  faSignInAlt,
+  faSignOutAlt,
+  faHome,
+  faRefresh,
+  faCircleXmark
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -171,6 +177,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'document-text': faFileLines,
     'ellipsis-vertical': faEllipsisVertical,
     'shield-check': faShield,
+    'shield-x': faShieldHalved,
     'list-bullet': faListDots,
     'squares-2x2': faCubes,
     'minus-circle': faMinusCircle,
@@ -178,6 +185,12 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'question-mark-circle': faQuestionCircle,
     'no-symbol': faBan,
     scale: faFileInvoice,
+    user: faUser,
+    login: faSignInAlt,
+    logout: faSignOutAlt,
+    home: faHome,
+    refresh: faRefresh,
+    'x-circle': faCircleXmark,
   }
 
   const icon = icons[name]
@@ -263,6 +276,7 @@ function getFallbackEmoji(name: string): string {
     'user-group': '👥',
     'people-group': '👥',
     'shield-exclamation': '🛡️',
+    'shield-x': '🛡️❌',
     'message-circle': '💬',
     send: '📤',
     comments: '💬',
@@ -282,6 +296,12 @@ function getFallbackEmoji(name: string): string {
     'question-mark-circle': '❓',
     'no-symbol': '🚫',
     scale: '⚖️',
+    user: '👤',
+    login: '🔑',
+    logout: '🚪',
+    home: '🏠',
+    refresh: '🔄',
+    'x-circle': '❌',
   }
   return emojiMap[name] || '📄'
 } 

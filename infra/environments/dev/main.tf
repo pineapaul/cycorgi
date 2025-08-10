@@ -9,6 +9,7 @@ terraform {
   backend "gcs" {
     bucket = "cycorgi-terraform-state"
     prefix = "env/dev"
+    impersonate_service_account = "terraform-deployer@cycorgi-grc-platform.iam.gserviceaccount.com"
   }
 
   required_version = ">= 1.7.0"
@@ -36,16 +37,58 @@ resource "google_cloud_run_service" "grc_dev" {
 
   template {
     spec {
+      service_account_name = "grc-dev-runtime@cycorgi-grc-platform.iam.gserviceaccount.com"
       containers {
         image = "us-central1-docker.pkg.dev/cycorgi-grc-platform/grc-containers/grc-dev:${var.image_tag}"
 
         ports {
           container_port = 8080
         }
-
+        # --- Secrets from Secret Manager (runtime) ---
         env {
-          name  = "MONGODB_URI"
-          value = var.mongodb_uri
+            name = "MONGODB_URI"
+          value_from {
+            secret_key_ref {
+              name = "MONGODB_URI"
+              key  = "latest"
+            }
+          }
+        }
+        env {
+          name = "NEXTAUTH_SECRET"
+          value_from {
+            secret_key_ref {
+              name = "NEXTAUTH_SECRET"
+              key  = "latest"
+            }
+          }
+        }
+        env {
+          name = "GOOGLE_CLIENT_ID"
+          value_from {
+            secret_key_ref {
+              name = "GOOGLE_CLIENT_ID"
+              key  = "latest"
+            }
+          }
+        }
+        env {
+          name = "GOOGLE_CLIENT_SECRET"
+          value_from {
+            secret_key_ref {
+              name = "GOOGLE_CLIENT_SECRET"
+              key  = "latest"
+            }
+          }
+        }
+        # --- Non-secret runtime env ---
+        env {
+          name  = "NEXTAUTH_URL"
+          value = "https://dev.cycorgi.org"
+        }
+        env {
+          name  = "AUTH_TRUST_HOST"
+          value = "true"
         }
       }
     }

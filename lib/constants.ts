@@ -105,6 +105,20 @@ export const CONTROL_APPLICABILITY = {
   NOT_APPLICABLE: 'Not Applicable'
 } as const
 
+// User authentication and authorization constants
+export const USER_ROLES = {
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  ANALYST: 'Analyst',
+  VIEWER: 'Viewer'
+} as const
+
+export const USER_STATUS = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  PENDING: 'Pending'
+} as const
+
 // Data parsing constants
 export const CIA_DELIMITERS = {
   PRIMARY: ', ',
@@ -127,3 +141,5 @@ export type WorkshopStatus = typeof VALID_STATUSES[number]
 export type ControlJustification = typeof CONTROL_JUSTIFICATION[keyof typeof CONTROL_JUSTIFICATION]
 export type ControlStatus = typeof CONTROL_STATUS[keyof typeof CONTROL_STATUS]
 export type ControlApplicability = typeof CONTROL_APPLICABILITY[keyof typeof CONTROL_APPLICABILITY]
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES]
+export type UserStatus = typeof USER_STATUS[keyof typeof USER_STATUS]

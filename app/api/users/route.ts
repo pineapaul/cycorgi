@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import getClientPromise from '@/lib/mongodb'
+import { USER_ROLES, USER_STATUS, UserRole, UserStatus } from '@/lib/constants'
+
+// GET - Fetch all users (Admin only)
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (session.user.role !== USER_ROLES.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    }
+
+    const client = await getClientPromise()
+    const db = client.db()
+    
+    const users = await db.collection('users').find({}).toArray()
+    
+    return NextResponse.json(users)
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// POST - Create a new user (Admin only)
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (session.user.role !== USER_ROLES.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { name, email, role, status } = body
+
+    // Validation
+    if (!name || !email) {
+      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+    }
+
+    if (role && !Object.values(USER_ROLES).includes(role as UserRole)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
+
+    if (status && !Object.values(USER_STATUS).includes(status as UserStatus)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    }
+
+    const client = await getClientPromise()
+    const db = client.db()
+    
+    // Check if user already exists
+    const existingUser = await db.collection('users').findOne({ email })
+    if (existingUser) {
+      return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 })
+    }
+
+    const newUser = {
+      name,
+      email,
+      role: role || USER_ROLES.VIEWER,
+      status: status || USER_STATUS.PENDING,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: session.user.id
+    }
+
+    const result = await db.collection('users').insertOne(newUser)
+    
+    return NextResponse.json({ 
+      message: 'User created successfully', 
+      userId: result.insertedId 
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating user:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// PUT - Update user role/status (Admin only)
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (session.user.role !== USER_ROLES.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { userId, role, status } = body
+
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    if (role && !Object.values(USER_ROLES).includes(role as UserRole)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
+
+    if (status && !Object.values(USER_STATUS).includes(status as UserStatus)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    }
+
+    const client = await getClientPromise()
+    const db = client.db()
+    
+    const updateData: any = {
+      updatedAt: new Date(),
+      updatedBy: session.user.id
+    }
+
+    if (role) updateData.role = role
+    if (status) updateData.status = status
+
+    const result = await db.collection('users').updateOne(
+      { _id: userId },
+      { $set: updateData }
+    )
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: 'User updated successfully' })
+  } catch (error) {
+    console.error('Error updating user:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
