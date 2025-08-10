@@ -72,4 +72,5 @@ jobs:
         working-directory: infra/environments/dev
         env:
           TF_VAR_image_tag: ${{ steps.vars.outputs.tag }}
-        run: terraform apply -auto-approve -lock-timeout=120s
+          TF_INPUT: "false"
+        run: terraform apply -auto-approve -lock-timeout=120s -input=false
