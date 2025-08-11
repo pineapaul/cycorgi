@@ -10,11 +10,6 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Custom logic for handling new user registration
-      // This will be called every time someone signs in
-      return true
-    },
     async session({ session, token }) {
       // Add user ID and role to the session from the JWT token
       if (session.user) {
@@ -24,7 +19,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       // Add user info to JWT token
       if (user) {
         token.id = user.id
@@ -35,7 +30,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   session: {
-    strategy: "jwt", // Use JWT sessions for better compatibility
+    strategy: "jwt",
   },
   pages: {
     signIn: '/auth/signin',
@@ -44,22 +39,21 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       try {
-        // Only run this in runtime environment and if MongoDB URI is available
-        if (typeof window === 'undefined' && process.env.MONGODB_URI) {
-          // Dynamic import to avoid build-time issues
+        // MongoDB URI is now available from Codespace environment
+        if (process.env.MONGODB_URI) {
           const { MongoClient } = await import('mongodb')
           
-          // Set default role when a new user is created
           const client = new MongoClient(process.env.MONGODB_URI)
           await client.connect()
           const db = client.db()
           
+          // Set default role and status for new users
           await db.collection('users').updateOne(
             { email: user.email },
             {
               $set: {
-                role: USER_ROLES.VIEWER, // Default role for new users
-                status: USER_STATUS.PENDING, // Require admin approval
+                role: USER_ROLES.VIEWER,
+                status: USER_STATUS.PENDING,
                 createdAt: new Date(),
                 updatedAt: new Date()
               }
@@ -72,24 +66,6 @@ export const authOptions: NextAuthOptions = {
         console.error('Error in createUser event:', error)
       }
     }
-  }
-}
-
-// Add MongoDB adapter if available (runtime only)
-if (typeof window === 'undefined') {
-  try {
-    // Dynamic import to avoid build-time issues
-    import('@auth/mongodb-adapter').then(async ({ MongoDBAdapter }) => {
-      import('./mongodb').then(async ({ default: getClientPromise }) => {
-        authOptions.adapter = MongoDBAdapter(getClientPromise())
-      }).catch(() => {
-        console.warn('MongoDB client not available during build')
-      })
-    }).catch(() => {
-      console.warn('MongoDB adapter not available during build')
-    })
-  } catch (error) {
-    console.warn('Error setting up MongoDB adapter:', error)
   }
 }
 
