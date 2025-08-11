@@ -19,13 +19,20 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       // Add user info to JWT token
       if (user) {
         token.id = user.id
         token.role = (user as any).role || USER_ROLES.VIEWER
         token.status = (user as any).status || USER_STATUS.PENDING
       }
+      
+      // Handle provider-specific logic if needed in the future
+      if (account) {
+        // You can add provider-specific logic here later
+        // For example: token.provider = account.provider
+      }
+      
       return token
     }
   },
@@ -39,8 +46,8 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       try {
-        // MongoDB URI is now available from Codespace environment
-        if (process.env.MONGODB_URI) {
+        // Only run this on the server side where MongoDB is accessible
+        if (typeof window === 'undefined' && process.env.MONGODB_URI) {
           const { MongoClient } = await import('mongodb')
           
           const client = new MongoClient(process.env.MONGODB_URI)
