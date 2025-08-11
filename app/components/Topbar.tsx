@@ -35,26 +35,25 @@ export default function Topbar() {
     
     if (pathname.includes('/compliance')) {
       return [
-        { name: 'SOA', href: '/dashboard/compliance/soa', active: pathname.includes('/soa') },
-        { name: 'Actions', href: '/dashboard/compliance/corrective-actions', active: pathname.includes('/corrective-actions') },
-        { name: 'Improvements', href: '/dashboard/compliance/improvements', active: pathname.includes('/improvements') }
+        { name: 'SOA', href: '/compliance/statement-of-applicability', active: pathname.includes('/statement-of-applicability') },
+        { name: 'Actions', href: '/compliance/corrective-actions', active: pathname.includes('/corrective-actions') },
+        { name: 'Improvements', href: '/compliance/improvements', active: pathname.includes('/improvements') }
       ]
     }
     
     if (pathname.includes('/isms-operations')) {
       return [
-        { name: 'Calendar', href: '/dashboard/isms-operations/calendar', active: pathname.includes('/calendar') },
-        { name: 'Incidents', href: '/dashboard/isms-operations/incidents', active: pathname.includes('/incidents') },
-        { name: 'Documents', href: '/dashboard/isms-operations/document-review', active: pathname.includes('/document-review') },
-        { name: 'Drills', href: '/dashboard/isms-operations/dr-drill', active: pathname.includes('/dr-drill') },
-        { name: 'Metrics', href: '/dashboard/isms-operations/measurements', active: pathname.includes('/measurements') }
+        { name: 'Calendar', href: '/isms-operations/calendar', active: pathname.includes('/calendar') },
+        { name: 'Incidents', href: '/isms-operations/incidents', active: pathname.includes('/incidents') },
+        { name: 'Documents', href: '/isms-operations/document-review', active: pathname.includes('/document-review') },
+        { name: 'Drills', href: '/isms-operations/dr-drill', active: pathname.includes('/dr-drill') },
+        { name: 'Metrics', href: '/isms-operations/measurements', active: pathname.includes('/measurements') }
       ]
     }
     
     // Default dashboard tabs
     return [
-      { name: 'Overview', href: '/dashboard', active: true },
-      { name: 'Activity', href: '/dashboard/activity', active: false }
+      { name: 'Overview', href: '/dashboard', active: true }
     ]
   }
 
