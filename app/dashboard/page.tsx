@@ -5,7 +5,6 @@ import Icon from '../components/Icon'
 import { ResponsiveBar } from '@nivo/bar'
 import { ResponsivePie } from '@nivo/pie'
 import { ResponsiveLine } from '@nivo/line'
-import { ResponsiveCalendar } from '@nivo/calendar'
 
 export default function DashboardHome() {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
@@ -82,40 +81,6 @@ export default function DashboardHome() {
         { x: 'Jun', y: 92 },
       ],
     },
-  ]
-
-  const calendarData = [
-    { day: '2024-01-01', value: 5 },
-    { day: '2024-01-02', value: 3 },
-    { day: '2024-01-03', value: 7 },
-    { day: '2024-01-04', value: 2 },
-    { day: '2024-01-05', value: 8 },
-    { day: '2024-01-06', value: 4 },
-    { day: '2024-01-07', value: 6 },
-    { day: '2024-01-08', value: 9 },
-    { day: '2024-01-09', value: 1 },
-    { day: '2024-01-10', value: 5 },
-    { day: '2024-01-11', value: 7 },
-    { day: '2024-01-12', value: 3 },
-    { day: '2024-01-13', value: 8 },
-    { day: '2024-01-14', value: 4 },
-    { day: '2024-01-15', value: 6 },
-    { day: '2024-01-16', value: 2 },
-    { day: '2024-01-17', value: 9 },
-    { day: '2024-01-18', value: 5 },
-    { day: '2024-01-19', value: 7 },
-    { day: '2024-01-20', value: 3 },
-    { day: '2024-01-21', value: 8 },
-    { day: '2024-01-22', value: 4 },
-    { day: '2024-01-23', value: 6 },
-    { day: '2024-01-24', value: 1 },
-    { day: '2024-01-25', value: 9 },
-    { day: '2024-01-26', value: 5 },
-    { day: '2024-01-27', value: 7 },
-    { day: '2024-01-28', value: 3 },
-    { day: '2024-01-29', value: 8 },
-    { day: '2024-01-30', value: 4 },
-    { day: '2024-01-31', value: 6 },
   ]
 
   const quickActions = [
@@ -228,7 +193,6 @@ export default function DashboardHome() {
                 { id: 'overview', name: 'Overview', icon: 'dashboard' },
                 { id: 'risks', name: 'Risk Analysis', icon: 'risk' },
                 { id: 'compliance', name: 'Compliance', icon: 'compliance' },
-                { id: 'activity', name: 'Activity', icon: 'calendar' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -489,39 +453,6 @@ export default function DashboardHome() {
                             },
                           },
                         ],
-                      },
-                    ]}
-                    theme={chartTheme}
-                  />
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'activity' && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Activity Calendar</h3>
-                <div className="h-80">
-                  <ResponsiveCalendar
-                    data={calendarData}
-                    from="2024-01-01"
-                    to="2024-01-31"
-                    emptyColor="#f3f4f6"
-                    colors={['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8']}
-                    margin={{ top: 20, right: 40, bottom: 40, left: 40 }}
-                    yearSpacing={40}
-                    monthBorderColor="#ffffff"
-                    dayBorderWidth={2}
-                    dayBorderColor="#ffffff"
-                    legends={[
-                      {
-                        anchor: 'bottom-right',
-                        direction: 'row',
-                        translateY: 36,
-                        itemCount: 4,
-                        itemWidth: 42,
-                        itemHeight: 36,
-                        itemsSpacing: 14,
-                        itemDirection: 'right-to-left',
                       },
                     ]}
                     theme={chartTheme}

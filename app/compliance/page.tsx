@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shield, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function CompliancePage() {
   const complianceAreas = [
@@ -11,25 +11,18 @@ export default function CompliancePage() {
       color: 'bg-blue-500',
     },
     {
-      title: 'Certifications',
-      description: 'Manage current and planned security certifications',
-      href: '/compliance/certifications',
-      icon: CheckCircle,
-      color: 'bg-green-500',
-    },
-    {
-      title: 'Audit Reports',
-      description: 'View and manage compliance audit reports',
-      href: '/compliance/audit-reports',
-      icon: Shield,
-      color: 'bg-purple-500',
-    },
-    {
-      title: 'Compliance Gaps',
-      description: 'Track and remediate compliance gaps and findings',
-      href: '/compliance/gaps',
+      title: 'Corrective Actions',
+      description: 'Track and manage corrective actions to address compliance gaps and audit findings',
+      href: '/compliance/corrective-actions',
       icon: AlertTriangle,
       color: 'bg-orange-500',
+    },
+    {
+      title: 'Improvements',
+      description: 'Track continuous improvement initiatives and enhancement opportunities for your ISMS',
+      href: '/compliance/improvements',
+      icon: CheckCircle,
+      color: 'bg-green-500',
     },
   ];
 
