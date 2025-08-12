@@ -34,8 +34,9 @@ interface RiskDetails {
   vulnerability: string
   riskStatement: string
   impactCIA: string
-  currentControls: string
-  currentControlsReference: string
+  currentControls: string[]
+  currentControlsReference: string[]
+  applicableControlsAfterTreatment: string
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -63,6 +64,17 @@ interface Treatment {
   closureApproval: string
   closureApprovedBy: string
   riskId?: string
+}
+
+interface SOAControl {
+  _id: string
+  id: string
+  title: string
+  description: string
+  controlStatus: string
+  controlApplicability: string
+  controlSetId: string
+  controlSetTitle: string
 }
 
 const parseDate = (dateString: string | null | undefined): Date | null => {
@@ -163,6 +175,9 @@ export default function RiskInformation() {
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
   const [originalInformationAssetIds, setOriginalInformationAssetIds] = useState<string[]>([])
+
+  // SOA Controls state
+  const [soaControls, setSoaControls] = useState<SOAControl[]>([])
 
   // Modal state for information assets selection
   const [showAssetModal, setShowAssetModal] = useState(false)
@@ -296,8 +311,9 @@ export default function RiskInformation() {
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
             impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
-            currentControls: risk.currentControls,
-            currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
+            currentControls: Array.isArray(risk.currentControls) ? risk.currentControls : (risk.currentControls ? [risk.currentControls] : []),
+            currentControlsReference: Array.isArray(risk.currentControlsReference) ? risk.currentControlsReference : (risk.currentControlsReference ? [risk.currentControlsReference] : []),
+            applicableControlsAfterTreatment: risk.applicableControlsAfterTreatment || '',
             consequenceRating: risk.consequenceRating,
             likelihoodRating: risk.likelihoodRating,
             riskRating: risk.riskRating,
@@ -325,6 +341,18 @@ export default function RiskInformation() {
 
         if (treatmentsResult.success) {
           setTreatments(treatmentsResult.data)
+        }
+
+        // Fetch SOA controls
+        try {
+          const soaResponse = await fetch('/api/compliance/soa')
+          const soaResult = await soaResponse.json()
+          if (soaResult.success) {
+            setSoaControls(soaResult.data)
+          }
+        } catch (error) {
+          console.error('Error fetching SOA controls:', error)
+          // Don't fail if SOA controls fetch fails
         }
 
       } catch (err) {
@@ -716,7 +744,7 @@ export default function RiskInformation() {
             </div>
             <div class="field">
               <div class="field-label">Current Controls</div>
-              <div class="field-value">${risk.currentControls}</div>
+              <div class="field-value">${Array.isArray(risk.currentControls) ? risk.currentControls.join(', ') : risk.currentControls}</div>
             </div>
             <div class="field">
               <div class="field-label">Jira Ticket</div>
@@ -1124,6 +1152,11 @@ export default function RiskInformation() {
     setIsOptionsMenuOpen(false) // Close options menu
   }
 
+  // Helper function to get SOA control details by ID
+  const getSOAControlDetails = (controlId: string) => {
+    return soaControls.find(control => control.id === controlId)
+  }
+
 
 
   if (loading) {
@@ -1504,21 +1537,6 @@ export default function RiskInformation() {
                 </div>
 
                 <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
-                  {isEditing ? (
-                    <textarea
-                      value={editedRisk?.currentControls || ''}
-                      onChange={(e) => handleFieldChange('currentControls', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter current controls..."
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
-                  )}
-                </div>
-                
-                <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
                   {isEditing ? (
                     <input
@@ -1624,6 +1642,98 @@ export default function RiskInformation() {
         </div>
 
 
+
+        {/* Controls Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-indigo-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Controls</h3>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Current Controls</h4>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
+                  {isEditing ? (
+                    <textarea
+                      value={Array.isArray(editedRisk?.currentControls) ? editedRisk.currentControls.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter current controls (one per line)..."
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.currentControls) && riskDetails.currentControls.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.currentControls.map((control, index) => (
+                            <li key={index}>{control}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls Reference</span>
+                  {isEditing ? (
+                    <textarea
+                      value={Array.isArray(editedRisk?.currentControlsReference) ? editedRisk.currentControlsReference.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.currentControlsReference) && riskDetails.currentControlsReference.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.currentControlsReference.map((controlRef, index) => {
+                            const soaControl = getSOAControlDetails(controlRef)
+                            return (
+                              <li key={index}>
+                                <span className="font-mono text-purple-600">{controlRef}</span>
+                                {soaControl && (
+                                  <span className="text-gray-600 ml-2">- {soaControl.title}</span>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Post-Treatment Controls</h4>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Applicable Controls After Treatment</span>
+                  {isEditing ? (
+                    <textarea
+                      value={editedRisk?.applicableControlsAfterTreatment || ''}
+                      onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter applicable controls after treatment..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.applicableControlsAfterTreatment || 'Not specified'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Ownership & Asset Section */}
         <div className="mb-8">

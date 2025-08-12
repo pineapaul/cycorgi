@@ -14,20 +14,35 @@ interface InformationAsset {
 
 interface RiskFormData {
   riskId: string
+  functionalUnit: string
+  jiraTicket: string
+  dateRiskRaised: string
   raisedBy: string
-  informationAssets: string[]
+  riskOwner: string
+  affectedSites: string
+  informationAsset: string[]
   threat: string
   vulnerability: string
   riskStatement: string
-  functionalUnit?: string
-  riskOwner?: string
-  affectedSites?: string
-  currentControls?: string
-  currentControlsReference?: string
-  consequenceRating?: string
-  likelihoodRating?: string
-  riskRating?: string
-  impact?: string[]
+  impactCIA: string[]
+  currentControls: string[]
+  currentControlsReference: string[]
+  consequenceRating: string
+  likelihoodRating: string
+  riskRating: string
+  riskAction: string
+  reasonForAcceptance: string
+  dateOfSSCApproval: string
+  riskTreatments: string
+  dateRiskTreatmentsApproved: string
+  riskTreatmentAssignedTo: string
+  residualConsequence: string
+  residualLikelihood: string
+  residualRiskRating: string
+  residualRiskAcceptedByOwner: string
+  dateResidualRiskAccepted: string
+  dateRiskTreatmentCompleted: string
+  currentPhase: string
 }
 
 type RiskFormErrors = {
@@ -40,20 +55,35 @@ export default function NewRisk() {
   
   const [formData, setFormData] = useState<RiskFormData>({
     riskId: '',
+    functionalUnit: '',
+    jiraTicket: '',
+    dateRiskRaised: '',
     raisedBy: '',
-    informationAssets: [],
+    riskOwner: '',
+    affectedSites: '',
+    informationAsset: [],
     threat: '',
     vulnerability: '',
     riskStatement: '',
-    functionalUnit: '',
-    riskOwner: '',
-    affectedSites: '',
-    currentControls: '',
-    currentControlsReference: '',
+    impactCIA: [],
+    currentControls: [],
+    currentControlsReference: [],
     consequenceRating: '',
     likelihoodRating: '',
     riskRating: '',
-    impact: []
+    riskAction: '',
+    reasonForAcceptance: '',
+    dateOfSSCApproval: '',
+    riskTreatments: '',
+    dateRiskTreatmentsApproved: '',
+    riskTreatmentAssignedTo: '',
+    residualConsequence: '',
+    residualLikelihood: '',
+    residualRiskRating: '',
+    residualRiskAcceptedByOwner: '',
+    dateResidualRiskAccepted: '',
+    dateRiskTreatmentCompleted: '',
+    currentPhase: 'Draft',
   })
 
   const [loading, setLoading] = useState(false)
@@ -66,7 +96,7 @@ export default function NewRisk() {
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
   const [selectedLetter, setSelectedLetter] = useState('')
 
-  const mandatoryFields = ['riskId', 'raisedBy', 'informationAssets', 'threat', 'vulnerability', 'riskStatement', 'consequenceRating', 'likelihoodRating', 'riskRating', 'impact']
+  const mandatoryFields = ['raisedBy', 'informationAsset', 'threat', 'vulnerability', 'riskStatement', 'consequenceRating', 'likelihoodRating', 'riskRating', 'impactCIA']
 
   // Fetch information assets on component mount
   useEffect(() => {
@@ -90,7 +120,7 @@ export default function NewRisk() {
 
   // Modal functions
   const openAssetModal = () => {
-    setTempSelectedAssets([...formData.informationAssets])
+    setTempSelectedAssets([...formData.informationAsset])
     setSearchTerm('')
     setSelectedLetter('')
     setShowAssetModal(true)
@@ -114,14 +144,14 @@ export default function NewRisk() {
   const applyAssetSelection = () => {
     setFormData(prev => ({
       ...prev,
-      informationAssets: tempSelectedAssets
+      informationAsset: tempSelectedAssets
     }))
     
     // Clear error when information asset is selected
-    if (errors.informationAssets) {
+    if (errors.informationAsset) {
       setErrors(prev => ({
         ...prev,
-        informationAssets: undefined
+        informationAsset: undefined
       }))
     }
     
@@ -133,7 +163,7 @@ export default function NewRisk() {
 
     mandatoryFields.forEach(field => {
       const value = formData[field as keyof RiskFormData]
-      if (field === 'informationAssets') {
+      if (field === 'informationAsset') {
         if (!Array.isArray(value) || value.length === 0) {
           newErrors[field as keyof RiskFormData] = 'Please select at least one information asset'
         }
@@ -143,8 +173,8 @@ export default function NewRisk() {
     })
 
     // Special validation for impact field (array)
-    if (!formData.impact || formData.impact.length === 0) {
-      newErrors.impact = 'Please select at least one CIA component'
+    if (!formData.impactCIA || formData.impactCIA.length === 0) {
+      newErrors.impactCIA = 'Please select at least one CIA component'
     }
 
     // Validate Risk ID format
@@ -159,7 +189,7 @@ export default function NewRisk() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: keyof RiskFormData, value: string) => {
+  const handleInputChange = (field: keyof RiskFormData, value: string | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -174,7 +204,7 @@ export default function NewRisk() {
     }
 
     // Real-time validation for Risk ID
-    if (field === 'riskId' && value.trim()) {
+    if (field === 'riskId' && typeof value === 'string' && value.trim()) {
       const riskIdPattern = /^RISK-\d+$/i
       if (!riskIdPattern.test(value.trim())) {
         setErrors(prev => ({
@@ -188,16 +218,16 @@ export default function NewRisk() {
   const handleImpactChange = (ciaValue: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      impact: checked 
-        ? [...(prev.impact || []), ciaValue]
-        : (prev.impact || []).filter(item => item !== ciaValue)
+      impactCIA: checked 
+        ? [...(prev.impactCIA || []), ciaValue]
+        : (prev.impactCIA || []).filter(item => item !== ciaValue)
     }))
     
     // Clear error when CIA component is selected
-    if (errors.impact) {
+    if (errors.impactCIA) {
       setErrors(prev => ({
         ...prev,
-        impact: undefined
+        impactCIA: undefined
       }))
     }
   }
@@ -278,7 +308,7 @@ export default function NewRisk() {
     .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
 
   // Get selected asset names for display
-  const selectedAssetNames = formData.informationAssets.map(assetId => {
+  const selectedAssetNames = formData.informationAsset.map(assetId => {
     const asset = informationAssets.find(a => a.id === assetId)
     return asset ? asset.informationAsset : assetId
   })
@@ -366,15 +396,15 @@ export default function NewRisk() {
                     type="button"
                     onClick={openAssetModal}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors text-left ${
-                      errors.informationAssets 
+                      errors.informationAsset 
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
                         : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500 hover:border-purple-400'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={formData.informationAssets.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
-                        {formData.informationAssets.length > 0 
-                          ? `${formData.informationAssets.length} asset${formData.informationAssets.length !== 1 ? 's' : ''} selected`
+                      <span className={formData.informationAsset.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                        {formData.informationAsset.length > 0 
+                          ? `${formData.informationAsset.length} asset${formData.informationAsset.length !== 1 ? 's' : ''} selected`
                           : 'Click to select information assets'
                         }
                       </span>
@@ -383,7 +413,7 @@ export default function NewRisk() {
                   </button>
                   
                   {/* Display selected assets as tags */}
-                  {formData.informationAssets.length > 0 && (
+                  {formData.informationAsset.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedAssetNames.map((assetName, index) => (
                         <span
@@ -396,8 +426,8 @@ export default function NewRisk() {
                     </div>
                   )}
                   
-                  {errors.informationAssets && (
-                    <p className="mt-1 text-sm text-red-600">{errors.informationAssets}</p>
+                  {errors.informationAsset && (
+                    <p className="mt-1 text-sm text-red-600">{errors.informationAsset}</p>
                   )}
                 </div>
 
@@ -526,13 +556,13 @@ export default function NewRisk() {
                   <label htmlFor="currentControls" className="block text-sm font-medium text-gray-700 mb-2">
                     Current Controls
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     id="currentControls"
-                    value={formData.currentControls}
-                    onChange={(e) => handleInputChange('currentControls', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    placeholder="e.g., Firewall, Access controls"
+                    value={Array.isArray(formData.currentControls) ? formData.currentControls.join('\n') : ''}
+                    onChange={(e) => handleInputChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+                    rows={3}
+                    placeholder="Enter current controls (one per line)..."
                   />
                 </div>
 
@@ -541,13 +571,13 @@ export default function NewRisk() {
                   <label htmlFor="currentControlsReference" className="block text-sm font-medium text-gray-700 mb-2">
                     Current Controls Reference
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     id="currentControlsReference"
-                    value={formData.currentControlsReference}
-                    onChange={(e) => handleInputChange('currentControlsReference', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    placeholder="e.g., CTRL-001"
+                    value={Array.isArray(formData.currentControlsReference) ? formData.currentControlsReference.join('\n') : ''}
+                    onChange={(e) => handleInputChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+                    rows={3}
+                    placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
                   />
                 </div>
               </div>
@@ -644,23 +674,23 @@ export default function NewRisk() {
                 <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                    <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                     errors.impact 
+                     errors.impactCIA 
                        ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
                    }`}>
                    <input
                      type="checkbox"
                      id="confidentiality"
-                     checked={formData.impact?.includes('Confidentiality')}
+                     checked={formData.impactCIA?.includes('Confidentiality')}
                      onChange={(e) => handleImpactChange('Confidentiality', e.target.checked)}
                      className="sr-only"
                    />
                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impact?.includes('Confidentiality')
+                     formData.impactCIA?.includes('Confidentiality')
                        ? 'bg-red-500 border-red-500'
                        : 'border-gray-300 group-hover:border-red-400'
                    }`}>
-                     {formData.impact?.includes('Confidentiality') && (
+                     {formData.impactCIA?.includes('Confidentiality') && (
                        <Icon name="check" size={12} className="text-white" />
                      )}
                    </div>
@@ -671,23 +701,23 @@ export default function NewRisk() {
                  </label>
 
                  <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                   errors.impact 
+                   errors.impactCIA 
                      ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
                      : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
                  }`}>
                    <input
                      type="checkbox"
                      id="integrity"
-                     checked={formData.impact?.includes('Integrity')}
+                     checked={formData.impactCIA?.includes('Integrity')}
                      onChange={(e) => handleImpactChange('Integrity', e.target.checked)}
                      className="sr-only"
                    />
                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impact?.includes('Integrity')
+                     formData.impactCIA?.includes('Integrity')
                        ? 'bg-orange-500 border-orange-500'
                        : 'border-gray-300 group-hover:border-orange-400'
                    }`}>
-                     {formData.impact?.includes('Integrity') && (
+                     {formData.impactCIA?.includes('Integrity') && (
                        <Icon name="check" size={12} className="text-white" />
                      )}
                    </div>
@@ -698,23 +728,23 @@ export default function NewRisk() {
                  </label>
 
                  <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                   errors.impact 
+                   errors.impactCIA 
                      ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
                  }`}>
                    <input
                      type="checkbox"
                      id="availability"
-                     checked={formData.impact?.includes('Availability')}
+                     checked={formData.impactCIA?.includes('Availability')}
                      onChange={(e) => handleImpactChange('Availability', e.target.checked)}
                      className="sr-only"
                    />
                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impact?.includes('Availability')
+                     formData.impactCIA?.includes('Availability')
                        ? 'bg-blue-500 border-blue-500'
                        : 'border-gray-300 group-hover:border-blue-400'
                    }`}>
-                     {formData.impact?.includes('Availability') && (
+                     {formData.impactCIA?.includes('Availability') && (
                        <Icon name="check" size={12} className="text-white" />
                      )}
                    </div>
@@ -724,8 +754,8 @@ export default function NewRisk() {
                    </div>
                  </label>
                 </div>
-                {errors.impact && (
-                  <p className="mt-2 text-sm text-red-600">{errors.impact}</p>
+                {errors.impactCIA && (
+                  <p className="mt-2 text-sm text-red-600">{errors.impactCIA}</p>
                 )}
               </div>
             </div>
