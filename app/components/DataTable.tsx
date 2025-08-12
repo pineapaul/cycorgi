@@ -321,7 +321,7 @@ export default function DataTable<T = Record<string, unknown>>({
           </button>
           
                       {showDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-40 bg-white rounded-lg shadow-lg border z-10" style={{ borderColor: '#C0C9EE' }}>
+              <div className="absolute top-full left-0 mt-1 w-40 bg-white rounded-lg shadow-lg border z-50" style={{ borderColor: '#C0C9EE' }}>
                 <div className="py-1">
                   <button
                     onClick={handleSelectAll}
@@ -658,7 +658,7 @@ export default function DataTable<T = Record<string, unknown>>({
           }}
         >
           <table className="w-full table-auto">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+            <thead className="bg-gray-50 sticky top-0 z-20">
               <tr>
                 {selectable && (
                   <th

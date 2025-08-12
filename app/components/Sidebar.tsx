@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import Icon from './Icon'
 import { useState } from 'react'
@@ -65,9 +66,39 @@ const settingsItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const { data: session } = useSession()
 
   const handleMenuToggle = (menuName: string) => {
     setOpenMenu(openMenu === menuName ? null : menuName)
+  }
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (session?.user?.name) {
+      return session.user.name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+    return 'U'
+  }
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    return session?.user?.name || 'Guest User'
+  }
+
+  // Get user role display
+  const getUserRole = () => {
+    if (session?.user?.role) {
+      // Capitalize first letter and replace underscores with spaces
+      return session.user.role
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase())
+    }
+    return 'User'
   }
 
   return (
@@ -440,11 +471,19 @@ export default function Sidebar() {
       <div className="p-2 md:p-4 border-t flex-shrink-0" style={{ borderColor: '#A2AADB' }}>
         <div className="flex items-center space-x-2 md:space-x-3">
           <div className="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C0C9EE' }}>
-            <span className="text-white text-xs md:text-sm font-medium">P</span>
+            {session?.user?.image ? (
+              <img 
+                src={session.user.image} 
+                alt={session.user.name || 'User'} 
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-white text-xs md:text-sm font-medium">{getUserInitials()}</span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs md:text-sm font-medium truncate">Admin</div>
-            <div className="text-xs" style={{ color: '#C0C9EE' }}>Administrator</div>
+            <div className="text-xs md:text-sm font-medium truncate">{getUserDisplayName()}</div>
+            <div className="text-xs" style={{ color: '#C0C9EE' }}>{getUserRole()}</div>
           </div>
         </div>
       </div>

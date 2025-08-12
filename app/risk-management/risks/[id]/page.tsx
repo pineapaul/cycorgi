@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber, mapAssetIdsToNames } from '@/lib/utils'
+import { RISK_ACTIONS, RISK_PHASES } from '@/lib/constants'
 import DataTable from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import CommentSidebar from '@/app/components/CommentSidebar'
 import WorkshopSelectionModal from '@/app/components/WorkshopSelectionModal'
+import RiskMatrix from '@/app/components/RiskMatrix'
 
 interface InformationAsset {
   id: string
@@ -34,9 +36,9 @@ interface RiskDetails {
   impactCIA: string
   currentControls: string
   currentControlsReference: string
-  consequence: string
-  likelihood: string
-  currentRiskRating: string
+  consequenceRating: string
+  likelihoodRating: string
+  riskRating: string
   riskAction: string
   reasonForAcceptance: string
   dateOfSSCApproval: string
@@ -63,7 +65,6 @@ interface Treatment {
   riskId?: string
 }
 
-// Robust date parsing utility
 const parseDate = (dateString: string | null | undefined): Date | null => {
   if (!dateString || typeof dateString !== 'string') return null
   // Try ISO, yyyy-mm-dd, dd/mm/yyyy, dd MMM yyyy
@@ -78,7 +79,6 @@ const parseDate = (dateString: string | null | undefined): Date | null => {
   return null
 }
 
-// Format date to dd MMM yyyy format
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString || dateString === 'Not specified') return 'Not specified'
   const date = parseDate(dateString)
@@ -94,7 +94,6 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 }
 
-// Get relative time (e.g., "2 days ago", "1 week ago")
 const getRelativeTime = (dateString: string | null | undefined): string => {
   if (!dateString || dateString === 'Not specified') return ''
 
@@ -175,6 +174,23 @@ export default function RiskInformation() {
   const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
   const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false)
+
+  // Memoized risk matrix data to prevent unnecessary recalculations
+  const memoizedCurrentRisk = useMemo(() => ({
+    likelihoodRating: isEditing ? (editedRisk?.likelihoodRating || riskDetails?.likelihoodRating || '') : (riskDetails?.likelihoodRating || ''),
+    consequenceRating: isEditing ? (editedRisk?.consequenceRating || riskDetails?.consequenceRating || '') : (riskDetails?.consequenceRating || ''),
+    rating: (isEditing ? (editedRisk?.riskRating || riskDetails?.riskRating || 'Low') : (riskDetails?.riskRating || 'Low')) as "Low" | "Moderate" | "High" | "Extreme"
+  }), [isEditing, editedRisk?.likelihoodRating, editedRisk?.consequenceRating, editedRisk?.riskRating, riskDetails?.likelihoodRating, riskDetails?.consequenceRating, riskDetails?.riskRating])
+
+  const memoizedResidualRisk = useMemo(() => ({
+    residualLikelihood: isEditing ? (editedRisk?.residualLikelihood || riskDetails?.residualLikelihood || '') : (riskDetails?.residualLikelihood || ''),
+    residualConsequence: isEditing ? (editedRisk?.residualConsequence || riskDetails?.residualConsequence || '') : (riskDetails?.residualConsequence || ''),
+    rating: (isEditing ? (editedRisk?.residualRiskRating || riskDetails?.residualRiskRating || 'Low') : (riskDetails?.residualRiskRating || 'Low')) as "Low" | "Moderate" | "High" | "Extreme"
+  }), [isEditing, editedRisk?.residualLikelihood, editedRisk?.residualConsequence, editedRisk?.residualRiskRating, riskDetails?.residualLikelihood, riskDetails?.residualConsequence, riskDetails?.residualRiskRating])
+
+
+
+
 
   // Set initial position of floating button to middle of page
   useEffect(() => {
@@ -274,7 +290,7 @@ export default function RiskInformation() {
             dateRiskRaised: risk.createdAt ? toDateInputValue(risk.createdAt) : '2024-01-15',
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
-            affectedSites: 'All Sites',
+            affectedSites: risk.affectedSites || 'All Sites',
             informationAssets: mapAssetIdsToNames(risk.informationAsset, informationAssetsResult.data || []),
             threat: risk.threat,
             vulnerability: risk.vulnerability,
@@ -282,10 +298,10 @@ export default function RiskInformation() {
             impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
             currentControls: risk.currentControls,
             currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
-            consequence: risk.consequenceRating,
-            likelihood: risk.likelihoodRating,
-            currentRiskRating: risk.riskRating,
-            riskAction: 'Requires treatment',
+            consequenceRating: risk.consequenceRating,
+            likelihoodRating: risk.likelihoodRating,
+            riskRating: risk.riskRating,
+            riskAction: risk.riskAction,
             reasonForAcceptance: risk.reasonForAcceptance || '',
             dateOfSSCApproval: risk.dateOfSSCApproval ? toDateInputValue(risk.dateOfSSCApproval) : '',
             dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? toDateInputValue(risk.dateRiskTreatmentsApproved) : '',
@@ -648,7 +664,7 @@ export default function RiskInformation() {
           <div class="grid">
             <div class="field">
               <div class="field-label">Risk Rating</div>
-              <div class="field-value">${risk.currentRiskRating}</div>
+                             <div class="field-value">${risk.riskRating}</div>
             </div>
             <div class="field">
               <div class="field-label">Impact (CIA)</div>
@@ -722,36 +738,16 @@ export default function RiskInformation() {
             </div>
             <div class="field">
               <div class="field-label">Consequence</div>
-              <div class="field-value">${risk.consequence}</div>
+                             <div class="field-value">${risk.consequenceRating}</div>
             </div>
             <div class="field">
               <div class="field-label">Likelihood</div>
-              <div class="field-value">${risk.likelihood}</div>
+                             <div class="field-value">${risk.likelihoodRating}</div>
             </div>
           </div>
         </div>
 
-        <div class="section">
-          <h2>Residual Risk Assessment</h2>
-          <div class="grid">
-            <div class="field">
-              <div class="field-label">Residual Consequence</div>
-              <div class="field-value">${risk.residualConsequence || 'Not specified'}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Residual Likelihood</div>
-              <div class="field-value">${risk.residualLikelihood || 'Not specified'}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Residual Risk Rating</div>
-              <div class="field-value">${risk.residualRiskRating || 'Not specified'}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Residual Risk Accepted By Owner</div>
-              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
-            </div>
-          </div>
-        </div>
+
 
         <div class="section">
           <h2>Approvals & Dates</h2>
@@ -769,9 +765,15 @@ export default function RiskInformation() {
               <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
             </div>
             <div class="field">
+              <div class="field-label">Residual Risk Accepted By</div>
+              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
+            </div>
+            ${risk.riskAction === 'Accept' ? `
+            <div class="field">
               <div class="field-label">Reason for Acceptance</div>
               <div class="field-value">${risk.reasonForAcceptance || 'Not specified'}</div>
             </div>
+            ` : ''}
           </div>
         </div>
 
@@ -838,12 +840,35 @@ export default function RiskInformation() {
   }
 
   const handleEdit = () => {
+    if (!riskDetails) return
+    
     setIsEditing(true)
-    setOriginalRisk(riskDetails) // Store the original values when entering edit mode
+    setOriginalRisk(riskDetails)
     setEditedRisk(riskDetails)
 
     // Initialize selected information assets from the stored original IDs
     setSelectedInformationAssets(originalInformationAssetIds)
+    
+    // Ensure risk ratings are properly calculated when entering edit mode
+    if (riskDetails.likelihoodRating && riskDetails.consequenceRating) {
+      const calculatedCurrentRating = calculateRiskRating(riskDetails.likelihoodRating, riskDetails.consequenceRating)
+      if (calculatedCurrentRating !== riskDetails.riskRating) {
+        setEditedRisk(prev => prev ? {
+          ...prev,
+          riskRating: calculatedCurrentRating
+        } : null)
+      }
+    }
+    
+    if (riskDetails.residualLikelihood && riskDetails.residualConsequence) {
+      const calculatedResidualRating = calculateRiskRating(riskDetails.residualLikelihood, riskDetails.residualConsequence)
+      if (calculatedResidualRating !== riskDetails.residualRiskRating) {
+        setEditedRisk(prev => prev ? {
+          ...prev,
+          residualRiskRating: calculatedResidualRating
+        } : null)
+      }
+    }
   }
 
   const handleCancel = () => {
@@ -860,8 +885,8 @@ export default function RiskInformation() {
   const handleSave = async () => {
     if (!editedRisk) return
 
-    // Build safe API URL
-    const riskApiUrl = buildApiUrl('/api/risks')
+    // Build safe API URL with the current risk ID
+    const riskApiUrl = buildApiUrl('/api/risks', params.id)
     if (!riskApiUrl) {
       showToast({
         type: 'error',
@@ -875,10 +900,18 @@ export default function RiskInformation() {
     try {
       setSaving(true)
 
-      // Prepare the data to save, including the selected information assets
+      // Ensure risk ratings are calculated before saving
       const dataToSave = {
         ...editedRisk,
-        informationAsset: selectedInformationAssets
+        informationAsset: selectedInformationAssets,
+        // Ensure current risk rating is calculated if likelihood/consequence changed
+        riskRating: editedRisk.likelihoodRating && editedRisk.consequenceRating 
+          ? calculateRiskRating(editedRisk.likelihoodRating, editedRisk.consequenceRating)
+          : editedRisk.riskRating,
+        // Ensure residual risk rating is calculated if residual likelihood/consequence changed
+        residualRiskRating: editedRisk.residualLikelihood && editedRisk.residualConsequence
+          ? calculateRiskRating(editedRisk.residualLikelihood, editedRisk.residualConsequence)
+          : editedRisk.residualRiskRating
       }
 
       const response = await fetch(riskApiUrl, {
@@ -892,9 +925,64 @@ export default function RiskInformation() {
       const result = await response.json()
 
       if (result.success) {
-        setRiskDetails(editedRisk)
+        // Update the local state with the actual API response data
+        // The risk details will be updated in the refresh section below
         setIsEditing(false)
-        setOriginalRisk(null) // Clear the original values after successful save
+        setOriginalRisk(null)
+        
+        // Refresh both risk details and information assets to ensure we have the latest data
+        // Only refresh information assets if they were actually changed
+        // Compare the selected assets with the original information asset IDs
+        const informationAssetsChanged = JSON.stringify(selectedInformationAssets.sort()) !== JSON.stringify(originalInformationAssetIds.sort())
+        
+        try {
+          const [riskResponse, informationAssetsResponse] = await Promise.all([
+            fetch(riskApiUrl),
+            // Only fetch information assets if they changed
+            informationAssetsChanged ? fetch('/api/information-assets') : Promise.resolve({ json: () => Promise.resolve({ success: false }) })
+          ])
+          
+          const riskResult = await riskResponse.json()
+          const informationAssetsResult = await informationAssetsResponse.json()
+          
+          if (riskResult.success) {
+            // Update with the latest risk data from database
+            const latestRiskDetails = {
+              ...riskResult.data,
+              informationAssets: selectedInformationAssets.length > 0 
+                ? selectedInformationAssets.map(assetId => {
+                    const asset = informationAssetsResult.success 
+                      ? informationAssetsResult.data.find((a: any) => a.id === assetId)?.informationAsset || assetId
+                      : assetId
+                    return asset
+                  }).join(', ')
+                : ''
+            }
+            setRiskDetails(latestRiskDetails)
+          } else {
+            console.warn('Failed to refresh risk details:', riskResult.error)
+          }
+          
+          if (informationAssetsResult.success) {
+            setInformationAssets(informationAssetsResult.data)
+          } else {
+            console.warn('Failed to refresh information assets:', informationAssetsResult.error)
+          }
+        } catch (error) {
+          console.error('Error refreshing data:', error)
+          // Fallback: update with the current edited data if refresh fails
+          const fallbackRiskDetails = {
+            ...result.data,
+            informationAssets: selectedInformationAssets.length > 0 
+              ? selectedInformationAssets.map(assetId => {
+                  const asset = informationAssets.find(a => a.id === assetId)
+                  return asset?.informationAsset || assetId
+                }).join(', ')
+              : ''
+          }
+          setRiskDetails(fallbackRiskDetails)
+        }
+        
         showToast({
           type: 'success',
           title: 'Risk Updated Successfully',
@@ -902,7 +990,6 @@ export default function RiskInformation() {
           duration: 4000
         })
       } else {
-        // Show detailed validation errors if available
         const errorMessage = result.details
           ? `Validation failed: ${result.details.join(', ')}`
           : result.error || 'An unknown error occurred while updating the risk.'
@@ -926,21 +1013,64 @@ export default function RiskInformation() {
     }
   }
 
-  // Type-safe field change handler that accepts appropriate value types for each field
+  const calculateRiskRating = (likelihood: string, consequence: string): string => {
+    const likelihoodIndex = ["Rare", "Unlikely", "Possible", "Likely", "Almost Certain"].indexOf(likelihood)
+    const consequenceIndex = ["Insignificant", "Minor", "Moderate", "Major", "Critical"].indexOf(consequence)
+    
+    if (likelihoodIndex === -1 || consequenceIndex === -1) return "Low"
+    
+    const ratings = [
+      ["Low", "Low", "Moderate", "High", "High"],
+      ["Low", "Low", "Moderate", "High", "Extreme"],
+      ["Low", "Moderate", "High", "Extreme", "Extreme"],
+      ["Moderate", "Moderate", "High", "Extreme", "Extreme"],
+      ["Moderate", "High", "Extreme", "Extreme", "Extreme"],
+    ]
+    
+    return ratings[likelihoodIndex][consequenceIndex]
+  }
+
   const handleFieldChange = <K extends keyof RiskDetails>(
     field: K,
     value: RiskDetails[K]
   ) => {
     if (!editedRisk) return
-    setEditedRisk({
-      ...editedRisk,
-      [field]: value
-    })
+    
+    let updatedRisk = { ...editedRisk, [field]: value }
+    
+    // Auto-calculate residual risk rating when residual likelihood or consequence changes
+    if (field === 'residualLikelihood' || field === 'residualConsequence') {
+      const newLikelihood = field === 'residualLikelihood' ? value as string : editedRisk.residualLikelihood
+      const newConsequence = field === 'residualConsequence' ? value as string : editedRisk.residualConsequence
+      
+      if (newLikelihood && newConsequence) {
+        const calculatedRating = calculateRiskRating(newLikelihood, newConsequence)
+        updatedRisk = {
+          ...updatedRisk,
+          residualRiskRating: calculatedRating
+        }
+      }
+    }
+    
+    // Auto-calculate current risk rating when likelihood or consequence changes
+    if (field === 'likelihoodRating' || field === 'consequenceRating') {
+      const newLikelihood = field === 'likelihoodRating' ? value as string : editedRisk.likelihoodRating
+      const newConsequence = field === 'consequenceRating' ? value as string : editedRisk.consequenceRating
+      
+      if (newLikelihood && newConsequence) {
+        const calculatedRating = calculateRiskRating(newLikelihood, newConsequence)
+        updatedRisk = {
+          ...updatedRisk,
+          riskRating: calculatedRating
+        }
+      }
+    }
+    
+    setEditedRisk(updatedRisk)
   }
 
 
 
-  // Modal functions for information assets selection
   const openAssetModal = () => {
     setTempSelectedAssets([...selectedInformationAssets])
     setSearchTerm('')
@@ -968,7 +1098,6 @@ export default function RiskInformation() {
     closeAssetModal()
   }
 
-  // Filter assets based on search term and sort alphabetically
   const filteredAssets = informationAssets
     .filter(asset =>
       asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -980,23 +1109,22 @@ export default function RiskInformation() {
     })
     .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
 
-  // Handler for adding treatment to workshop
   const handleAddTreatmentToWorkshop = (treatment: Treatment) => {
     setSelectedTreatmentForWorkshop(treatment)
     setIsWorkshopModalOpen(true)
   }
 
-  // Handler for closing workshop modal
   const handleCloseWorkshopModal = () => {
     setIsWorkshopModalOpen(false)
     setSelectedTreatmentForWorkshop(null)
   }
 
-  // Handler for adding risk to workshop agenda
   const handleAddRiskToWorkshop = () => {
     setIsWorkshopModalOpen(true)
     setIsOptionsMenuOpen(false) // Close options menu
   }
+
+
 
   if (loading) {
     return (
@@ -1187,126 +1315,34 @@ export default function RiskInformation() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Current Risk Status */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Current Status</h4>
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-gray-700">Risk Details</h4>
+              </div>
               <div className="space-y-4">
                 <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Phase</span>
-                  <div className="mt-1">
-                    {isEditing ? (
-                      <select
-                        value={editedRisk?.currentPhase || ''}
-                        onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="Draft">Draft</option>
-                        <option value="Identification">Identification</option>
-                        <option value="Analysis">Analysis</option>
-                        <option value="Evaluation">Evaluation</option>
-                        <option value="Treatment">Treatment</option>
-                        <option value="Monitoring">Monitoring</option>
-                      </select>
-                    ) : (
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Phase</span>
+                  {isEditing ? (
+                    <select
+                      value={editedRisk?.currentPhase || ''}
+                      onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mt-1"
+                    >
+                      <option value="">Select a phase</option>
+                      {Object.values(RISK_PHASES).map((phase: string) => (
+                        <option key={phase} value={phase}>
+                          {phase}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="mt-1">
                       <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
-                        {riskDetails.currentPhase}
+                        {riskDetails.currentPhase || 'Not specified'}
                       </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative group">
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Risk Rating</span>
-                  <div className="mt-1">
-                    {isEditing ? (
-                      <select
-                        value={editedRisk?.currentRiskRating || ''}
-                        onChange={(e) => handleFieldChange('currentRiskRating', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="">Select risk rating</option>
-                        <option value="Low">Low</option>
-                        <option value="Moderate">Moderate</option>
-                        <option value="High">High</option>
-                        <option value="Extreme">Extreme</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium cursor-help ${getRiskLevelColor(riskDetails.currentRiskRating)}`}>
-                        {riskDetails.currentRiskRating}
-                      </span>
-                    )}
-                  </div>
-                  {!isEditing && (
-                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                      <div className="text-white text-xs rounded-lg p-3 shadow-lg" style={{ backgroundColor: '#4C1D95' }}>
-                        <div className="space-y-1">
-                          <div className="flex justify-between">
-                            <span>Consequence:</span>
-                            <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.consequence)}`}>
-                              {riskDetails.consequence}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Likelihood:</span>
-                            <span className={`ml-2 px-1 py-0.5 rounded text-xs ${getPriorityColor(riskDetails.likelihood)}`}>
-                              {riskDetails.likelihood}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent" style={{ borderTopColor: '#4C1D95' }}></div>
-                      </div>
                     </div>
                   )}
                 </div>
-
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Consequence Rating</span>
-                  <div className="mt-1">
-                    {isEditing ? (
-                      <select
-                        value={editedRisk?.consequence || ''}
-                        onChange={(e) => handleFieldChange('consequence', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="">Select consequence rating</option>
-                        <option value="Insignificant">Insignificant</option>
-                        <option value="Minor">Minor</option>
-                        <option value="Moderate">Moderate</option>
-                        <option value="Major">Major</option>
-                        <option value="Critical">Critical</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.consequence)}`}>
-                        {riskDetails.consequence}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Likelihood Rating</span>
-                  <div className="mt-1">
-                    {isEditing ? (
-                      <select
-                        value={editedRisk?.likelihood || ''}
-                        onChange={(e) => handleFieldChange('likelihood', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="">Select likelihood rating</option>
-                        <option value="Rare">Rare</option>
-                        <option value="Unlikely">Unlikely</option>
-                        <option value="Possible">Possible</option>
-                        <option value="Likely">Likely</option>
-                        <option value="Almost Certain">Almost Certain</option>
-                      </select>
-                    ) : (
-                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.likelihood)}`}>
-                        {riskDetails.likelihood}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Impact (CIA)</span>
                   {isEditing ? (
@@ -1421,24 +1457,22 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
                   {isEditing ? (
-                    <input
-                      type="text"
+                    <select
                       value={editedRisk?.riskAction || ''}
                       onChange={(e) => handleFieldChange('riskAction', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., Requires treatment"
-                    />
+                    >
+                      <option value="">Select a risk action</option>
+                      {Object.values(RISK_ACTIONS).map((action) => (
+                        <option key={action} value={action}>
+                          {action}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction || 'Not specified'}</p>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Risk Details */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Risk Details</h4>
-              <div className="space-y-4">
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Threat</span>
                   {isEditing ? (
@@ -1483,6 +1517,7 @@ export default function RiskInformation() {
                     <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
                   )}
                 </div>
+                
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
                   {isEditing ? (
@@ -1499,8 +1534,96 @@ export default function RiskInformation() {
                 </div>
               </div>
             </div>
+
+                         <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-4">Risk Matrix</h4>
+              
+              {/* Risk Assessment Fields - Only visible when editing */}
+              {isEditing && (
+                <div className="mb-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Likelihood</span>
+                      <select
+                        value={editedRisk?.likelihoodRating || ''}
+                        onChange={(e) => handleFieldChange('likelihoodRating', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select likelihood</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Unlikely">Unlikely</option>
+                        <option value="Possible">Possible</option>
+                        <option value="Likely">Likely</option>
+                        <option value="Almost Certain">Almost Certain</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Consequence</span>
+                      <select
+                        value={editedRisk?.consequenceRating || ''}
+                        onChange={(e) => handleFieldChange('consequenceRating', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select consequence</option>
+                        <option value="Insignificant">Insignificant</option>
+                        <option value="Minor">Minor</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Major">Major</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Residual Likelihood</span>
+                      <select
+                        value={editedRisk?.residualLikelihood || ''}
+                        onChange={(e) => handleFieldChange('residualLikelihood', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select likelihood</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Unlikely">Unlikely</option>
+                        <option value="Possible">Possible</option>
+                        <option value="Likely">Likely</option>
+                        <option value="Almost Certain">Almost Certain</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Residual Consequence</span>
+                      <select
+                        value={editedRisk?.residualConsequence || ''}
+                        onChange={(e) => handleFieldChange('residualConsequence', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select consequence</option>
+                        <option value="Insignificant">Insignificant</option>
+                        <option value="Minor">Minor</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Major">Major</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+                             {riskDetails && (
+                               <RiskMatrix
+                                 currentRisk={memoizedCurrentRisk}
+                                 residualRisk={memoizedResidualRisk}
+                                 isEditing={false}
+                                 compact={true}
+                               />
+                             )}
+            </div>
           </div>
         </div>
+
+
 
         {/* Ownership & Asset Section */}
         <div className="mb-8">
@@ -1664,90 +1787,7 @@ export default function RiskInformation() {
           </div>
         </div>
 
-        {/* Residual Risk Assessment Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="w-1 h-6 bg-orange-600 rounded-full mr-3"></div>
-            <h3 className="text-lg font-semibold text-gray-900">Residual Risk Assessment</h3>
-          </div>
 
-          <div className="bg-gray-50 rounded-lg p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Consequence</span>
-                {isEditing ? (
-                  <select
-                    value={editedRisk?.residualConsequence || ''}
-                    onChange={(e) => handleFieldChange('residualConsequence', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="">Select...</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                ) : (
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualConsequence)}`}>
-                    {riskDetails.residualConsequence}
-                  </span>
-                )}
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Likelihood</span>
-                {isEditing ? (
-                  <select
-                    value={editedRisk?.residualLikelihood || ''}
-                    onChange={(e) => handleFieldChange('residualLikelihood', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="">Select...</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                ) : (
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(riskDetails.residualLikelihood)}`}>
-                    {riskDetails.residualLikelihood}
-                  </span>
-                )}
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Risk Rating</span>
-                {isEditing ? (
-                  <select
-                    value={editedRisk?.residualRiskRating || ''}
-                    onChange={(e) => handleFieldChange('residualRiskRating', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="">Select risk rating</option>
-                    <option value="Low">Low</option>
-                    <option value="Moderate">Moderate</option>
-                    <option value="High">High</option>
-                    <option value="Extreme">Extreme</option>
-                  </select>
-                ) : (
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getRiskLevelColor(riskDetails.residualRiskRating)}`}>
-                    {riskDetails.residualRiskRating}
-                  </span>
-                )}
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Accepted By</span>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedRisk?.residualRiskAcceptedByOwner || ''}
-                    onChange={(e) => handleFieldChange('residualRiskAcceptedByOwner', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter name"
-                  />
-                ) : (
-                  <p className="text-sm text-gray-900">{riskDetails.residualRiskAcceptedByOwner}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Approvals & Dates Section */}
         <div>
@@ -1757,7 +1797,7 @@ export default function RiskInformation() {
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date of SSC Approval</span>
                 {isEditing ? (
@@ -1794,6 +1834,8 @@ export default function RiskInformation() {
                   </>
                 )}
               </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Date Residual Risk Accepted</span>
                 {isEditing ? (
@@ -1812,21 +1854,38 @@ export default function RiskInformation() {
                   </>
                 )}
               </div>
+              <div>
+                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Risk Accepted By</span>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedRisk?.residualRiskAcceptedByOwner || ''}
+                    onChange={(e) => handleFieldChange('residualRiskAcceptedByOwner', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter name"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900">{riskDetails.residualRiskAcceptedByOwner || 'Not specified'}</p>
+                )}
+              </div>
             </div>
-            <div>
-              <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Reason for Acceptance</span>
-              {isEditing ? (
-                <textarea
-                  value={editedRisk?.reasonForAcceptance || ''}
-                  onChange={(e) => handleFieldChange('reasonForAcceptance', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  rows={3}
-                  placeholder="Enter reason for acceptance..."
-                />
-              ) : (
-                <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
-              )}
-            </div>
+            {/* Only show Reason for Acceptance if Risk Action is "Accept" */}
+            {(isEditing ? editedRisk?.riskAction === 'Accept' : riskDetails.riskAction === 'Accept') && (
+              <div>
+                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Reason for Acceptance</span>
+                {isEditing ? (
+                  <textarea
+                    value={editedRisk?.reasonForAcceptance || ''}
+                    onChange={(e) => handleFieldChange('reasonForAcceptance', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    rows={3}
+                    placeholder="Enter reason for acceptance..."
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
