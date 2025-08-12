@@ -27,6 +27,7 @@ interface RiskFormData {
   impactCIA: string[]
   currentControls: string[]
   currentControlsReference: string[]
+  applicableControlsAfterTreatment: string[]
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -68,6 +69,7 @@ export default function NewRisk() {
     impactCIA: [],
     currentControls: [],
     currentControlsReference: [],
+    applicableControlsAfterTreatment: [],
     consequenceRating: '',
     likelihoodRating: '',
     riskRating: '',
@@ -575,6 +577,21 @@ export default function NewRisk() {
                     id="currentControlsReference"
                     value={Array.isArray(formData.currentControlsReference) ? formData.currentControlsReference.join('\n') : ''}
                     onChange={(e) => handleInputChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+                    rows={3}
+                    placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                  />
+                </div>
+
+                {/* Applicable Controls After Treatment */}
+                <div>
+                  <label htmlFor="applicableControlsAfterTreatment" className="block text-sm font-medium text-gray-700 mb-2">
+                    Applicable Controls After Treatment
+                  </label>
+                  <textarea
+                    id="applicableControlsAfterTreatment"
+                    value={Array.isArray(formData.applicableControlsAfterTreatment) ? formData.applicableControlsAfterTreatment.join('\n') : ''}
+                    onChange={(e) => handleInputChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
                     rows={3}
                     placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."

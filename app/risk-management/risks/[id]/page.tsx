@@ -36,7 +36,7 @@ interface RiskDetails {
   impactCIA: string
   currentControls: string[]
   currentControlsReference: string[]
-  applicableControlsAfterTreatment: string
+  applicableControlsAfterTreatment: string[]
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -311,9 +311,9 @@ export default function RiskInformation() {
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
             impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
-            currentControls: Array.isArray(risk.currentControls) ? risk.currentControls : (risk.currentControls ? [risk.currentControls] : []),
-            currentControlsReference: Array.isArray(risk.currentControlsReference) ? risk.currentControlsReference : (risk.currentControlsReference ? [risk.currentControlsReference] : []),
-            applicableControlsAfterTreatment: risk.applicableControlsAfterTreatment || '',
+                              currentControls: Array.isArray(risk.currentControls) ? risk.currentControls : (risk.currentControls ? [risk.currentControls] : []),
+                  currentControlsReference: Array.isArray(risk.currentControlsReference) ? risk.currentControlsReference : (risk.currentControlsReference ? [risk.currentControlsReference] : []),
+                  applicableControlsAfterTreatment: Array.isArray(risk.applicableControlsAfterTreatment) ? risk.applicableControlsAfterTreatment : (risk.applicableControlsAfterTreatment ? [risk.applicableControlsAfterTreatment] : []),
             consequenceRating: risk.consequenceRating,
             likelihoodRating: risk.likelihoodRating,
             riskRating: risk.riskRating,
@@ -1720,14 +1720,32 @@ export default function RiskInformation() {
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Applicable Controls After Treatment</span>
                   {isEditing ? (
                     <textarea
-                      value={editedRisk?.applicableControlsAfterTreatment || ''}
-                      onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value)}
+                      value={Array.isArray(editedRisk?.applicableControlsAfterTreatment) ? editedRisk.applicableControlsAfterTreatment.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                       rows={3}
-                      placeholder="Enter applicable controls after treatment..."
+                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
                     />
                   ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.applicableControlsAfterTreatment || 'Not specified'}</p>
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.applicableControlsAfterTreatment) && riskDetails.applicableControlsAfterTreatment.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.applicableControlsAfterTreatment.map((controlRef, index) => {
+                            const soaControl = getSOAControlDetails(controlRef)
+                            return (
+                              <li key={index}>
+                                <span className="font-mono text-purple-600">{controlRef}</span>
+                                {soaControl && (
+                                  <span className="text-gray-600 ml-2">- {soaControl.title}</span>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
