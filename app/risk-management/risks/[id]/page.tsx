@@ -546,6 +546,87 @@ export default function RiskInformation() {
   }
 
   const generatePDFHTML = (risk: RiskDetails, treatments: Treatment[]) => {
+    // Generate risk matrix HTML
+    const generateRiskMatrixHTML = () => {
+      const likelihoodLabels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain']
+      const consequenceLabels = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Critical']
+      const ratings = [
+        ['Low', 'Low', 'Moderate', 'High', 'High'],
+        ['Low', 'Low', 'Moderate', 'High', 'Extreme'],
+        ['Low', 'Moderate', 'High', 'Extreme', 'Extreme'],
+        ['Moderate', 'Moderate', 'High', 'Extreme', 'Extreme'],
+        ['Moderate', 'High', 'Extreme', 'Extreme', 'Extreme'],
+      ]
+
+      // Find current risk coordinates
+      const currentLikelihoodIndex = likelihoodLabels.findIndex(label => label === risk.likelihoodRating)
+      const currentConsequenceIndex = consequenceLabels.findIndex(label => label === risk.consequenceRating)
+      
+      // Find residual risk coordinates
+      const residualLikelihoodIndex = likelihoodLabels.findIndex(label => label === risk.residualLikelihood)
+      const residualConsequenceIndex = consequenceLabels.findIndex(label => label === risk.residualConsequence)
+
+      let matrixHTML = `
+        <div class="risk-matrix">
+          <h3>Risk Matrix</h3>
+          <div class="matrix-container">
+            <div class="matrix-grid">
+              <div class="matrix-header-cell"></div>
+      `
+      
+      // Add consequence headers
+      consequenceLabels.forEach(label => {
+        matrixHTML += `<div class="matrix-header-cell">${label}</div>`
+      })
+      
+      // Add matrix rows
+      likelihoodLabels.forEach((likelihood, lIdx) => {
+        matrixHTML += `<div class="matrix-row-label">${likelihood}</div>`
+        
+        consequenceLabels.forEach((consequence, cIdx) => {
+          const rating = ratings[lIdx][cIdx]
+          const isCurrentRisk = lIdx === currentLikelihoodIndex && cIdx === currentConsequenceIndex
+          const isResidualRisk = lIdx === residualLikelihoodIndex && cIdx === residualConsequenceIndex
+          
+          let cellClass = 'matrix-cell'
+          let cellContent = rating
+          
+          if (isCurrentRisk && isResidualRisk) {
+            cellClass += ' current-and-residual'
+            cellContent = `${rating}<br><span class="risk-indicator current">C</span><span class="risk-indicator residual">R</span>`
+          } else if (isCurrentRisk) {
+            cellClass += ' current-risk'
+            cellContent = `${rating}<br><span class="risk-indicator current">C</span>`
+          } else if (isResidualRisk) {
+            cellClass += ' residual-risk'
+            cellContent = `${rating}<br><span class="risk-indicator residual">R</span>`
+          }
+          
+          matrixHTML += `<div class="${cellClass} ${rating.toLowerCase()}">${cellContent}</div>`
+        })
+      })
+      
+      matrixHTML += `
+            </div>
+          </div>
+          <div class="matrix-legend">
+            <div class="legend-item">
+              <span class="legend-marker current"></span>
+              <span>Current Risk (${risk.likelihoodRating} × ${risk.consequenceRating} = ${risk.riskRating})</span>
+            </div>
+            ${risk.residualLikelihood && risk.residualConsequence ? `
+            <div class="legend-item">
+              <span class="legend-marker residual"></span>
+              <span>Residual Risk (${risk.residualLikelihood} × ${risk.residualConsequence} = ${risk.residualRiskRating})</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `
+      
+      return matrixHTML
+    }
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -591,6 +672,12 @@ export default function RiskInformation() {
             padding-bottom: 5px;
             border-bottom: 1px solid #E8ECF7;
           }
+          .section h3 {
+            color: #4C1D95;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+          }
           .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -631,6 +718,128 @@ export default function RiskInformation() {
             color: #333;
             line-height: 1.5;
           }
+          
+          /* Risk Matrix Styles */
+          .risk-matrix {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+          .matrix-container {
+            margin: 20px 0;
+            overflow-x: auto;
+          }
+          .matrix-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(5, 1fr);
+            gap: 2px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .matrix-header-cell {
+            background: #F8F9FA;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #4C1D95;
+            border: 1px solid #E8ECF7;
+          }
+          .matrix-row-label {
+            background: #F8F9FA;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #4C1D95;
+            border: 1px solid #E8ECF7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .matrix-cell {
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 10px;
+            border: 1px solid #E8ECF7;
+            position: relative;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+          }
+          .matrix-cell.low {
+            background: #D1FAE5;
+            color: #065F46;
+          }
+          .matrix-cell.moderate {
+            background: #FEF3C7;
+            color: #92400E;
+          }
+          .matrix-cell.high {
+            background: #FED7AA;
+            color: #C2410C;
+          }
+          .matrix-cell.extreme {
+            background: #FECACA;
+            color: #BE123C;
+          }
+          .matrix-cell.current-risk {
+            background: #DBEAFE;
+            color: #1E40AF;
+            border: 2px solid #3B82F6;
+          }
+          .matrix-cell.residual-risk {
+            background: #FCE7F3;
+            color: #BE185D;
+            border: 2px solid #EC4899;
+          }
+          .matrix-cell.current-and-residual {
+            background: linear-gradient(135deg, #DBEAFE 50%, #FCE7F3 50%);
+            color: #1E40AF;
+            border: 2px solid #3B82F6;
+          }
+          .risk-indicator {
+            font-size: 8px;
+            font-weight: bold;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-top: 2px;
+          }
+          .risk-indicator.current {
+            background: #3B82F6;
+            color: white;
+          }
+          .risk-indicator.residual {
+            background: #EC4899;
+            color: white;
+          }
+          .matrix-legend {
+            margin-top: 15px;
+            text-align: center;
+          }
+          .legend-item {
+            display: inline-block;
+            margin: 0 15px;
+            font-size: 12px;
+            color: #666;
+          }
+          .legend-marker {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 5px;
+            vertical-align: middle;
+          }
+          .legend-marker.current {
+            background: #3B82F6;
+          }
+          .legend-marker.residual {
+            background: #EC4899;
+          }
+          
           .treatments-table {
             width: 100%;
             border-collapse: collapse;
@@ -692,7 +901,7 @@ export default function RiskInformation() {
           <div class="grid">
             <div class="field">
               <div class="field-label">Risk Rating</div>
-                             <div class="field-value">${risk.riskRating}</div>
+              <div class="field-value">${risk.riskRating}</div>
             </div>
             <div class="field">
               <div class="field-label">Impact (CIA)</div>
@@ -707,6 +916,11 @@ export default function RiskInformation() {
               <div class="field-value">${risk.vulnerability}</div>
             </div>
           </div>
+        </div>
+
+        <div class="section">
+          <h2>Risk Matrix</h2>
+          ${generateRiskMatrixHTML()}
         </div>
 
         <div class="section">
@@ -743,12 +957,26 @@ export default function RiskInformation() {
               <div class="field-value">${risk.riskAction}</div>
             </div>
             <div class="field">
-              <div class="field-label">Current Controls</div>
-              <div class="field-value">${Array.isArray(risk.currentControls) ? risk.currentControls.join(', ') : risk.currentControls}</div>
-            </div>
-            <div class="field">
               <div class="field-label">Jira Ticket</div>
               <div class="field-value">${risk.jiraTicket}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Controls</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Current Controls</div>
+              <div class="field-value">${Array.isArray(risk.currentControls) && risk.currentControls.length > 0 ? risk.currentControls.join(', ') : 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Current Controls Reference</div>
+              <div class="field-value">${Array.isArray(risk.currentControlsReference) && risk.currentControlsReference.length > 0 ? risk.currentControlsReference.join(', ') : 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Applicable Controls After Treatment</div>
+              <div class="field-value">${Array.isArray(risk.applicableControlsAfterTreatment) && risk.applicableControlsAfterTreatment.length > 0 ? risk.applicableControlsAfterTreatment.join(', ') : 'Not specified'}</div>
             </div>
           </div>
         </div>
@@ -765,17 +993,41 @@ export default function RiskInformation() {
               <div class="field-value">${risk.raisedBy}</div>
             </div>
             <div class="field">
-              <div class="field-label">Consequence</div>
-                             <div class="field-value">${risk.consequenceRating}</div>
+              <div class="field-label">Consequence Rating</div>
+              <div class="field-value">${risk.consequenceRating}</div>
             </div>
             <div class="field">
-              <div class="field-label">Likelihood</div>
-                             <div class="field-value">${risk.likelihoodRating}</div>
+              <div class="field-label">Likelihood Rating</div>
+              <div class="field-value">${risk.likelihoodRating}</div>
             </div>
           </div>
         </div>
 
-
+        <div class="section">
+          <h2>Residual Risk Assessment</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Residual Consequence</div>
+              <div class="field-value">${risk.residualConsequence || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Likelihood</div>
+              <div class="field-value">${risk.residualLikelihood || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Rating</div>
+              <div class="field-value">${risk.residualRiskRating || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Accepted By Owner</div>
+              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Date Residual Risk Accepted</div>
+              <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
+            </div>
+          </div>
+        </div>
 
         <div class="section">
           <h2>Approvals & Dates</h2>
@@ -787,14 +1039,6 @@ export default function RiskInformation() {
             <div class="field">
               <div class="field-label">Date Risk Treatments Approved</div>
               <div class="field-value">${formatDate(risk.dateRiskTreatmentsApproved)}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Date Residual Risk Accepted</div>
-              <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Residual Risk Accepted By</div>
-              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
             </div>
             ${risk.riskAction === 'Accept' ? `
             <div class="field">
@@ -812,7 +1056,8 @@ export default function RiskInformation() {
             <thead>
               <tr>
                 <th>Treatment</th>
-                <th>Jira Ticket</th>
+                <th>Treatment ID</th>
+                <th>Treatment Jira</th>
                 <th>Owner</th>
                 <th>Due Date</th>
                 <th>Extended Due Date</th>
@@ -825,7 +1070,8 @@ export default function RiskInformation() {
               ${treatments.map(treatment => `
                 <tr>
                   <td>${treatment.riskTreatment}</td>
-                                      <td>${treatment.treatmentId}</td>
+                  <td>${treatment.treatmentId}</td>
+                  <td>${treatment.treatmentJira || 'Not specified'}</td>
                   <td>${treatment.riskTreatmentOwner}</td>
                   <td>${formatDate(treatment.dateRiskTreatmentDue)}</td>
                   <td>${formatDate(treatment.extendedDueDate)}</td>

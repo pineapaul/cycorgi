@@ -1,0 +1,5 @@
+[33m8644a5c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msandbox[m[33m)[m feat: Convert applicableControlsAfterTreatment to array with SOA control integration
+[33mda73d82[m feat: Convert currentControlsReference to array with SOA control integration
+[33m22b513f[m Remove due date and extended due date fields from edit treatment form
+[33m4bdafd6[m Add Treatment Jira Ticket field to treatments page and details view
+[33m5ee98a3[m[33m ([m[1;31morigin/sandbox[m[33m)[m Merge branch 'sandbox' of https://github.com/pineapaul/cycorgi into sandbox Need to resolve merge conflicts

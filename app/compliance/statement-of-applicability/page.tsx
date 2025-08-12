@@ -168,14 +168,16 @@ export default function StatementOfApplicabilityPage() {
     let controlsHTML = '';
     
     if (viewMode === 'compact') {
-      // Compact view - just control sets with summary stats
+      // Compact view - control sets with summary stats and individual controls
       controlsHTML = filteredControls.map(controlSet => `
-        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+        <div style="margin-bottom: 30px; page-break-inside: avoid;">
           <h3 style="color: #1f2937; font-size: 18px; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">
             ${controlSet.id} - ${controlSet.title}
           </h3>
           <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description}</p>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+          
+          <!-- Control Set Summary Stats -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
             <div style="background: #f0f9ff; padding: 10px; border-radius: 8px; text-align: center;">
               <div style="color: #1e40af; font-weight: 600; font-size: 16px;">${controlSet.implementedCount}</div>
               <div style="color: #6b7280; font-size: 12px;">Implemented</div>
@@ -191,6 +193,48 @@ export default function StatementOfApplicabilityPage() {
             <div style="background: #fee2e2; padding: 10px; border-radius: 8px; text-align: center;">
               <div style="color: #991b1b; font-weight: 600; font-size: 16px;">${controlSet.statusCounts[CONTROL_STATUS.NOT_IMPLEMENTED]}</div>
               <div style="color: #6b7280; font-size: 12px;">Not Impl.</div>
+            </div>
+          </div>
+          
+          <!-- Individual Controls Table -->
+          <div style="margin-top: 20px;">
+            <h4 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Controls</h4>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background: #f9fafb;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Control ID</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Title</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Status</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Applicability</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Justification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${controlSet.controls.map(control => `
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                      <td style="padding: 12px; color: #1f2937; font-weight: 500; font-family: monospace;">${control.id}</td>
+                      <td style="padding: 12px; color: #374151;">${control.title}</td>
+                      <td style="padding: 12px; text-align: center;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; ${getPDFStatusStyle(control.controlStatus)}">
+                          ${control.controlStatus}
+                        </span>
+                      </td>
+                      <td style="padding: 12px; text-align: center;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; ${getPDFApplicabilityStyle(control.controlApplicability)}">
+                          ${control.controlApplicability}
+                        </span>
+                      </td>
+                      <td style="padding: 12px; color: #6b7280;">
+                        ${control.justification && control.justification.length > 0 
+                          ? control.justification.map(j => `<div style="margin-bottom: 4px;">• ${j}</div>`).join('') 
+                          : '<em style="color: #9ca3af;">None specified</em>'
+                        }
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -554,8 +598,8 @@ export default function StatementOfApplicabilityPage() {
                       onClick={() => setShowExportModal(true)}
                       className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                                          <Icon name="file-pdf" size={16} className="mr-2" />
-                    Export PDF
+                                                                  <Icon name="file-pdf" size={16} className="mr-2" />
+                        Export PDF
                     </button>
                   </div>
                 </div>
@@ -1309,7 +1353,7 @@ function ExportPDFModal({ onExport, onClose, isExporting }: ExportPDFModalProps)
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
             >
-              <Icon name="times" size={20} />
+              <Icon name="file-export" size={20} />
             </button>
           </div>
 
@@ -1342,12 +1386,12 @@ function ExportPDFModal({ onExport, onClose, isExporting }: ExportPDFModalProps)
                       <Icon name="list-bullet" size={20} className="text-green-600" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900">Compact View</h3>
-                    <p className="text-sm text-gray-600">
-                      Summary view with control set statistics and overview
-                    </p>
-                  </div>
+                                     <div className="flex-1">
+                     <h3 className="text-lg font-medium text-gray-900">Compact View</h3>
+                     <p className="text-sm text-gray-600">
+                       Control set summaries with individual controls in table format
+                     </p>
+                   </div>
                 </div>
               </div>
             </div>
