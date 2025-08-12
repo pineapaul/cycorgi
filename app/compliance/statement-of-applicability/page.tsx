@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Icon from '../../components/Icon';
+import { RelatedRisks, RelatedRisksCompact } from '../../components/RelatedRisks';
 import { 
   CONTROL_STATUS, 
   CONTROL_APPLICABILITY,
@@ -277,6 +278,15 @@ export default function StatementOfApplicabilityPage() {
                 <div style="margin-bottom: 10px;">
                   <strong style="color: #374151; font-size: 13px;">Implementation Details:</strong>
                   <p style="color: #6b7280; font-size: 12px; margin: 5px 0;">${control.implementationDetails}</p>
+                </div>
+              ` : ''}
+              
+              ${control.relatedRisks && control.relatedRisks.length > 0 ? `
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #374151; font-size: 13px;">Related Risks:</strong>
+                  <div style="margin: 5px 0;">
+                    ${control.relatedRisks.map(riskId => `<span style="display: inline-block; margin: 2px; padding: 2px 6px; background: #f3e8ff; color: #7c3aed; border-radius: 4px; font-size: 11px;">${riskId}</span>`).join('')}
+                  </div>
                 </div>
               ` : ''}
             </div>
@@ -1041,22 +1051,7 @@ export default function StatementOfApplicabilityPage() {
                                   )}
 
                                   {/* Related Risks */}
-                                  {control.relatedRisks && control.relatedRisks.length > 0 && (
-                                    <div className="bg-purple-50 rounded-lg p-4">
-                                      <div className="flex items-center space-x-2 mb-3">
-                                        <Icon name="exclamation-triangle" size={16} className="text-purple-500" />
-                                        <span className="text-sm font-medium text-purple-700">Related Risks</span>
-                                      </div>
-                                      <div className="flex flex-wrap gap-2">
-                                        {control.relatedRisks.map((riskId, index) => (
-                                          <span key={index} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs font-medium">
-                                            <Icon name="link" size={12} className="mr-1" />
-                                            {riskId}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
+                                  <RelatedRisks controlId={control.id} />
                                 </div>
                               </div>
                             </div>
@@ -1085,11 +1080,13 @@ export default function StatementOfApplicabilityPage() {
                                   </span>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getApplicabilityColor(control.controlApplicability)}`}>
                                     {control.controlApplicability}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                                  </span>
+                                  {/* Related Risks Indicator */}
+                                  <RelatedRisksCompact controlId={control.id} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1286,18 +1283,10 @@ function EditControlModal({ control, onSave, onClose }: EditControlModalProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Related Risks
               </label>
-              <div className="text-sm text-gray-600">
-                Currently linked to {formData.relatedRisks?.length || 0} risk(s)
+              <div className="text-sm text-gray-600 mb-3">
+                This control is automatically linked to risks that reference it in their current controls or applicable controls after treatment.
               </div>
-              {formData.relatedRisks && formData.relatedRisks.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {formData.relatedRisks.map((riskId) => (
-                    <span key={riskId} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                      {riskId}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <RelatedRisks controlId={control.id} />
             </div>
 
             {/* Modal Footer */}
