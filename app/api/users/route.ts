@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import getClientPromise from '@/lib/mongodb'
 import { USER_ROLES, USER_STATUS, UserRole, UserStatus } from '@/lib/constants'
+import { ObjectId } from 'mongodb'
 
 // GET - Fetch all users (Admin only)
 export async function GET() {
@@ -103,17 +104,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userId, role, status } = body
+    console.log('User update request body:', body)
+    
+    const { id, role, status } = body
 
-    if (!userId) {
+    if (!id) {
+      console.log('Missing user ID in request body')
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
     if (role && !Object.values(USER_ROLES).includes(role as UserRole)) {
+      console.log('Invalid role provided:', role)
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
     if (status && !Object.values(USER_STATUS).includes(status as UserStatus)) {
+      console.log('Invalid status provided:', status)
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
@@ -128,12 +134,27 @@ export async function PUT(request: NextRequest) {
     if (role) updateData.role = role
     if (status) updateData.status = status
 
+    console.log('Update data:', updateData)
+
+    // Convert string ID to ObjectId for MongoDB query
+    let objectId: ObjectId
+    try {
+      objectId = new ObjectId(id)
+      console.log('Converted ID to ObjectId:', objectId)
+    } catch (error) {
+      console.log('Failed to convert ID to ObjectId:', id, error)
+      return NextResponse.json({ error: 'Invalid user ID format' }, { status: 400 })
+    }
+
     const result = await db.collection('users').updateOne(
-      { _id: userId },
+      { _id: objectId },
       { $set: updateData }
     )
 
+    console.log('Update result:', result)
+
     if (result.matchedCount === 0) {
+      console.log('No user found with ID:', id)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 

@@ -27,6 +27,11 @@ export function RelatedRisks({ controlId, className = '' }: RelatedRisksProps) {
       
       try {
         const response = await fetch(`/api/compliance/soa/${controlId}/related-risks`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const result = await response.json()
         
         if (result.success) {
@@ -123,6 +128,11 @@ export function RelatedRisksCompact({ controlId }: { controlId: string }) {
       
       try {
         const response = await fetch(`/api/compliance/soa/${controlId}/related-risks`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const result = await response.json()
         
         if (result.success) {
