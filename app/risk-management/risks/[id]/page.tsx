@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber, mapAssetIdsToNames } from '@/lib/utils'
+import { RISK_ACTIONS } from '@/lib/constants'
 import DataTable from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
@@ -287,7 +288,7 @@ export default function RiskInformation() {
             consequenceRating: risk.consequenceRating,
             likelihoodRating: risk.likelihoodRating,
             riskRating: risk.riskRating,
-            riskAction: 'Requires treatment',
+            riskAction: risk.riskAction,
             reasonForAcceptance: risk.reasonForAcceptance || '',
             dateOfSSCApproval: risk.dateOfSSCApproval ? toDateInputValue(risk.dateOfSSCApproval) : '',
             dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? toDateInputValue(risk.dateRiskTreatmentsApproved) : '',
@@ -1247,13 +1248,33 @@ export default function RiskInformation() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <h4 className="text-sm font-semibold text-gray-700">Current Status & Risk Details</h4>
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
-                  {riskDetails.currentPhase}
-                </span>
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-gray-700">Risk Details</h4>
               </div>
               <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Phase</span>
+                  {isEditing ? (
+                    <select
+                      value={editedRisk?.currentPhase || ''}
+                      onChange={(e) => handleFieldChange('currentPhase', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mt-1"
+                    >
+                      <option value="">Select a phase</option>
+                      <option value="Draft">Draft</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Approved">Approved</option>
+                      <option value="In Treatment">In Treatment</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                  ) : (
+                    <div className="mt-1">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
+                        {riskDetails.currentPhase}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Impact (CIA)</span>
                   {isEditing ? (
@@ -1368,15 +1389,20 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Risk Action</span>
                   {isEditing ? (
-                    <input
-                      type="text"
+                    <select
                       value={editedRisk?.riskAction || ''}
                       onChange={(e) => handleFieldChange('riskAction', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="e.g., Requires treatment"
-                    />
+                    >
+                      <option value="">Select a risk action</option>
+                      {Object.values(RISK_ACTIONS).map((action) => (
+                        <option key={action} value={action}>
+                          {action}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction}</p>
+                    <p className="text-sm text-gray-900 mt-1">{riskDetails.riskAction || 'Not specified'}</p>
                   )}
                 </div>
                 <div>

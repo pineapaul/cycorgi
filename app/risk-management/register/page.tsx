@@ -433,7 +433,7 @@ export default function RiskRegister() {
               consequence: risk.consequenceRating,
               likelihood: risk.likelihoodRating,
               currentRiskRating: risk.riskRating,
-              riskAction: 'Requires treatment',
+              riskAction: risk.riskAction || 'Not specified',
               reasonForAcceptance: risk.reasonForAcceptance || '',
               dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
               riskTreatments: treatmentsText,

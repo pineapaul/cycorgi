@@ -180,6 +180,14 @@ export function validateAndTransformRiskData(
     errors.push('Functional unit is required and must be a non-empty string')
   }
 
+  // Validate riskAction if provided
+  if (data.riskAction && typeof data.riskAction === 'string' && data.riskAction.trim() !== '') {
+    const validRiskActions = ['Avoid', 'Transfer', 'Accept', 'Mitigate']
+    if (!validRiskActions.includes(data.riskAction)) {
+      errors.push(`Risk action must be one of: ${validRiskActions.join(', ')}`)
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
