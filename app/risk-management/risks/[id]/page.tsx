@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
 import { getCIAConfig, extractRiskNumber, mapAssetIdsToNames } from '@/lib/utils'
-import { RISK_ACTIONS } from '@/lib/constants'
+import { RISK_ACTIONS, RISK_PHASES } from '@/lib/constants'
 import DataTable from '@/app/components/DataTable'
 import { useToast } from '@/app/components/Toast'
 import { useBackNavigation } from '@/app/hooks/useBackNavigation'
@@ -1261,16 +1261,16 @@ export default function RiskInformation() {
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mt-1"
                     >
                       <option value="">Select a phase</option>
-                      <option value="Draft">Draft</option>
-                      <option value="Under Review">Under Review</option>
-                      <option value="Approved">Approved</option>
-                      <option value="In Treatment">In Treatment</option>
-                      <option value="Closed">Closed</option>
+                      {Object.values(RISK_PHASES).map((phase: string) => (
+                        <option key={phase} value={phase}>
+                          {phase}
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <div className="mt-1">
                       <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(riskDetails.currentPhase)}`}>
-                        {riskDetails.currentPhase}
+                        {riskDetails.currentPhase || 'Not specified'}
                       </span>
                     </div>
                   )}
