@@ -290,7 +290,7 @@ export default function RiskInformation() {
             dateRiskRaised: risk.createdAt ? toDateInputValue(risk.createdAt) : '2024-01-15',
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
-            affectedSites: risk.affectedSites,
+            affectedSites: risk.affectedSites || 'All Sites',
             informationAssets: mapAssetIdsToNames(risk.informationAsset, informationAssetsResult.data || []),
             threat: risk.threat,
             vulnerability: risk.vulnerability,

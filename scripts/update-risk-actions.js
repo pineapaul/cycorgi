@@ -14,7 +14,7 @@ function loadEnvFile() {
       if (key && valueParts.length > 0) {
         const value = valueParts.join('=').trim()
         if (!key.startsWith('#')) {
-          envVars[key.trim()] = value.replace(/^[\"'""'']|[\"'""'']$/g, '') // Remove quotes
+          envVars[key.trim()] = value.replace(/^["']|["']$/g, '') // Remove ASCII quotes
         }
       }
     })
@@ -32,6 +32,10 @@ loadEnvFile()
 // MongoDB connection string from environment
 const MONGODB_URI = process.env.MONGODB_URI
 
+if (!MONGODB_URI) {
+  console.error('Error: MONGODB_URI environment variable is not defined. Please set it in your .env.local file.')
+  process.exit(1)
+}
 // Risk action mapping logic based on risk characteristics
 function determineRiskAction(risk) {
   const { riskRating, currentPhase, consequenceRating, likelihoodRating } = risk
