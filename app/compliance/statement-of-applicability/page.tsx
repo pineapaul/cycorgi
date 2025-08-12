@@ -1353,7 +1353,7 @@ function ExportPDFModal({ onExport, onClose, isExporting }: ExportPDFModalProps)
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
             >
-              <Icon name="file-export" size={20} />
+              <Icon name="circle-xmark" size={20} />
             </button>
           </div>
 

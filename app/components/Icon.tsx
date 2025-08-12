@@ -192,6 +192,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     home: faHome,
     refresh: faRefresh,
     'x-circle': faCircleXmark,
+    'circle-xmark': faCircleXmark,
     'file-export': faFileExport,
   }
 
@@ -304,6 +305,7 @@ function getFallbackEmoji(name: string): string {
     home: '🏠',
     refresh: '🔄',
     'x-circle': '❌',
+    'circle-xmark': '❌',
     'file-export': '📤',
   }
   return emojiMap[name] || '📄'
