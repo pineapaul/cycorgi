@@ -5,9 +5,8 @@
  * Usage:
  *   1) Ensure you have Node 18+ and npm installed.
  *   2) Install the MongoDB driver (once):   npm i mongodb@6
- *   3) Export your connection string (DO NOT commit this):
- *        PowerShell:  $Env:MONGODB_URI="mongodb+srv://<user>:<pass>@<host>/<db>?retryWrites=true&w=majority"
- *        bash/zsh:    export MONGODB_URI="mongodb+srv://<user>:<pass>@<host>/<db>?retryWrites=true&w=majority"
+ *   3) Create .env.local file with your MongoDB connection string:
+ *        MONGODB_URI="mongodb+srv://<user>:<pass>@<host>/<db>?retryWrites=true&w=majority"
  *   4) (Optional) override DB and collection:
  *        export DB_NAME="grc_platform"
  *        export COLLECTION_NAME="risks"
@@ -20,11 +19,96 @@
  * - Annex A control references use ISO/IEC 27001:2022 style IDs (e.g., A.5.9, A.8.18).
  */
 
-import { MongoClient } from "mongodb";
+const { MongoClient } = require("mongodb");
+const path = require('path');
+const fs = require('fs');
+
+// Load environment variables from .env.local
+function loadEnvFile() {
+  const envPath = path.join(__dirname, '..', '.env.local');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const envVars = {};
+
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('=').trim();
+        if (!key.startsWith('#')) {
+          envVars[key.trim()] = value.replace(/^[\"'""'']|[\"'""'']$/g, ''); // Remove quotes
+        }
+      }
+    });
+
+    // Set environment variables
+    Object.keys(envVars).forEach(key => {
+      process.env[key] = envVars[key];
+    });
+  }
+}
+
+// Load environment variables
+loadEnvFile();
+
+// Check if .env.local exists and provide helpful error message
+if (!fs.existsSync(path.join(__dirname, '..', '.env.local'))) {
+  console.error("❌ .env.local file not found in project root");
+  console.error("Please create .env.local file with your MongoDB connection string:");
+  console.error("MONGODB_URI=mongodb+srv://<user>:<pass>@<host>/<db>?retryWrites=true&w=majority");
+  process.exit(1);
+}
+
+// Constants aligned with lib/constants.ts
+const RISK_PHASES = {
+  DRAFT: 'Draft',
+  IDENTIFICATION: 'Identification',
+  ANALYSIS: 'Analysis',
+  EVALUATION: 'Evaluation',
+  TREATMENT: 'Treatment',
+  MONITORING: 'Monitoring',
+  CLOSED: 'Closed'
+};
+
+const RISK_ACTIONS = {
+  AVOID: 'Avoid',
+  TRANSFER: 'Transfer',
+  ACCEPT: 'Accept',
+  MITIGATE: 'Mitigate'
+};
+
+const RISK_RATINGS = {
+  EXTREME: 'Extreme',
+  HIGH: 'High',
+  MODERATE: 'Moderate',
+  LOW: 'Low'
+};
+
+const CONSEQUENCE_RATINGS = {
+  INSIGNIFICANT: 'Insignificant',
+  MINOR: 'Minor',
+  MODERATE: 'Moderate',
+  MAJOR: 'Major',
+  CRITICAL: 'Critical'
+};
+
+const LIKELIHOOD_RATINGS = {
+  RARE: 'Rare',
+  UNLIKELY: 'Unlikely',
+  POSSIBLE: 'Possible',
+  LIKELY: 'Likely',
+  ALMOST_CERTAIN: 'Almost Certain'
+};
+
+const IMPACT_CIA = {
+  CONFIDENTIALITY: 'Confidentiality',
+  INTEGRITY: 'Integrity',
+  AVAILABILITY: 'Availability'
+};
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   console.error("Missing MONGODB_URI env var. Aborting.");
+  console.error("Please ensure your .env.local file contains: MONGODB_URI=your_mongodb_connection_string");
   process.exit(1);
 }
 
@@ -48,11 +132,11 @@ const infoAssetCatalog = [
   "Web Frontend","Payment Processor","CRM (HubSpot)","Data Modelling Sandbox"
 ];
 
-const riskActions = ["Mitigate","Avoid","Transfer","Accept"];
-const phases = ["Identification","Analysis","Evaluation","Treatment Planning","Implementation","Monitoring"];
-const likelihoods = ["Rare","Unlikely","Possible","Likely","Almost Certain"];
-const consequences = ["Insignificant","Minor","Moderate","Major","Critical"];
-const impactsAll = ["Confidentiality","Integrity","Availability"];
+const riskActions = Object.values(RISK_ACTIONS);
+const phases = [RISK_PHASES.IDENTIFICATION, RISK_PHASES.ANALYSIS, RISK_PHASES.EVALUATION, RISK_PHASES.TREATMENT, RISK_PHASES.MONITORING];
+const likelihoods = Object.values(LIKELIHOOD_RATINGS);
+const consequences = Object.values(CONSEQUENCE_RATINGS);
+const impactsAll = Object.values(IMPACT_CIA);
 
 // ISO/IEC 27001:2022 Annex A control IDs (truncated notation "A.x.y").
 const isoControls = ['A.5.1', 'A.5.2', 'A.5.3', 'A.5.4', 'A.5.5', 'A.5.6', 'A.5.7', 'A.5.8', 'A.5.9', 'A.5.10', 'A.5.11', 'A.5.12', 'A.5.13', 'A.5.14', 'A.5.15', 'A.5.16', 'A.5.17', 'A.5.18', 'A.5.19', 'A.5.20', 'A.5.21', 'A.5.22', 'A.5.23', 'A.5.24', 'A.5.25', 'A.5.26', 'A.5.27', 'A.5.28', 'A.5.29', 'A.5.30', 'A.5.31', 'A.5.32', 'A.5.33', 'A.5.34', 'A.5.35', 'A.5.36', 'A.5.37', 'A.6.1', 'A.6.2', 'A.6.3', 'A.6.4', 'A.6.5', 'A.6.6', 'A.6.7', 'A.6.8', 'A.7.1', 'A.7.2', 'A.7.3', 'A.7.4', 'A.7.5', 'A.7.6', 'A.7.7', 'A.7.8', 'A.7.9', 'A.7.10', 'A.7.11', 'A.7.12', 'A.7.13', 'A.7.14', 'A.8.1', 'A.8.2', 'A.8.3', 'A.8.4', 'A.8.5', 'A.8.6', 'A.8.7', 'A.8.8', 'A.8.9', 'A.8.10', 'A.8.11', 'A.8.12', 'A.8.13', 'A.8.14', 'A.8.15', 'A.8.16', 'A.8.17', 'A.8.18', 'A.8.19', 'A.8.20', 'A.8.21', 'A.8.22', 'A.8.23', 'A.8.24', 'A.8.25', 'A.8.26', 'A.8.27', 'A.8.28', 'A.8.29', 'A.8.30', 'A.8.31', 'A.8.32', 'A.8.33', 'A.8.34'];
@@ -69,14 +153,30 @@ function pick(arr, n=1) {
 
 function sample(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
 
+/**
+ * Calculate risk rating based on likelihood and consequence using the same matrix
+ * as defined in the RiskMatrix component.
+ * 
+ * Matrix structure (5x5):
+ * - Rows: Likelihood (Rare, Unlikely, Possible, Likely, Almost Certain)
+ * - Columns: Consequence (Insignificant, Minor, Moderate, Major, Critical)
+ * 
+ * This ensures consistency with the application's risk assessment methodology.
+ */
 function riskMatrix(consequence, likelihood) {
   const lIdx = likelihoods.indexOf(likelihood); // 0..4
   const cIdx = consequences.indexOf(consequence); // 0..4
-  const score = (lIdx+1)*(cIdx+1); // 1..25
-  if (score >= 20) return "Extreme";
-  if (score >= 12) return "High";
-  if (score >= 6) return "Moderate";
-  return "Low";
+  
+  // Use the same matrix as defined in RiskMatrix component
+  const riskMatrix = [
+    [RISK_RATINGS.LOW, RISK_RATINGS.LOW, RISK_RATINGS.MODERATE, RISK_RATINGS.HIGH, RISK_RATINGS.HIGH],           // Rare
+    [RISK_RATINGS.LOW, RISK_RATINGS.LOW, RISK_RATINGS.MODERATE, RISK_RATINGS.HIGH, RISK_RATINGS.EXTREME],         // Unlikely  
+    [RISK_RATINGS.LOW, RISK_RATINGS.MODERATE, RISK_RATINGS.HIGH, RISK_RATINGS.EXTREME, RISK_RATINGS.EXTREME],     // Possible
+    [RISK_RATINGS.MODERATE, RISK_RATINGS.MODERATE, RISK_RATINGS.HIGH, RISK_RATINGS.EXTREME, RISK_RATINGS.EXTREME], // Likely
+    [RISK_RATINGS.MODERATE, RISK_RATINGS.HIGH, RISK_RATINGS.EXTREME, RISK_RATINGS.EXTREME, RISK_RATINGS.EXTREME],  // Almost Certain
+  ];
+  
+  return riskMatrix[lIdx][cIdx];
 }
 
 // Some realistic risk templates
@@ -231,9 +331,9 @@ function makeRisk(i) {
   const updatedAt = randomDateBetween(treatmentCompleted, "2025-08-12T10:00:00Z");
   const createdAt = new Date(raised);
 
-  // Residuals: often reduced from initial
-  const residualLikelihood = sample(["Rare","Unlikely","Possible"]);
-  const residualConsequence = sample(["Insignificant","Minor","Moderate"]);
+  // Residuals: often reduced from initial (typically lower than initial risk)
+  const residualLikelihood = sample([LIKELIHOOD_RATINGS.RARE, LIKELIHOOD_RATINGS.UNLIKELY, LIKELIHOOD_RATINGS.POSSIBLE]);
+  const residualConsequence = sample([CONSEQUENCE_RATINGS.INSIGNIFICANT, CONSEQUENCE_RATINGS.MINOR, CONSEQUENCE_RATINGS.MODERATE]);
   const residualRiskRating = riskMatrix(residualConsequence, residualLikelihood);
 
   const impact = pick(impactsAll, 1 + Math.floor(Math.random()*3));
@@ -252,14 +352,14 @@ function makeRisk(i) {
     vulnerability: tmpl.vulnerability,
     currentControls,
     currentPhase: phase,
-    reasonForAcceptance: action === "Accept" ? "Residual risk within appetite for time-bound business needs." : "N/A",
+    reasonForAcceptance: action === RISK_ACTIONS.ACCEPT ? "Residual risk within appetite for time-bound business needs." : "N/A",
     dateOfSSCApproval: ssc.toISOString().slice(0,10),
     dateRiskTreatmentsApproved: treatmentsApproved.toISOString().slice(0,10),
     residualConsequence: residualConsequence,
     residualLikelihood: residualLikelihood,
     residualRiskRating: residualRiskRating,
     residualRiskAcceptedByOwner: sample(owners),
-    dateResidualRiskAccepted: action === "Accept" ? new Date(treatmentCompleted.getTime() + 1000*60*60*24*2).toISOString().slice(0,10) : null,
+    dateResidualRiskAccepted: action === RISK_ACTIONS.ACCEPT ? new Date(treatmentCompleted.getTime() + 1000*60*60*24*2).toISOString().slice(0,10) : null,
     dateRiskTreatmentCompleted: treatmentCompleted,
     dateRiskTreatmentsAssigned: treatmentsAssigned,
     applicableControlsAfterTreatment: pick([
@@ -293,7 +393,7 @@ async function main() {
     const db = client.db(DB_NAME);
     const col = db.collection(COLLECTION_NAME);
 
-    console.log(`Connected. Target => db={DB_NAME}, collection={COLLECTION_NAME}`);
+    console.log(`Connected. Target => db=${DB_NAME}, collection=${COLLECTION_NAME}`);
     console.log("Clearing existing data...");
     await col.deleteMany({});
 
