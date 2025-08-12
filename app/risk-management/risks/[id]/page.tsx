@@ -34,8 +34,9 @@ interface RiskDetails {
   vulnerability: string
   riskStatement: string
   impactCIA: string
-  currentControls: string
-  currentControlsReference: string
+  currentControls: string[]
+  currentControlsReference: string[]
+  applicableControlsAfterTreatment: string[]
   consequenceRating: string
   likelihoodRating: string
   riskRating: string
@@ -63,6 +64,17 @@ interface Treatment {
   closureApproval: string
   closureApprovedBy: string
   riskId?: string
+}
+
+interface SOAControl {
+  _id: string
+  id: string
+  title: string
+  description: string
+  controlStatus: string
+  controlApplicability: string
+  controlSetId: string
+  controlSetTitle: string
 }
 
 const parseDate = (dateString: string | null | undefined): Date | null => {
@@ -163,6 +175,9 @@ export default function RiskInformation() {
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
   const [selectedInformationAssets, setSelectedInformationAssets] = useState<string[]>([])
   const [originalInformationAssetIds, setOriginalInformationAssetIds] = useState<string[]>([])
+
+  // SOA Controls state
+  const [soaControls, setSoaControls] = useState<SOAControl[]>([])
 
   // Modal state for information assets selection
   const [showAssetModal, setShowAssetModal] = useState(false)
@@ -296,8 +311,9 @@ export default function RiskInformation() {
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
             impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
-            currentControls: risk.currentControls,
-            currentControlsReference: `CTRL-${extractRiskNumber(risk.riskId)}`,
+                              currentControls: Array.isArray(risk.currentControls) ? risk.currentControls : (risk.currentControls ? [risk.currentControls] : []),
+                  currentControlsReference: Array.isArray(risk.currentControlsReference) ? risk.currentControlsReference : (risk.currentControlsReference ? [risk.currentControlsReference] : []),
+                  applicableControlsAfterTreatment: Array.isArray(risk.applicableControlsAfterTreatment) ? risk.applicableControlsAfterTreatment : (risk.applicableControlsAfterTreatment ? [risk.applicableControlsAfterTreatment] : []),
             consequenceRating: risk.consequenceRating,
             likelihoodRating: risk.likelihoodRating,
             riskRating: risk.riskRating,
@@ -325,6 +341,18 @@ export default function RiskInformation() {
 
         if (treatmentsResult.success) {
           setTreatments(treatmentsResult.data)
+        }
+
+        // Fetch SOA controls
+        try {
+          const soaResponse = await fetch('/api/compliance/soa')
+          const soaResult = await soaResponse.json()
+          if (soaResult.success) {
+            setSoaControls(soaResult.data)
+          }
+        } catch (error) {
+          console.error('Error fetching SOA controls:', error)
+          // Don't fail if SOA controls fetch fails
         }
 
       } catch (err) {
@@ -518,6 +546,87 @@ export default function RiskInformation() {
   }
 
   const generatePDFHTML = (risk: RiskDetails, treatments: Treatment[]) => {
+    // Generate risk matrix HTML
+    const generateRiskMatrixHTML = () => {
+      const likelihoodLabels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain']
+      const consequenceLabels = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Critical']
+      const ratings = [
+        ['Low', 'Low', 'Moderate', 'High', 'High'],
+        ['Low', 'Low', 'Moderate', 'High', 'Extreme'],
+        ['Low', 'Moderate', 'High', 'Extreme', 'Extreme'],
+        ['Moderate', 'Moderate', 'High', 'Extreme', 'Extreme'],
+        ['Moderate', 'High', 'Extreme', 'Extreme', 'Extreme'],
+      ]
+
+      // Find current risk coordinates
+      const currentLikelihoodIndex = likelihoodLabels.findIndex(label => label === risk.likelihoodRating)
+      const currentConsequenceIndex = consequenceLabels.findIndex(label => label === risk.consequenceRating)
+      
+      // Find residual risk coordinates
+      const residualLikelihoodIndex = likelihoodLabels.findIndex(label => label === risk.residualLikelihood)
+      const residualConsequenceIndex = consequenceLabels.findIndex(label => label === risk.residualConsequence)
+
+      let matrixHTML = `
+        <div class="risk-matrix">
+          <h3>Risk Matrix</h3>
+          <div class="matrix-container">
+            <div class="matrix-grid">
+              <div class="matrix-header-cell"></div>
+      `
+      
+      // Add consequence headers
+      consequenceLabels.forEach(label => {
+        matrixHTML += `<div class="matrix-header-cell">${label}</div>`
+      })
+      
+      // Add matrix rows
+      likelihoodLabels.forEach((likelihood, lIdx) => {
+        matrixHTML += `<div class="matrix-row-label">${likelihood}</div>`
+        
+        consequenceLabels.forEach((consequence, cIdx) => {
+          const rating = ratings[lIdx][cIdx]
+          const isCurrentRisk = lIdx === currentLikelihoodIndex && cIdx === currentConsequenceIndex
+          const isResidualRisk = lIdx === residualLikelihoodIndex && cIdx === residualConsequenceIndex
+          
+          let cellClass = 'matrix-cell'
+          let cellContent = rating
+          
+          if (isCurrentRisk && isResidualRisk) {
+            cellClass += ' current-and-residual'
+            cellContent = `${rating}<br><span class="risk-indicator current">C</span><span class="risk-indicator residual">R</span>`
+          } else if (isCurrentRisk) {
+            cellClass += ' current-risk'
+            cellContent = `${rating}<br><span class="risk-indicator current">C</span>`
+          } else if (isResidualRisk) {
+            cellClass += ' residual-risk'
+            cellContent = `${rating}<br><span class="risk-indicator residual">R</span>`
+          }
+          
+          matrixHTML += `<div class="${cellClass} ${rating.toLowerCase()}">${cellContent}</div>`
+        })
+      })
+      
+      matrixHTML += `
+            </div>
+          </div>
+          <div class="matrix-legend">
+            <div class="legend-item">
+              <span class="legend-marker current"></span>
+              <span>Current Risk (${risk.likelihoodRating} × ${risk.consequenceRating} = ${risk.riskRating})</span>
+            </div>
+            ${risk.residualLikelihood && risk.residualConsequence ? `
+            <div class="legend-item">
+              <span class="legend-marker residual"></span>
+              <span>Residual Risk (${risk.residualLikelihood} × ${risk.residualConsequence} = ${risk.residualRiskRating})</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `
+      
+      return matrixHTML
+    }
+
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -563,6 +672,12 @@ export default function RiskInformation() {
             padding-bottom: 5px;
             border-bottom: 1px solid #E8ECF7;
           }
+          .section h3 {
+            color: #4C1D95;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+          }
           .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -603,6 +718,128 @@ export default function RiskInformation() {
             color: #333;
             line-height: 1.5;
           }
+          
+          /* Risk Matrix Styles */
+          .risk-matrix {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+          .matrix-container {
+            margin: 20px 0;
+            overflow-x: auto;
+          }
+          .matrix-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(5, 1fr);
+            gap: 2px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .matrix-header-cell {
+            background: #F8F9FA;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #4C1D95;
+            border: 1px solid #E8ECF7;
+          }
+          .matrix-row-label {
+            background: #F8F9FA;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #4C1D95;
+            border: 1px solid #E8ECF7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .matrix-cell {
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 10px;
+            border: 1px solid #E8ECF7;
+            position: relative;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+          }
+          .matrix-cell.low {
+            background: #D1FAE5;
+            color: #065F46;
+          }
+          .matrix-cell.moderate {
+            background: #FEF3C7;
+            color: #92400E;
+          }
+          .matrix-cell.high {
+            background: #FED7AA;
+            color: #C2410C;
+          }
+          .matrix-cell.extreme {
+            background: #FECACA;
+            color: #BE123C;
+          }
+          .matrix-cell.current-risk {
+            background: #DBEAFE;
+            color: #1E40AF;
+            border: 2px solid #3B82F6;
+          }
+          .matrix-cell.residual-risk {
+            background: #FCE7F3;
+            color: #BE185D;
+            border: 2px solid #EC4899;
+          }
+          .matrix-cell.current-and-residual {
+            background: linear-gradient(135deg, #DBEAFE 50%, #FCE7F3 50%);
+            color: #1E40AF;
+            border: 2px solid #3B82F6;
+          }
+          .risk-indicator {
+            font-size: 8px;
+            font-weight: bold;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-top: 2px;
+          }
+          .risk-indicator.current {
+            background: #3B82F6;
+            color: white;
+          }
+          .risk-indicator.residual {
+            background: #EC4899;
+            color: white;
+          }
+          .matrix-legend {
+            margin-top: 15px;
+            text-align: center;
+          }
+          .legend-item {
+            display: inline-block;
+            margin: 0 15px;
+            font-size: 12px;
+            color: #666;
+          }
+          .legend-marker {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 5px;
+            vertical-align: middle;
+          }
+          .legend-marker.current {
+            background: #3B82F6;
+          }
+          .legend-marker.residual {
+            background: #EC4899;
+          }
+          
           .treatments-table {
             width: 100%;
             border-collapse: collapse;
@@ -664,7 +901,7 @@ export default function RiskInformation() {
           <div class="grid">
             <div class="field">
               <div class="field-label">Risk Rating</div>
-                             <div class="field-value">${risk.riskRating}</div>
+              <div class="field-value">${risk.riskRating}</div>
             </div>
             <div class="field">
               <div class="field-label">Impact (CIA)</div>
@@ -679,6 +916,11 @@ export default function RiskInformation() {
               <div class="field-value">${risk.vulnerability}</div>
             </div>
           </div>
+        </div>
+
+        <div class="section">
+          <h2>Risk Matrix</h2>
+          ${generateRiskMatrixHTML()}
         </div>
 
         <div class="section">
@@ -715,12 +957,26 @@ export default function RiskInformation() {
               <div class="field-value">${risk.riskAction}</div>
             </div>
             <div class="field">
-              <div class="field-label">Current Controls</div>
-              <div class="field-value">${risk.currentControls}</div>
-            </div>
-            <div class="field">
               <div class="field-label">Jira Ticket</div>
               <div class="field-value">${risk.jiraTicket}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Controls</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Current Controls</div>
+              <div class="field-value">${Array.isArray(risk.currentControls) && risk.currentControls.length > 0 ? risk.currentControls.join(', ') : 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Current Controls Reference</div>
+              <div class="field-value">${Array.isArray(risk.currentControlsReference) && risk.currentControlsReference.length > 0 ? risk.currentControlsReference.join(', ') : 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Applicable Controls After Treatment</div>
+              <div class="field-value">${Array.isArray(risk.applicableControlsAfterTreatment) && risk.applicableControlsAfterTreatment.length > 0 ? risk.applicableControlsAfterTreatment.join(', ') : 'Not specified'}</div>
             </div>
           </div>
         </div>
@@ -737,17 +993,41 @@ export default function RiskInformation() {
               <div class="field-value">${risk.raisedBy}</div>
             </div>
             <div class="field">
-              <div class="field-label">Consequence</div>
-                             <div class="field-value">${risk.consequenceRating}</div>
+              <div class="field-label">Consequence Rating</div>
+              <div class="field-value">${risk.consequenceRating}</div>
             </div>
             <div class="field">
-              <div class="field-label">Likelihood</div>
-                             <div class="field-value">${risk.likelihoodRating}</div>
+              <div class="field-label">Likelihood Rating</div>
+              <div class="field-value">${risk.likelihoodRating}</div>
             </div>
           </div>
         </div>
 
-
+        <div class="section">
+          <h2>Residual Risk Assessment</h2>
+          <div class="grid">
+            <div class="field">
+              <div class="field-label">Residual Consequence</div>
+              <div class="field-value">${risk.residualConsequence || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Likelihood</div>
+              <div class="field-value">${risk.residualLikelihood || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Rating</div>
+              <div class="field-value">${risk.residualRiskRating || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Residual Risk Accepted By Owner</div>
+              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Date Residual Risk Accepted</div>
+              <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
+            </div>
+          </div>
+        </div>
 
         <div class="section">
           <h2>Approvals & Dates</h2>
@@ -759,14 +1039,6 @@ export default function RiskInformation() {
             <div class="field">
               <div class="field-label">Date Risk Treatments Approved</div>
               <div class="field-value">${formatDate(risk.dateRiskTreatmentsApproved)}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Date Residual Risk Accepted</div>
-              <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Residual Risk Accepted By</div>
-              <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
             </div>
             ${risk.riskAction === 'Accept' ? `
             <div class="field">
@@ -784,7 +1056,8 @@ export default function RiskInformation() {
             <thead>
               <tr>
                 <th>Treatment</th>
-                <th>Jira Ticket</th>
+                <th>Treatment ID</th>
+                <th>Treatment Jira</th>
                 <th>Owner</th>
                 <th>Due Date</th>
                 <th>Extended Due Date</th>
@@ -797,7 +1070,8 @@ export default function RiskInformation() {
               ${treatments.map(treatment => `
                 <tr>
                   <td>${treatment.riskTreatment}</td>
-                                      <td>${treatment.treatmentId}</td>
+                  <td>${treatment.treatmentId}</td>
+                  <td>${treatment.treatmentJira || 'Not specified'}</td>
                   <td>${treatment.riskTreatmentOwner}</td>
                   <td>${formatDate(treatment.dateRiskTreatmentDue)}</td>
                   <td>${formatDate(treatment.extendedDueDate)}</td>
@@ -1122,6 +1396,11 @@ export default function RiskInformation() {
   const handleAddRiskToWorkshop = () => {
     setIsWorkshopModalOpen(true)
     setIsOptionsMenuOpen(false) // Close options menu
+  }
+
+  // Helper function to get SOA control details by ID
+  const getSOAControlDetails = (controlId: string) => {
+    return soaControls.find(control => control.id === controlId)
   }
 
 
@@ -1504,21 +1783,6 @@ export default function RiskInformation() {
                 </div>
 
                 <div>
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
-                  {isEditing ? (
-                    <textarea
-                      value={editedRisk?.currentControls || ''}
-                      onChange={(e) => handleFieldChange('currentControls', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter current controls..."
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-900 mt-1">{riskDetails.currentControls}</p>
-                  )}
-                </div>
-                
-                <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Raised By</span>
                   {isEditing ? (
                     <input
@@ -1624,6 +1888,116 @@ export default function RiskInformation() {
         </div>
 
 
+
+        {/* Controls Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="w-1 h-6 bg-indigo-600 rounded-full mr-3"></div>
+            <h3 className="text-lg font-semibold text-gray-900">Controls</h3>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Current Controls</h4>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
+                  {isEditing ? (
+                    <textarea
+                      value={Array.isArray(editedRisk?.currentControls) ? editedRisk.currentControls.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter current controls (one per line)..."
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.currentControls) && riskDetails.currentControls.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.currentControls.map((control, index) => (
+                            <li key={index}>{control}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls Reference</span>
+                  {isEditing ? (
+                    <textarea
+                      value={Array.isArray(editedRisk?.currentControlsReference) ? editedRisk.currentControlsReference.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.currentControlsReference) && riskDetails.currentControlsReference.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.currentControlsReference.map((controlRef, index) => {
+                            const soaControl = getSOAControlDetails(controlRef)
+                            return (
+                              <li key={index}>
+                                <span className="font-mono text-purple-600">{controlRef}</span>
+                                {soaControl && (
+                                  <span className="text-gray-600 ml-2">- {soaControl.title}</span>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Post-Treatment Controls</h4>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Applicable Controls After Treatment</span>
+                  {isEditing ? (
+                    <textarea
+                      value={Array.isArray(editedRisk?.applicableControlsAfterTreatment) ? editedRisk.applicableControlsAfterTreatment.join('\n') : ''}
+                      onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-900 mt-1">
+                      {Array.isArray(riskDetails.applicableControlsAfterTreatment) && riskDetails.applicableControlsAfterTreatment.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {riskDetails.applicableControlsAfterTreatment.map((controlRef, index) => {
+                            const soaControl = getSOAControlDetails(controlRef)
+                            return (
+                              <li key={index}>
+                                <span className="font-mono text-purple-600">{controlRef}</span>
+                                {soaControl && (
+                                  <span className="text-gray-600 ml-2">- {soaControl.title}</span>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        'Not specified'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Ownership & Asset Section */}
         <div className="mb-8">

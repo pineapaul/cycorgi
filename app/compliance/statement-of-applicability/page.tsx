@@ -46,6 +46,8 @@ export default function StatementOfApplicabilityPage() {
   const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
   const [editingControl, setEditingControl] = useState<Control | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch data from API
   useEffect(() => {
@@ -102,6 +104,241 @@ export default function StatementOfApplicabilityPage() {
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setEditingControl(null);
+  };
+
+  const handleExportPDF = async (exportViewMode: 'expanded' | 'compact') => {
+    setIsExporting(true);
+    try {
+      // Generate HTML content based on the selected view mode
+      const htmlContent = generatePDFHTML(exportViewMode);
+      
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: htmlContent,
+          filename: `statement-of-applicability-${exportViewMode}-view.pdf`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `statement-of-applicability-${exportViewMode}-view.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setShowExportModal(false);
+    } catch (error) {
+      console.error('Export error:', error);
+      // TODO: Replace with toast notification - avoid alert() in production
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const generatePDFHTML = (viewMode: 'expanded' | 'compact') => {
+    const currentDate = new Date().toLocaleDateString('en-AU');
+    
+    // Helper functions to get PDF styles
+    const getPDFStatusStyle = (status: ControlStatus) => {
+      if (status === CONTROL_STATUS.IMPLEMENTED) return 'background: #dcfce7; color: #166534';
+      if (status === CONTROL_STATUS.NOT_IMPLEMENTED) return 'background: #fee2e2; color: #991b1b';
+      if (status === CONTROL_STATUS.PARTIALLY_IMPLEMENTED) return 'background: #fef3c7; color: #92400e';
+      if (status === CONTROL_STATUS.PLANNING_IMPLEMENTATION) return 'background: #dbeafe; color: #1e40af';
+      return 'background: #f3f4f6; color: #374151';
+    };
+
+    const getPDFApplicabilityStyle = (applicability: ControlApplicability) => {
+      if (applicability === CONTROL_APPLICABILITY.APPLICABLE) return 'background: #dcfce7; color: #166534';
+      return 'background: #f3f4f6; color: #374151';
+    };
+    
+    let controlsHTML = '';
+    
+    if (viewMode === 'compact') {
+      // Compact view - control sets with summary stats and individual controls
+      controlsHTML = filteredControls.map(controlSet => `
+        <div style="margin-bottom: 30px; page-break-inside: avoid;">
+          <h3 style="color: #1f2937; font-size: 18px; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">
+            ${controlSet.id} - ${controlSet.title}
+          </h3>
+          <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description}</p>
+          
+          <!-- Control Set Summary Stats -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+            <div style="background: #f0f9ff; padding: 10px; border-radius: 8px; text-align: center;">
+              <div style="color: #1e40af; font-weight: 600; font-size: 16px;">${controlSet.implementedCount}</div>
+              <div style="color: #6b7280; font-size: 12px;">Implemented</div>
+            </div>
+            <div style="background: #fef3c7; padding: 10px; border-radius: 8px; text-align: center;">
+              <div style="color: #92400e; font-weight: 600; font-size: 16px;">${controlSet.statusCounts[CONTROL_STATUS.PARTIALLY_IMPLEMENTED]}</div>
+              <div style="color: #6b7280; font-size: 12px;">Partial</div>
+            </div>
+            <div style="background: #e0e7ff; padding: 10px; border-radius: 8px; text-align: center;">
+              <div style="color: #3730a3; font-weight: 600; font-size: 16px;">${controlSet.statusCounts[CONTROL_STATUS.PLANNING_IMPLEMENTATION]}</div>
+              <div style="color: #6b7280; font-size: 12px;">Planning</div>
+            </div>
+            <div style="background: #fee2e2; padding: 10px; border-radius: 8px; text-align: center;">
+              <div style="color: #991b1b; font-weight: 600; font-size: 16px;">${controlSet.statusCounts[CONTROL_STATUS.NOT_IMPLEMENTED]}</div>
+              <div style="color: #6b7280; font-size: 12px;">Not Impl.</div>
+            </div>
+          </div>
+          
+          <!-- Individual Controls Table -->
+          <div style="margin-top: 20px;">
+            <h4 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Controls</h4>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background: #f9fafb;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Control ID</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Title</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Status</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Applicability</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600;">Justification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${controlSet.controls.map(control => `
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                      <td style="padding: 12px; color: #1f2937; font-weight: 500; font-family: monospace;">${control.id}</td>
+                      <td style="padding: 12px; color: #374151;">${control.title}</td>
+                      <td style="padding: 12px; text-align: center;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; ${getPDFStatusStyle(control.controlStatus)}">
+                          ${control.controlStatus}
+                        </span>
+                      </td>
+                      <td style="padding: 12px; text-align: center;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; ${getPDFApplicabilityStyle(control.controlApplicability)}">
+                          ${control.controlApplicability}
+                        </span>
+                      </td>
+                      <td style="padding: 12px; color: #6b7280;">
+                        ${control.justification && control.justification.length > 0 
+                          ? control.justification.map(j => `<div style="margin-bottom: 4px;">• ${j}</div>`).join('') 
+                          : '<em style="color: #9ca3af;">None specified</em>'
+                        }
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      // Expanded view - detailed control information
+      controlsHTML = filteredControls.map(controlSet => `
+        <div style="margin-bottom: 30px; page-break-inside: avoid;">
+          <h3 style="color: #1f2937; font-size: 20px; font-weight: 600; margin-bottom: 15px; border-bottom: 3px solid #3b82f6; padding-bottom: 10px;">
+            ${controlSet.id} - ${controlSet.title}
+          </h3>
+          <p style="color: #6b7280; font-size: 16px; margin-bottom: 20px;">${controlSet.description}</p>
+          
+          ${controlSet.controls.map(control => `
+            <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="color: #1f2937; font-size: 16px; font-weight: 600;">${control.id}</h4>
+                <div style="display: flex; gap: 10px;">
+                  <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; ${getPDFStatusStyle(control.controlStatus)}">
+                    ${control.controlStatus}
+                  </span>
+                  <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; ${getPDFApplicabilityStyle(control.controlApplicability)}">
+                    ${control.controlApplicability}
+                  </span>
+                </div>
+              </div>
+              <h5 style="color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 8px;">${control.title}</h5>
+              <p style="color: #6b7280; font-size: 13px; margin-bottom: 10px;">${control.description}</p>
+              
+              ${control.justification && control.justification.length > 0 ? `
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #374151; font-size: 13px;">Justifications:</strong>
+                  <ul style="margin: 5px 0; padding-left: 20px;">
+                    ${control.justification.map(j => `<li style="color: #6b7280; font-size: 12px;">${j}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+              
+              ${control.implementationDetails ? `
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #374151; font-size: 13px;">Implementation Details:</strong>
+                  <p style="color: #6b7280; font-size: 12px; margin: 5px 0;">${control.implementationDetails}</p>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Statement of Applicability - ${viewMode === 'expanded' ? 'Expanded' : 'Compact'} View</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; }
+            .header { text-align: center; margin-bottom: 40px; padding: 20px; border-bottom: 3px solid #3b82f6; }
+            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+            .stat-card { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+            .stat-number { font-size: 24px; font-weight: 700; color: #1e40af; }
+            .stat-label { font-size: 14px; color: #64748b; margin-top: 5px; }
+            .controls-section { margin-top: 40px; }
+            .page-break { page-break-before: always; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 10px;">
+              Statement of Applicability
+            </h1>
+            <p style="color: #64748b; font-size: 18px; margin-bottom: 5px;">
+              ISO 27001:2022 Annex A Controls Implementation Status
+            </p>
+            <p style="color: #94a3b8; font-size: 14px;">
+              Generated on ${currentDate} | ${viewMode === 'expanded' ? 'Expanded' : 'Compact'} View
+            </p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number">${stats.total}</div>
+              <div class="stat-label">Total Controls</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">${stats.implemented}</div>
+              <div class="stat-label">Implemented</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">${Math.round((stats.implemented / stats.total) * 100)}%</div>
+              <div class="stat-label">Implementation Rate</div>
+            </div>
+          </div>
+
+          <div class="controls-section">
+            <h2 style="color: #1e40af; font-size: 24px; font-weight: 600; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+              Control Implementation Details
+            </h2>
+            ${controlsHTML}
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const handleSaveControl = async (updatedControl: Control) => {
@@ -355,6 +592,16 @@ export default function StatementOfApplicabilityPage() {
                     <Icon name={viewMode === 'expanded' ? 'list-bullet' : 'squares-2x2'} size={16} className="mr-2" />
                     {viewMode === 'expanded' ? 'Compact View' : 'Expanded View'}
                   </button>
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportModal(true)}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                                                                  <Icon name="file-pdf" size={16} className="mr-2" />
+                        Export PDF
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -862,6 +1109,15 @@ export default function StatementOfApplicabilityPage() {
           onClose={handleCloseEditModal}
         />
       )}
+
+      {/* Export PDF Modal */}
+      {showExportModal && (
+        <ExportPDFModal
+          onExport={handleExportPDF}
+          onClose={() => setShowExportModal(false)}
+          isExporting={isExporting}
+        />
+      )}
     </div>
   );
 }
@@ -1062,6 +1318,104 @@ function EditControlModal({ control, onSave, onClose }: EditControlModalProps) {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Export PDF Modal Component
+interface ExportPDFModalProps {
+  onExport: (viewMode: 'expanded' | 'compact') => Promise<void>;
+  onClose: () => void;
+  isExporting: boolean;
+}
+
+function ExportPDFModal({ onExport, onClose, isExporting }: ExportPDFModalProps) {
+  return (
+    <>
+      {/* Background overlay with blur */}
+      <div 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Export to PDF</h2>
+              <p className="text-sm text-gray-600 mt-1">Choose your preferred view format</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            >
+              <Icon name="circle-xmark" size={20} />
+            </button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-6">
+            {/* Export Options */}
+            <div className="space-y-4">
+              <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer"
+                   onClick={() => onExport('expanded')}>
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Icon name="squares-2x2" size={20} className="text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium text-gray-900">Expanded View</h3>
+                    <p className="text-sm text-gray-600">
+                      Detailed control information including justifications, implementation details, and status
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer"
+                   onClick={() => onExport('compact')}>
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Icon name="list-bullet" size={20} className="text-green-600" />
+                    </div>
+                  </div>
+                                     <div className="flex-1">
+                     <h3 className="text-lg font-medium text-gray-900">Compact View</h3>
+                     <p className="text-sm text-gray-600">
+                       Control set summaries with individual controls in table format
+                     </p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Export Status */}
+            {isExporting && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-blue-800">Generating PDF...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+              </button>
+          </div>
         </div>
       </div>
     </>

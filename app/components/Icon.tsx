@@ -85,7 +85,8 @@ import {
   faSignOutAlt,
   faHome,
   faRefresh,
-  faCircleXmark
+  faCircleXmark,
+  faFileExport
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -191,6 +192,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     home: faHome,
     refresh: faRefresh,
     'x-circle': faCircleXmark,
+    'circle-xmark': faCircleXmark,
+    'file-export': faFileExport,
   }
 
   const icon = icons[name]
@@ -302,6 +305,8 @@ function getFallbackEmoji(name: string): string {
     home: '🏠',
     refresh: '🔄',
     'x-circle': '❌',
+    'circle-xmark': '❌',
+    'file-export': '📤',
   }
   return emojiMap[name] || '📄'
 } 

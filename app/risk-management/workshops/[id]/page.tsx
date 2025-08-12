@@ -2264,7 +2264,7 @@ export default function WorkshopDetails() {
                 </>
               ) : (
                 <>
-                  <Icon name="file-pdf" size={16} className="mr-2" />
+                  <Icon name="file-export" size={16} className="mr-2" />
                   Export PDF
                 </>
               )}

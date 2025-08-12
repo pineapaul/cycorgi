@@ -204,6 +204,65 @@ export default function TreatmentInformation() {
     )
   }, [handleMouseEnter, handleMouseLeave])
 
+  // Custom renderer for Information Assets
+  const renderInformationAssets = useCallback((value: any) => {
+    if (!value || value === 'Not specified' || value === '' || value === '-') {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    let assets: string[] = []
+
+    // Handle different data formats
+    if (Array.isArray(value)) {
+      // Handle array of objects with id/name or array of strings
+      assets = value.map((asset: any) => {
+        if (typeof asset === 'object' && asset !== null) {
+          // The API returns objects with id and name properties
+          if (asset.name) return asset.name
+          if (asset.id) return asset.id
+          if (asset.title) return asset.title
+          if (asset.label) return asset.label
+          // If none of the above, try to find any string property
+          const stringProps = Object.values(asset).filter(val => typeof val === 'string' && val.trim() !== '')
+          if (stringProps.length > 0) return stringProps[0]
+          return JSON.stringify(asset)
+        }
+        return String(asset)
+      }).filter(asset => asset && asset !== '[object Object]')
+    } else if (typeof value === 'string') {
+      // Handle comma-separated string (already mapped by mapAssetIdsToNames)
+      assets = value
+        .split(/[,;|]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+    } else {
+      // Fallback for other types
+      assets = [String(value)]
+    }
+
+    if (assets.length === 0) {
+      return (
+        <span className="text-gray-400 text-xs italic">Not specified</span>
+      )
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1.5 min-w-32 max-w-none">
+        {assets.map((asset, index) => (
+          <span
+            key={index}
+            className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200 transition-all duration-200 hover:scale-105 flex-shrink-0 whitespace-nowrap max-w-full"
+            title={asset}
+          >
+            <span className="truncate">{asset}</span>
+          </span>
+        ))}
+      </div>
+    )
+  }, [])
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -275,9 +334,11 @@ export default function TreatmentInformation() {
     if (!level || typeof level !== 'string') return 'bg-gray-100 text-gray-800'
     
     switch (level.toLowerCase()) {
-      case 'high':
+      case 'extreme':
         return 'bg-red-100 text-red-800'
-      case 'medium':
+      case 'high':
+        return 'bg-orange-100 text-orange-800'
+      case 'moderate':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
         return 'bg-green-100 text-green-800'
@@ -568,6 +629,22 @@ export default function TreatmentInformation() {
                        <span className="text-xs text-gray-500 uppercase tracking-wide">Extensions</span>
                        <p className="text-sm text-gray-900 mt-1">{treatment.numberOfExtensions}</p>
                      </div>
+                     {treatment.treatmentJira && (
+                       <div>
+                         <span className="text-xs text-gray-500 uppercase tracking-wide">Jira Ticket</span>
+                         <div className="mt-1">
+                           <a
+                             href={treatment.treatmentJira}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                           >
+                             <Icon name="link" size={12} className="mr-1" />
+                             {treatment.treatmentJira.split('/').pop() || treatment.treatmentJira}
+                           </a>
+                         </div>
+                       </div>
+                     )}
                      {treatment.extendedDueDate && (
                        <div>
                          <span className="text-xs text-gray-500 uppercase tracking-wide">Extended Due Date</span>
@@ -635,9 +712,9 @@ export default function TreatmentInformation() {
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Information Asset</span>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {mapAssetIdsToNames(risk.informationAsset, risk.informationAssetDetails || [])}
-                      </p>
+                      <div className="mt-1">
+                        {renderInformationAssets(mapAssetIdsToNames(risk.informationAsset, risk.informationAssetDetails || []))}
+                      </div>
                     </div>
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Functional Unit</span>

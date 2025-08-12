@@ -15,8 +15,6 @@ interface TreatmentFormData {
   treatmentJira?: string
   riskTreatment: string
   riskTreatmentOwner: string
-  dateRiskTreatmentDue: string
-  extendedDueDate?: string
   numberOfExtensions?: number
   completionDate?: string
   closureApproval?: string
@@ -44,8 +42,6 @@ export default function EditTreatment() {
     treatmentJira: '',
     riskTreatment: '',
     riskTreatmentOwner: '',
-    dateRiskTreatmentDue: '',
-    extendedDueDate: '',
     numberOfExtensions: 0,
     completionDate: '',
     closureApproval: TREATMENT_STATUS.PENDING,
@@ -59,7 +55,7 @@ export default function EditTreatment() {
   const [, setRiskDetails] = useState<any>(null)
   const [treatmentDetails, setTreatmentDetails] = useState<any>(null)
 
-  const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
+  const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner']
 
   // Fetch treatment and risk details
   useEffect(() => {
@@ -82,8 +78,6 @@ export default function EditTreatment() {
           treatmentJira: treatmentData.treatmentJira || '',
           riskTreatment: treatmentData.riskTreatment || '',
           riskTreatmentOwner: treatmentData.riskTreatmentOwner || '',
-          dateRiskTreatmentDue: treatmentData.dateRiskTreatmentDue ? new Date(treatmentData.dateRiskTreatmentDue).toISOString().split('T')[0] : '',
-          extendedDueDate: treatmentData.extendedDueDate ? new Date(treatmentData.extendedDueDate).toISOString().split('T')[0] : '',
           numberOfExtensions: treatmentData.numberOfExtensions || 0,
           completionDate: treatmentData.completionDate ? new Date(treatmentData.completionDate).toISOString().split('T')[0] : '',
           closureApproval: treatmentData.closureApproval || TREATMENT_STATUS.PENDING,
@@ -124,24 +118,14 @@ export default function EditTreatment() {
       }
     })
 
-    // Validate due date is not in the past
-    if (formData.dateRiskTreatmentDue) {
-      const dueDate = new Date(formData.dateRiskTreatmentDue)
+    // Validate completion date is from today onwards
+    if (formData.completionDate) {
+      const completionDate = new Date(formData.completionDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
-      if (dueDate < today) {
-        newErrors.dateRiskTreatmentDue = 'Due date cannot be in the past'
-      }
-    }
-
-    // Validate extended due date is after original due date
-    if (formData.extendedDueDate && formData.dateRiskTreatmentDue) {
-      const originalDueDate = new Date(formData.dateRiskTreatmentDue)
-      const extendedDueDate = new Date(formData.extendedDueDate)
-      
-      if (extendedDueDate <= originalDueDate) {
-        newErrors.extendedDueDate = 'Extended due date must be after the original due date'
+      if (completionDate < today) {
+        newErrors.completionDate = 'Completion date cannot be in the past'
       }
     }
 
@@ -337,47 +321,7 @@ export default function EditTreatment() {
                   )}
                 </div>
 
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="dateRiskTreatmentDue" className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="dateRiskTreatmentDue"
-                    value={formData.dateRiskTreatmentDue}
-                    onChange={(e) => handleInputChange('dateRiskTreatmentDue', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.dateRiskTreatmentDue 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  />
-                  {errors.dateRiskTreatmentDue && (
-                    <p className="mt-1 text-sm text-red-600">{errors.dateRiskTreatmentDue}</p>
-                  )}
-                </div>
 
-                {/* Extended Due Date */}
-                <div>
-                  <label htmlFor="extendedDueDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Extended Due Date
-                  </label>
-                  <input
-                    type="date"
-                    id="extendedDueDate"
-                    value={formData.extendedDueDate}
-                    onChange={(e) => handleInputChange('extendedDueDate', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.extendedDueDate 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  />
-                  {errors.extendedDueDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.extendedDueDate}</p>
-                  )}
-                </div>
               </div>
 
               {/* Risk Treatment - Full Width */}
@@ -420,8 +364,17 @@ export default function EditTreatment() {
                     id="completionDate"
                     value={formData.completionDate}
                     onChange={(e) => handleInputChange('completionDate', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    min={new Date().toISOString().split('T')[0]}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                      errors.completionDate 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                    }`}
                   />
+                  {errors.completionDate && (
+                    <p className="mt-1 text-sm text-red-600">{errors.completionDate}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">Only today and future dates can be selected</p>
                 </div>
 
                 {/* Closure Approval */}

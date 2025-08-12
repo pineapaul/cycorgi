@@ -19,8 +19,9 @@ export interface RiskData {
   vulnerability?: string
   riskStatement?: string
   impactCIA?: string
-  currentControls?: string
-  currentControlsReference?: string
+  currentControls?: string[]
+  currentControlsReference?: string[]
+  applicableControlsAfterTreatment?: string[]
   consequenceRating?: string
   likelihoodRating?: string
   riskRating?: string
@@ -143,6 +144,66 @@ export function validateAndTransformRiskData(
     transformedData.informationAsset = infoAssetValidation.transformedData
   }
 
+  // Validate and transform currentControls
+  if (data.currentControls !== undefined) {
+    if (Array.isArray(data.currentControls)) {
+      // Ensure all items are non-empty strings
+      const validControls = data.currentControls
+        .map(control => typeof control === 'string' ? control.trim() : '')
+        .filter(control => control.length > 0)
+      transformedData.currentControls = validControls
+    } else if (typeof data.currentControls === 'string') {
+      // Convert string to array format
+      const controlsArray = (data.currentControls as string)
+        .split(/[,;|\n\r]+/)
+        .map(control => control.trim())
+        .filter(control => control.length > 0)
+      transformedData.currentControls = controlsArray
+    } else {
+      errors.push('Current controls must be either an array of strings or a string')
+    }
+  }
+
+    // Validate and transform currentControlsReference
+  if (data.currentControlsReference !== undefined) {
+    if (Array.isArray(data.currentControlsReference)) {
+      // Ensure all items are non-empty strings
+      const validControlRefs = data.currentControlsReference
+        .map(ref => typeof ref === 'string' ? ref.trim() : '')
+        .filter(ref => ref.length > 0)
+      transformedData.currentControlsReference = validControlRefs
+    } else if (typeof data.currentControlsReference === 'string') {
+      // Convert string to array format
+      const controlRefsArray = (data.currentControlsReference as string)
+        .split(/[,;|\n\r]+/)
+        .map(ref => ref.trim())
+        .filter(ref => ref.length > 0)
+      transformedData.currentControlsReference = controlRefsArray
+    } else {
+      errors.push('Current controls reference must be either an array of strings or a string')
+    }
+  }
+
+  // Validate and transform applicableControlsAfterTreatment
+  if (data.applicableControlsAfterTreatment !== undefined) {
+    if (Array.isArray(data.applicableControlsAfterTreatment)) {
+      // Ensure all items are non-empty strings
+      const validControlRefs = data.applicableControlsAfterTreatment
+        .map(ref => typeof ref === 'string' ? ref.trim() : '')
+        .filter(ref => ref.length > 0)
+      transformedData.applicableControlsAfterTreatment = validControlRefs
+    } else if (typeof data.applicableControlsAfterTreatment === 'string') {
+      // Convert string to array format
+      const controlRefsArray = (data.applicableControlsAfterTreatment as string)
+        .split(/[,;|\n\r]+/)
+        .map(ref => ref.trim())
+        .filter(ref => ref.length > 0)
+      transformedData.applicableControlsAfterTreatment = controlRefsArray
+    } else {
+      errors.push('Applicable controls after treatment must be either an array of strings or a string')
+    }
+  }
+  
   // Validate other required fields
   if (!data.riskStatement || typeof data.riskStatement !== 'string' || data.riskStatement.trim() === '') {
     errors.push('Risk statement is required and must be a non-empty string')
