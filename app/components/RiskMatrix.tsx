@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 
 // Types
 export type RiskLevel = "Low" | "Moderate" | "High" | "Extreme";
@@ -172,13 +172,19 @@ export default function RiskMatrix({
     if (selected) setActive({ l: selected.likelihoodIndex, c: selected.consequenceIndex });
   }, [selected?.likelihoodIndex, selected?.consequenceIndex]);
 
-  const currentRiskCoords = currentRisk 
-    ? findMatrixCoordinates(currentRisk.likelihoodRating, currentRisk.consequenceRating, likelihoodLabels, consequenceLabels)
-    : null;
+  const currentRiskCoords = useMemo(() => 
+    currentRisk 
+      ? findMatrixCoordinates(currentRisk.likelihoodRating, currentRisk.consequenceRating, likelihoodLabels, consequenceLabels)
+      : null,
+    [currentRisk?.likelihoodRating, currentRisk?.consequenceRating, likelihoodLabels, consequenceLabels]
+  );
   
-  const residualRiskCoords = residualRisk 
-    ? findMatrixCoordinates(residualRisk.residualLikelihood, residualRisk.residualConsequence, likelihoodLabels, consequenceLabels)
-    : null;
+  const residualRiskCoords = useMemo(() => 
+    residualRisk 
+      ? findMatrixCoordinates(residualRisk.residualLikelihood, residualRisk.residualConsequence, likelihoodLabels, consequenceLabels)
+      : null,
+    [residualRisk?.residualLikelihood, residualRisk?.residualConsequence, likelihoodLabels, consequenceLabels]
+  );
 
   const handleSelect = (lIndex: number, cIndex: number) => {
     if (!isEditing) return;

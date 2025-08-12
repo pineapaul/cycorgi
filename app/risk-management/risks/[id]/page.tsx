@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
@@ -174,6 +174,19 @@ export default function RiskInformation() {
   const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
   const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false)
+
+  // Memoized risk matrix data to prevent unnecessary recalculations
+  const memoizedCurrentRisk = useMemo(() => ({
+    likelihoodRating: isEditing ? (editedRisk?.likelihoodRating || riskDetails?.likelihoodRating || '') : (riskDetails?.likelihoodRating || ''),
+    consequenceRating: isEditing ? (editedRisk?.consequenceRating || riskDetails?.consequenceRating || '') : (riskDetails?.consequenceRating || ''),
+    rating: (isEditing ? (editedRisk?.riskRating || riskDetails?.riskRating || 'Low') : (riskDetails?.riskRating || 'Low')) as "Low" | "Moderate" | "High" | "Extreme"
+  }), [isEditing, editedRisk?.likelihoodRating, editedRisk?.consequenceRating, editedRisk?.riskRating, riskDetails?.likelihoodRating, riskDetails?.consequenceRating, riskDetails?.riskRating])
+
+  const memoizedResidualRisk = useMemo(() => ({
+    residualLikelihood: isEditing ? (editedRisk?.residualLikelihood || riskDetails?.residualLikelihood || '') : (riskDetails?.residualLikelihood || ''),
+    residualConsequence: isEditing ? (editedRisk?.residualConsequence || riskDetails?.residualConsequence || '') : (riskDetails?.residualConsequence || ''),
+    rating: (isEditing ? (editedRisk?.residualRiskRating || riskDetails?.residualRiskRating || 'Low') : (riskDetails?.residualRiskRating || 'Low')) as "Low" | "Moderate" | "High" | "Extreme"
+  }), [isEditing, editedRisk?.residualLikelihood, editedRisk?.residualConsequence, editedRisk?.residualRiskRating, riskDetails?.residualLikelihood, riskDetails?.residualConsequence, riskDetails?.residualRiskRating])
 
 
 
@@ -1598,20 +1611,14 @@ export default function RiskInformation() {
                 </div>
               )}
               
-                             <RiskMatrix
-                  currentRisk={{
-                    likelihoodRating: isEditing ? (editedRisk?.likelihoodRating || riskDetails.likelihoodRating) : riskDetails.likelihoodRating,
-                    consequenceRating: isEditing ? (editedRisk?.consequenceRating || riskDetails.consequenceRating) : riskDetails.consequenceRating,
-                    rating: (isEditing ? (editedRisk?.riskRating || riskDetails.riskRating) : riskDetails.riskRating) as "Low" | "Moderate" | "High" | "Extreme"
-                  }}
-                  residualRisk={{
-                    residualLikelihood: isEditing ? (editedRisk?.residualLikelihood || riskDetails.residualLikelihood) : riskDetails.residualLikelihood,
-                    residualConsequence: isEditing ? (editedRisk?.residualConsequence || riskDetails.residualConsequence) : riskDetails.residualConsequence,
-                    rating: (isEditing ? (editedRisk?.residualRiskRating || riskDetails.residualRiskRating) : riskDetails.residualRiskRating) as "Low" | "Moderate" | "High" | "Extreme"
-                  }}
-                  isEditing={false}
-                  compact={true}
-                />
+                             {riskDetails && (
+                               <RiskMatrix
+                                 currentRisk={memoizedCurrentRisk}
+                                 residualRisk={memoizedResidualRisk}
+                                 isEditing={false}
+                                 compact={true}
+                               />
+                             )}
             </div>
           </div>
         </div>
