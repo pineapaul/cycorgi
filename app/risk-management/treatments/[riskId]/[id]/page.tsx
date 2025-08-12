@@ -568,6 +568,22 @@ export default function TreatmentInformation() {
                        <span className="text-xs text-gray-500 uppercase tracking-wide">Extensions</span>
                        <p className="text-sm text-gray-900 mt-1">{treatment.numberOfExtensions}</p>
                      </div>
+                     {treatment.treatmentJira && (
+                       <div>
+                         <span className="text-xs text-gray-500 uppercase tracking-wide">Jira Ticket</span>
+                         <div className="mt-1">
+                           <a
+                             href={treatment.treatmentJira}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                           >
+                             <Icon name="link" size={12} className="mr-1" />
+                             {treatment.treatmentJira.split('/').pop() || treatment.treatmentJira}
+                           </a>
+                         </div>
+                       </div>
+                     )}
                      {treatment.extendedDueDate && (
                        <div>
                          <span className="text-xs text-gray-500 uppercase tracking-wide">Extended Due Date</span>

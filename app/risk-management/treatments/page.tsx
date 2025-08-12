@@ -113,7 +113,8 @@ export default function Treatments() {
                closureApprovedBy: treatment.closureApprovedBy || 'Not specified',
                createdAt: formatDate(treatment.createdAt),
                updatedAt: formatDate(treatment.updatedAt),
-                               timeRemaining: calculateTimeRemaining(treatment.dateRiskTreatmentDue, treatment.extendedDueDate, treatment.closureApproval),
+               timeRemaining: calculateTimeRemaining(treatment.dateRiskTreatmentDue, treatment.extendedDueDate, treatment.closureApproval),
+               treatmentJira: treatment.treatmentJira || 'Not specified',
              }
            })
           setTreatments(transformedTreatments)
@@ -178,6 +179,7 @@ export default function Treatments() {
 
   const columns: Column[] = [
     { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
+    { key: 'treatmentJira', label: 'Jira Ticket', sortable: true, width: '180px' },
     { key: 'actions', label: 'Add to workshop agenda', sortable: false, width: '120px' },
     { key: 'treatmentType', label: 'Treatment', sortable: true },
     { key: 'treatmentStatus', label: 'Status', sortable: true, width: '100px' },
@@ -294,6 +296,25 @@ export default function Treatments() {
                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
              </div>
            </div>
+         )
+       }
+             if (col.key === 'treatmentJira') {
+         if (!value || value === 'Not specified') return <span className="text-gray-400">-</span>
+         
+         // Extract ticket ID from Jira URL
+         const ticketId = value.split('/').pop() || value
+         
+         return (
+           <a
+             href={value}
+             target="_blank"
+             rel="noopener noreferrer"
+             onClick={(e) => e.stopPropagation()}
+             className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+           >
+             <Icon name="link" size={12} className="mr-1" />
+             {ticketId}
+           </a>
          )
        }
              if (col.key === 'targetCompletionDate' || col.key === 'extendedDueDate' || col.key === 'actualCompletionDate' || col.key === 'createdAt') {
