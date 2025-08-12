@@ -277,7 +277,7 @@ export default function RiskInformation() {
             dateRiskRaised: risk.createdAt ? toDateInputValue(risk.createdAt) : '2024-01-15',
             raisedBy: risk.riskOwner,
             riskOwner: risk.riskOwner,
-            affectedSites: 'All Sites',
+            affectedSites: risk.affectedSites,
             informationAssets: mapAssetIdsToNames(risk.informationAsset, informationAssetsResult.data || []),
             threat: risk.threat,
             vulnerability: risk.vulnerability,
@@ -752,13 +752,15 @@ export default function RiskInformation() {
               <div class="field-value">${formatDate(risk.dateResidualRiskAccepted)}</div>
             </div>
             <div class="field">
-              <div class="field-label">Accepted By</div>
+              <div class="field-label">Residual Risk Accepted By</div>
               <div class="field-value">${risk.residualRiskAcceptedByOwner || 'Not specified'}</div>
             </div>
+            ${risk.riskAction === 'Accept' ? `
             <div class="field">
               <div class="field-label">Reason for Acceptance</div>
               <div class="field-value">${risk.reasonForAcceptance || 'Not specified'}</div>
             </div>
+            ` : ''}
           </div>
         </div>
 
@@ -911,9 +913,62 @@ export default function RiskInformation() {
 
       if (result.success) {
         // Update the local state with the actual API response data
-        setRiskDetails(result.data)
+        // The risk details will be updated in the refresh section below
         setIsEditing(false)
         setOriginalRisk(null)
+        
+        // Refresh both risk details and information assets to ensure we have the latest data
+        // Only refresh information assets if they were actually changed
+        // Compare the selected assets with the original information asset IDs
+        const informationAssetsChanged = JSON.stringify(selectedInformationAssets.sort()) !== JSON.stringify(originalInformationAssetIds.sort())
+        
+        try {
+          const [riskResponse, informationAssetsResponse] = await Promise.all([
+            fetch(riskApiUrl),
+            // Only fetch information assets if they changed
+            informationAssetsChanged ? fetch('/api/information-assets') : Promise.resolve({ json: () => Promise.resolve({ success: false }) })
+          ])
+          
+          const riskResult = await riskResponse.json()
+          const informationAssetsResult = await informationAssetsResponse.json()
+          
+          if (riskResult.success) {
+            // Update with the latest risk data from database
+            const latestRiskDetails = {
+              ...riskResult.data,
+              informationAssets: selectedInformationAssets.length > 0 
+                ? selectedInformationAssets.map(assetId => {
+                    const asset = informationAssetsResult.success 
+                      ? informationAssetsResult.data.find((a: any) => a.id === assetId)?.informationAsset || assetId
+                      : assetId
+                    return asset
+                  }).join(', ')
+                : ''
+            }
+            setRiskDetails(latestRiskDetails)
+          } else {
+            console.warn('Failed to refresh risk details:', riskResult.error)
+          }
+          
+          if (informationAssetsResult.success) {
+            setInformationAssets(informationAssetsResult.data)
+          } else {
+            console.warn('Failed to refresh information assets:', informationAssetsResult.error)
+          }
+        } catch (error) {
+          console.error('Error refreshing data:', error)
+          // Fallback: update with the current edited data if refresh fails
+          const fallbackRiskDetails = {
+            ...result.data,
+            informationAssets: selectedInformationAssets.length > 0 
+              ? selectedInformationAssets.map(assetId => {
+                  const asset = informationAssets.find(a => a.id === assetId)
+                  return asset?.informationAsset || assetId
+                }).join(', ')
+              : ''
+          }
+          setRiskDetails(fallbackRiskDetails)
+        }
         
         showToast({
           type: 'success',
@@ -1793,7 +1848,7 @@ export default function RiskInformation() {
                 )}
               </div>
               <div>
-                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Accepted By</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Residual Risk Accepted By</span>
                 {isEditing ? (
                   <input
                     type="text"
@@ -1807,20 +1862,23 @@ export default function RiskInformation() {
                 )}
               </div>
             </div>
-            <div>
-              <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Reason for Acceptance</span>
-              {isEditing ? (
-                <textarea
-                  value={editedRisk?.reasonForAcceptance || ''}
-                  onChange={(e) => handleFieldChange('reasonForAcceptance', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  rows={3}
-                  placeholder="Enter reason for acceptance..."
-                />
-              ) : (
-                <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
-              )}
-            </div>
+            {/* Only show Reason for Acceptance if Risk Action is "Accept" */}
+            {(isEditing ? editedRisk?.riskAction === 'Accept' : riskDetails.riskAction === 'Accept') && (
+              <div>
+                <span className="text-xs text-gray-500 uppercase tracking-wide block mb-2">Reason for Acceptance</span>
+                {isEditing ? (
+                  <textarea
+                    value={editedRisk?.reasonForAcceptance || ''}
+                    onChange={(e) => handleFieldChange('reasonForAcceptance', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    rows={3}
+                    placeholder="Enter reason for acceptance..."
+                  />
+                ) : (
+                  <p className="text-sm text-gray-900">{riskDetails.reasonForAcceptance || 'Not specified'}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
