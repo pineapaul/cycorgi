@@ -162,7 +162,7 @@ export default function RiskReports() {
         }))
       },
       {
-        id: 'Medium Risk',
+        id: 'Moderate Risk',
         data: months.map(month => ({
           x: month,
           y: monthlyData[month].medium
@@ -230,7 +230,7 @@ export default function RiskReports() {
   // Calculate summary statistics
   const totalRisks = risks.length
   const highRiskCount = risks.filter(r => r.riskRating?.toLowerCase().includes('high')).length
-  const mediumRiskCount = risks.filter(r => r.riskRating?.toLowerCase().includes('medium')).length
+  const moderateRiskCount = risks.filter(r => r.riskRating?.toLowerCase().includes('moderate')).length
   const lowRiskCount = risks.filter(r => r.riskRating?.toLowerCase().includes('low')).length
   const activeTreatments = treatments.filter(t => t.status === 'active').length
   const completedTreatments = treatments.filter(t => t.status === 'completed').length
@@ -303,8 +303,8 @@ export default function RiskReports() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Medium Risk</p>
-                <p className="text-2xl font-bold text-yellow-600">{mediumRiskCount}</p>
+                <p className="text-sm font-medium text-gray-600">Moderate Risk</p>
+                <p className="text-2xl font-bold text-yellow-600">{moderateRiskCount}</p>
               </div>
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Icon name="warning" size={16} className="text-yellow-600" />
@@ -687,7 +687,7 @@ export default function RiskReports() {
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{risk.riskStatement}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${risk.riskRating?.toLowerCase().includes('high') ? 'bg-red-100 text-red-800' :
-                          risk.riskRating?.toLowerCase().includes('medium') ? 'bg-yellow-100 text-yellow-800' :
+                          risk.riskRating?.toLowerCase().includes('moderate') ? 'bg-yellow-100 text-yellow-800' :
                             'bg-green-100 text-green-800'
                         }`}>
                         {risk.riskRating}

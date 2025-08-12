@@ -21,9 +21,9 @@ export interface RiskData {
   impactCIA?: string
   currentControls?: string
   currentControlsReference?: string
-  consequence?: string
-  likelihood?: string
-  currentRiskRating?: string
+  consequenceRating?: string
+  likelihoodRating?: string
+  riskRating?: string
   riskAction?: string
   reasonForAcceptance?: string
   dateOfSSCApproval?: string
@@ -156,16 +156,16 @@ export function validateAndTransformRiskData(
     errors.push('Vulnerability is required and must be a non-empty string')
   }
 
-  if (!data.consequence || typeof data.consequence !== 'string' || data.consequence.trim() === '') {
-    errors.push('Consequence is required and must be a non-empty string')
+  if (!data.consequenceRating || typeof data.consequenceRating !== 'string' || data.consequenceRating.trim() === '') {
+    errors.push('Consequence rating is required and must be a non-empty string')
   }
 
-  if (!data.likelihood || typeof data.likelihood !== 'string' || data.likelihood.trim() === '') {
-    errors.push('Likelihood is required and must be a non-empty string')
+  if (!data.likelihoodRating || typeof data.likelihoodRating !== 'string' || data.likelihoodRating.trim() === '') {
+    errors.push('Likelihood rating is required and must be a non-empty string')
   }
 
-  if (!data.currentRiskRating || typeof data.currentRiskRating !== 'string' || data.currentRiskRating.trim() === '') {
-    errors.push('Current risk rating is required and must be a non-empty string')
+  if (!data.riskRating || typeof data.riskRating !== 'string' || data.riskRating.trim() === '') {
+    errors.push('Risk rating is required and must be a non-empty string')
   }
 
   if (!data.riskOwner || typeof data.riskOwner !== 'string' || data.riskOwner.trim() === '') {
