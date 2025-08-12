@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Icon from '@/app/components/Icon'
 import Modal from '@/app/components/Modal'
+import { useToast } from '@/app/components/Toast'
 import { USER_ROLES, USER_STATUS } from '@/lib/constants'
 
 interface User {
@@ -30,6 +31,7 @@ interface EditUserData {
 
 export default function UsersPage() {
   const { data: session } = useSession()
+  const { showToast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +87,7 @@ export default function UsersPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to create user')
+        throw new Error(errorData.error || 'Failed to create user')
       }
 
       await fetchUsers()
@@ -96,8 +98,21 @@ export default function UsersPage() {
         role: USER_ROLES.VIEWER,
         status: USER_STATUS.PENDING
       })
+      setError(null)
+      
+      showToast({
+        type: 'success',
+        title: 'User Created',
+        message: 'User has been created successfully'
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create user'
+      setError(errorMessage)
+      showToast({
+        type: 'error',
+        title: 'Creation Failed',
+        message: errorMessage
+      })
     }
   }
 
@@ -105,7 +120,44 @@ export default function UsersPage() {
     e.preventDefault()
     if (!selectedUser) return
 
+    // Validate form data
+    if (!editUserData.role || !editUserData.status) {
+      setError('Role and status are required')
+      return
+    }
+
+    // Validate role and status values
+    if (!Object.values(USER_ROLES).includes(editUserData.role as any)) {
+      setError('Invalid role selected')
+      return
+    }
+
+    if (!Object.values(USER_STATUS).includes(editUserData.status as any)) {
+      setError('Invalid status selected')
+      return
+    }
+
+    // Prevent users from changing their own role to non-admin (which could lock them out)
+    if (selectedUser._id === session?.user?.id && editUserData.role !== USER_ROLES.ADMIN) {
+      setError('You cannot change your own role to non-admin as it could lock you out of the system')
+      return
+    }
+
+    // Prevent users from deactivating themselves
+    if (selectedUser._id === session?.user?.id && editUserData.status === USER_STATUS.INACTIVE) {
+      setError('You cannot deactivate your own account')
+      return
+    }
+
+    // Validate user ID format (should be a valid MongoDB ObjectId)
+    if (!selectedUser._id || typeof selectedUser._id !== 'string' || selectedUser._id.length !== 24) {
+      setError('Invalid user ID format')
+      return
+    }
+
     try {
+      console.log('Updating user:', selectedUser._id, 'with data:', editUserData)
+      
       const response = await fetch('/api/users', {
         method: 'PUT',
         headers: {
@@ -117,16 +169,36 @@ export default function UsersPage() {
         }),
       })
 
+      console.log('Update response status:', response.status)
+      
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to update user')
+        console.error('User update failed:', errorData)
+        throw new Error(errorData.error || 'Failed to update user')
       }
+
+      const result = await response.json()
+      console.log('User update successful:', result)
 
       await fetchUsers()
       setShowEditModal(false)
       setSelectedUser(null)
+      setError(null) // Clear any previous errors
+      
+      showToast({
+        type: 'success',
+        title: 'User Updated',
+        message: 'User has been updated successfully'
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update user')
+      console.error('Error updating user:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update user'
+      setError(errorMessage)
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: errorMessage
+      })
     }
   }
 
