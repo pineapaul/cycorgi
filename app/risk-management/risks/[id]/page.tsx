@@ -185,6 +185,13 @@ export default function RiskInformation() {
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
   const [selectedLetter, setSelectedLetter] = useState<string>('')
 
+  // Control selection modal state
+  const [showControlModal, setShowControlModal] = useState(false)
+  const [controlModalType, setControlModalType] = useState<'currentControlsReference' | 'applicableControlsAfterTreatment' | 'currentControls'>('currentControlsReference')
+  const [tempSelectedControls, setTempSelectedControls] = useState<string[]>([])
+  const [controlSearchTerm, setControlSearchTerm] = useState('')
+  const [selectedControlSet, setSelectedControlSet] = useState<string>('')
+
   // Workshop selection modal state
   const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
   const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
@@ -310,7 +317,7 @@ export default function RiskInformation() {
             threat: risk.threat,
             vulnerability: risk.vulnerability,
             riskStatement: risk.riskStatement,
-            impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : 'Not specified') : 'Not specified',
+            impactCIA: risk.impact ? (Array.isArray(risk.impact) ? risk.impact.join(', ') : risk.impact) : 'Not specified',
                               currentControls: Array.isArray(risk.currentControls) ? risk.currentControls : (risk.currentControls ? [risk.currentControls] : []),
                   currentControlsReference: Array.isArray(risk.currentControlsReference) ? risk.currentControlsReference : (risk.currentControlsReference ? [risk.currentControlsReference] : []),
                   applicableControlsAfterTreatment: Array.isArray(risk.applicableControlsAfterTreatment) ? risk.applicableControlsAfterTreatment : (risk.applicableControlsAfterTreatment ? [risk.applicableControlsAfterTreatment] : []),
@@ -1121,7 +1128,19 @@ export default function RiskInformation() {
     setEditedRisk(riskDetails)
 
     // Initialize selected information assets from the stored original IDs
-    setSelectedInformationAssets(originalInformationAssetIds)
+    // If we have original IDs, use them; otherwise, try to extract from informationAssets string
+    if (originalInformationAssetIds.length > 0) {
+      setSelectedInformationAssets(originalInformationAssetIds)
+    } else if (riskDetails.informationAssets) {
+      // Extract asset IDs from the informationAssets string by matching with informationAssets array
+      const assetNames = riskDetails.informationAssets.split(', ').map(name => name.trim())
+      const matchingAssetIds = informationAssets
+        .filter(asset => assetNames.includes(asset.informationAsset))
+        .map(asset => asset.id)
+      setSelectedInformationAssets(matchingAssetIds)
+    } else {
+      setSelectedInformationAssets([])
+    }
     
     // Ensure risk ratings are properly calculated when entering edit mode
     if (riskDetails.likelihoodRating && riskDetails.consequenceRating) {
@@ -1201,6 +1220,20 @@ export default function RiskInformation() {
       if (result.success) {
         // Update the local state with the actual API response data
         // The risk details will be updated in the refresh section below
+        
+        // Immediately update the editedRisk state with the saved values to ensure UI consistency
+        const savedRiskData = {
+          ...editedRisk,
+          impactCIA: editedRisk.impactCIA, // Keep the current edited value
+          informationAssets: selectedInformationAssets.length > 0 
+            ? selectedInformationAssets.map(assetId => {
+                const asset = informationAssets.find(a => a.id === assetId)
+                return asset?.informationAsset || assetId
+              }).join(', ')
+            : ''
+        }
+        setEditedRisk(savedRiskData)
+        
         setIsEditing(false)
         setOriginalRisk(null)
         
@@ -1219,22 +1252,42 @@ export default function RiskInformation() {
           const riskResult = await riskResponse.json()
           const informationAssetsResult = await informationAssetsResponse.json()
           
+
+          
           if (riskResult.success) {
             // Update with the latest risk data from database
-            const latestRiskDetails = {
+            // Transform the impact field to impactCIA for UI display
+            const transformedRiskData = {
               ...riskResult.data,
+              impactCIA: riskResult.data.impact ? (Array.isArray(riskResult.data.impact) ? riskResult.data.impact.join(', ') : riskResult.data.impact) : 'Not specified',
               informationAssets: selectedInformationAssets.length > 0 
                 ? selectedInformationAssets.map(assetId => {
-                    const asset = informationAssetsResult.success 
-                      ? informationAssetsResult.data.find((a: any) => a.id === assetId)?.informationAsset || assetId
-                      : assetId
-                    return asset
+                    const asset = informationAssets.find(a => a.id === assetId)
+                    return asset?.informationAsset || assetId
                   }).join(', ')
                 : ''
             }
-            setRiskDetails(latestRiskDetails)
+            
+
+            setRiskDetails(transformedRiskData)
+            // Also update the editedRisk state to reflect the new values in the form
+            setEditedRisk(transformedRiskData)
+
           } else {
             console.warn('Failed to refresh risk details:', riskResult.error)
+            // Use fallback data if refresh fails
+            const fallbackRiskDetails = {
+              ...result.data,
+              impactCIA: result.data.impact ? (Array.isArray(result.data.impact) ? result.data.impact.join(', ') : result.data.impact) : 'Not specified',
+              informationAssets: selectedInformationAssets.length > 0 
+                ? selectedInformationAssets.map(assetId => {
+                    const asset = informationAssets.find(a => a.id === assetId)
+                    return asset?.informationAsset || assetId
+                  }).join(', ')
+                : ''
+            }
+            setRiskDetails(fallbackRiskDetails)
+            setEditedRisk(fallbackRiskDetails)
           }
           
           if (informationAssetsResult.success) {
@@ -1245,8 +1298,10 @@ export default function RiskInformation() {
         } catch (error) {
           console.error('Error refreshing data:', error)
           // Fallback: update with the current edited data if refresh fails
+          // Since the API response data might not have the transformed fields, we need to handle this manually
           const fallbackRiskDetails = {
             ...result.data,
+            impactCIA: result.data.impact ? (Array.isArray(result.data.impact) ? result.data.impact.join(', ') : result.data.impact) : 'Not specified',
             informationAssets: selectedInformationAssets.length > 0 
               ? selectedInformationAssets.map(assetId => {
                   const asset = informationAssets.find(a => a.id === assetId)
@@ -1255,6 +1310,7 @@ export default function RiskInformation() {
               : ''
           }
           setRiskDetails(fallbackRiskDetails)
+          setEditedRisk(fallbackRiskDetails)
         }
         
         showToast({
@@ -1372,6 +1428,59 @@ export default function RiskInformation() {
     closeAssetModal()
   }
 
+  const openControlModal = (type: 'currentControlsReference' | 'applicableControlsAfterTreatment' | 'currentControls') => {
+    setControlModalType(type)
+    setControlSearchTerm('')
+    setSelectedControlSet('')
+    
+    // Initialize with current values
+    if (type === 'currentControlsReference') {
+      setTempSelectedControls([...(editedRisk?.currentControlsReference || [])])
+    } else if (type === 'applicableControlsAfterTreatment') {
+      setTempSelectedControls([...(editedRisk?.applicableControlsAfterTreatment || [])])
+    } else {
+      setTempSelectedControls([...(editedRisk?.currentControls || [])])
+    }
+    
+    setShowControlModal(true)
+  }
+
+  const closeControlModal = () => {
+    setShowControlModal(false)
+    setControlSearchTerm('')
+    setSelectedControlSet('')
+    setTempSelectedControls([])
+  }
+
+  const handleControlSelection = (controlId: string, checked: boolean) => {
+    setTempSelectedControls(prev =>
+      checked
+        ? [...prev, controlId]
+        : prev.filter(id => id !== controlId)
+    )
+  }
+
+  const applyControlSelection = () => {
+    if (controlModalType === 'currentControlsReference') {
+      handleFieldChange('currentControlsReference', [...tempSelectedControls])
+    } else if (controlModalType === 'applicableControlsAfterTreatment') {
+      handleFieldChange('applicableControlsAfterTreatment', [...tempSelectedControls])
+    } else {
+      handleFieldChange('currentControls', [...tempSelectedControls])
+    }
+    closeControlModal()
+  }
+
+  const addCurrentControl = (controlId: string) => {
+    if (!editedRisk) return
+    
+    const currentControls = Array.isArray(editedRisk.currentControls) ? [...editedRisk.currentControls] : []
+    if (!currentControls.includes(controlId)) {
+      currentControls.push(controlId)
+      handleFieldChange('currentControls', currentControls)
+    }
+  }
+
   const filteredAssets = informationAssets
     .filter(asset =>
       asset.informationAsset.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1382,6 +1491,23 @@ export default function RiskInformation() {
       return asset.informationAsset.toLowerCase().startsWith(selectedLetter.toLowerCase())
     })
     .sort((a, b) => a.informationAsset.localeCompare(b.informationAsset))
+
+  const filteredSOAControls = soaControls
+    .filter(control =>
+      control.id.toLowerCase().includes(controlSearchTerm.toLowerCase()) ||
+      control.title.toLowerCase().includes(controlSearchTerm.toLowerCase()) ||
+      control.description.toLowerCase().includes(controlSearchTerm.toLowerCase())
+    )
+    .filter(control => {
+      if (!selectedControlSet) return true
+      return control.controlSetId === selectedControlSet
+    })
+    .sort((a, b) => a.id.localeCompare(b.id))
+
+  const getUniqueControlSets = () => {
+    const sets = new Set(soaControls.map(control => control.controlSetId))
+    return Array.from(sets).sort()
+  }
 
   const handleAddTreatmentToWorkshop = (treatment: Treatment) => {
     setSelectedTreatmentForWorkshop(treatment)
@@ -1634,7 +1760,7 @@ export default function RiskInformation() {
                             id="edit-confidentiality-register"
                             checked={editedRisk?.impactCIA?.includes('Confidentiality')}
                             onChange={(e) => {
-                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Confidentiality']
                                 : currentCIA.filter(item => item !== 'Confidentiality')
@@ -1662,7 +1788,7 @@ export default function RiskInformation() {
                             id="edit-integrity-register"
                             checked={editedRisk?.impactCIA?.includes('Integrity')}
                             onChange={(e) => {
-                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Integrity']
                                 : currentCIA.filter(item => item !== 'Integrity')
@@ -1690,7 +1816,7 @@ export default function RiskInformation() {
                             id="edit-availability-register"
                             checked={editedRisk?.impactCIA?.includes('Availability')}
                             onChange={(e) => {
-                              const currentCIA = editedRisk?.impactCIA?.split(', ') || []
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Availability']
                                 : currentCIA.filter(item => item !== 'Availability')
@@ -1716,7 +1842,7 @@ export default function RiskInformation() {
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {riskDetails.impactCIA ? (
-                        (riskDetails.impactCIA?.split(', ') || []).map((cia: string, index: number) => {
+                        (riskDetails.impactCIA?.split(', ').filter(item => item.trim() !== '') || []).map((cia: string, index: number) => {
                           const config = getCIAConfig(cia)
                           return (
                             <span
@@ -1903,13 +2029,26 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls</span>
                   {isEditing ? (
-                    <textarea
-                      value={Array.isArray(editedRisk?.currentControls) ? editedRisk.currentControls.join('\n') : ''}
-                      onChange={(e) => handleFieldChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter current controls (one per line)..."
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => openControlModal('currentControls')}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
+                        >
+                          <Icon name="plus" size={12} className="mr-1" />
+                          Add Control
+                        </button>
+                        <span className="text-xs text-gray-500">or type manually below</span>
+                      </div>
+                      <textarea
+                        value={Array.isArray(editedRisk?.currentControls) ? editedRisk.currentControls.join('\n') : ''}
+                        onChange={(e) => handleFieldChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        rows={3}
+                        placeholder="Enter current controls (one per line)..."
+                      />
+                    </div>
                   ) : (
                     <div className="text-sm text-gray-900 mt-1">
                       {Array.isArray(riskDetails.currentControls) && riskDetails.currentControls.length > 0 ? (
@@ -1927,13 +2066,26 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Current Controls Reference</span>
                   {isEditing ? (
-                    <textarea
-                      value={Array.isArray(editedRisk?.currentControlsReference) ? editedRisk.currentControlsReference.join('\n') : ''}
-                      onChange={(e) => handleFieldChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => openControlModal('currentControlsReference')}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
+                        >
+                          <Icon name="plus" size={12} className="mr-1" />
+                          Select SOA Controls
+                        </button>
+                        <span className="text-xs text-gray-500">or type manually below</span>
+                      </div>
+                      <textarea
+                        value={Array.isArray(editedRisk?.currentControlsReference) ? editedRisk.currentControlsReference.join('\n') : ''}
+                        onChange={(e) => handleFieldChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        rows={3}
+                        placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                      />
+                    </div>
                   ) : (
                     <div className="text-sm text-gray-900 mt-1">
                       {Array.isArray(riskDetails.currentControlsReference) && riskDetails.currentControlsReference.length > 0 ? (
@@ -1965,13 +2117,26 @@ export default function RiskInformation() {
                 <div>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">Applicable Controls After Treatment</span>
                   {isEditing ? (
-                    <textarea
-                      value={Array.isArray(editedRisk?.applicableControlsAfterTreatment) ? editedRisk.applicableControlsAfterTreatment.join('\n') : ''}
-                      onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                      rows={3}
-                      placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => openControlModal('applicableControlsAfterTreatment')}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
+                        >
+                          <Icon name="plus" size={12} className="mr-1" />
+                          Select SOA Controls
+                        </button>
+                        <span className="text-xs text-gray-500">or type manually below</span>
+                      </div>
+                      <textarea
+                        value={Array.isArray(editedRisk?.applicableControlsAfterTreatment) ? editedRisk.applicableControlsAfterTreatment.join('\n') : ''}
+                        onChange={(e) => handleFieldChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        rows={3}
+                        placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
+                      />
+                    </div>
                   ) : (
                     <div className="text-sm text-gray-900 mt-1">
                       {Array.isArray(riskDetails.applicableControlsAfterTreatment) && riskDetails.applicableControlsAfterTreatment.length > 0 ? (
@@ -2563,6 +2728,151 @@ export default function RiskInformation() {
                 <button onClick={applyAssetSelection} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
                   Apply Selection
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SOA Controls Selection Modal */}
+      {showControlModal && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <Icon name="shield-check" size={20} className="text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {controlModalType === 'currentControls' ? 'Add Current Controls' : 
+                   controlModalType === 'currentControlsReference' ? 'Select SOA Controls Reference' : 
+                   'Select Applicable Controls After Treatment'}
+                </h3>
+              </div>
+              <button onClick={closeControlModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            {/* Search and Filter Controls */}
+            <div className="p-6 border-b border-gray-200 space-y-4">
+              <div className="relative">
+                <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search controls by ID, title, or description..."
+                  value={controlSearchTerm}
+                  onChange={(e) => setControlSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm font-medium text-gray-700">Control Set:</span>
+                <button
+                  onClick={() => setSelectedControlSet('')}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${selectedControlSet === ''
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  All Sets
+                </button>
+                {getUniqueControlSets().map((setId) => (
+                  <button
+                    key={setId}
+                    onClick={() => setSelectedControlSet(selectedControlSet === setId ? '' : setId)}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${selectedControlSet === setId
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                  >
+                    {setId}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Controls List */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredSOAControls.length === 0 ? (
+                <div className="text-center py-8">
+                  <Icon name="magnifying-glass" size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500">
+                    {controlSearchTerm || selectedControlSet ? 'No controls found matching your criteria.' : 'No SOA controls available.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredSOAControls.map((control) => (
+                    <div
+                      key={control._id}
+                      className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      {controlModalType === 'currentControls' ? (
+                        // For current controls, show an "Add" button instead of checkbox
+                        <button
+                          onClick={() => addCurrentControl(control.id)}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition-colors"
+                        >
+                          <Icon name="plus" size={12} className="mr-1" />
+                          Add
+                        </button>
+                      ) : (
+                        // For other control types, show checkbox
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedControls.includes(control.id)}
+                          onChange={(e) => handleControlSelection(control.id, e.target.checked)}
+                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded mt-1"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-mono text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                            {control.id}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            control.controlStatus === 'Implemented' ? 'bg-green-100 text-green-800' :
+                            control.controlStatus === 'Partially Implemented' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {control.controlStatus}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            control.controlApplicability === 'Applicable' ? 'bg-blue-100 text-blue-800' :
+                            control.controlApplicability === 'Not Applicable' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {control.controlApplicability}
+                          </span>
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 mb-1">{control.title}</div>
+                        <div className="text-xs text-gray-600">{control.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                {controlModalType === 'currentControls' ? (
+                  'Click "Add" button next to each control to add it to current controls'
+                ) : (
+                  `${tempSelectedControls.length} control${tempSelectedControls.length !== 1 ? 's' : ''} selected`
+                )}
+              </div>
+              <div className="flex space-x-3">
+                <button onClick={closeControlModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  {controlModalType === 'currentControls' ? 'Close' : 'Cancel'}
+                </button>
+                {controlModalType !== 'currentControls' && (
+                  <button onClick={applyControlSelection} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                    Apply Selection
+                  </button>
+                )}
               </div>
             </div>
           </div>

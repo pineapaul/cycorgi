@@ -42,7 +42,8 @@ export async function GET(
     console.error('Error fetching risk:', error)
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch risk'
+      error: 'Failed to fetch risk',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
@@ -82,11 +83,20 @@ export async function PUT(
       }, { status: 400 })
     }
     
-    const { riskId: validatedRiskId, ...validatedUpdateData } = validation.transformedData!
+    const { riskId: validatedRiskId, _id, ...validatedUpdateData } = validation.transformedData!
+    
+    // Remove any MongoDB-specific fields that shouldn't be updated
+    const cleanUpdateData = { ...validatedUpdateData }
+    // _id is already removed by destructuring, but let's be explicit
+    if ('_id' in cleanUpdateData) {
+      delete (cleanUpdateData as any)._id
+    }
+    
+
     
     const result = await collection.updateOne(
       { riskId: validatedRiskId },
-      { $set: validatedUpdateData }
+      { $set: cleanUpdateData }
     )
     
     if (result.matchedCount === 0) {

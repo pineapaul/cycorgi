@@ -262,6 +262,7 @@ const fakeInformationAssets = [
 
 export async function GET() {
   try {
+    console.log('Fetching information assets from database...')
     // Connect to MongoDB
     const client = await clientPromise()
     const db = client.db('cycorgi')
@@ -278,6 +279,7 @@ export async function GET() {
     
     // Retrieve all information assets
     let informationAssets = await collection.find({}).toArray()
+    console.log('Found information assets:', informationAssets.length)
     
     // Transform old data structure to new structure if needed
     informationAssets = informationAssets.map(asset => {
@@ -358,6 +360,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching information assets:', error)
+    console.log('Falling back to fake data due to error')
     return NextResponse.json(
       { 
         success: false, 

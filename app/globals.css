@@ -52,6 +52,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 /* Always show horizontal scrollbar */
 .data-table-container {
   overflow-x: scroll !important;
+  overflow-y: auto;
 }
 
 /* Ensure horizontal scrollbar is always visible */
@@ -73,6 +74,217 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .data-table-container::-webkit-scrollbar-track:horizontal {
   background: #f1f5f9 !important;
   border-radius: 4px !important;
+}
+
+/* Ensure table has proper minimum width */
+.data-table-container table {
+  min-width: max-content;
+  width: 100%;
+}
+
+/* Responsive table styles */
+@media (max-width: 640px) {
+  .data-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure minimum table width on mobile */
+  .data-table-container table {
+    min-width: 600px;
+  }
+  
+  /* Hide less important columns on mobile using CSS */
+  .data-table-container th:nth-child(n+6),
+  .data-table-container td:nth-child(n+6) {
+    display: none;
+  }
+  
+  /* Ensure Risk ID and Actions columns don't overlap */
+  .data-table-container th:first-child,
+  .data-table-container td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 10;
+  }
+  
+  .data-table-container th:nth-child(2),
+  .data-table-container td:nth-child(2) {
+    position: sticky;
+    left: 120px;
+    background: white;
+    z-index: 10;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .data-table-container {
+    overflow-x: auto;
+  }
+  
+  /* Show more columns on tablet */
+  .data-table-container th:nth-child(n+8),
+  .data-table-container td:nth-child(n+8) {
+    display: none;
+  }
+  
+  /* Ensure proper column spacing */
+  .data-table-container th,
+  .data-table-container td {
+    white-space: nowrap;
+  }
+}
+
+/* Ensure proper table layout */
+.data-table-container table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: max-content;
+}
+
+.data-table-container th,
+.data-table-container td {
+  border-right: none;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* Ensure headers are fully visible */
+.data-table-container thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 40;
+  white-space: normal;
+  word-wrap: break-word;
+  min-width: fit-content;
+}
+
+/* Remove column borders and use row borders instead */
+.data-table-container tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table-container tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Alternating row colors */
+.data-table-container tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.data-table-container tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Enhanced hover effect */
+.data-table-container tbody tr:hover {
+  background-color: #f3f4f6 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Ensure proper spacing between columns without borders */
+.data-table-container th:not(:last-child),
+.data-table-container td:not(:last-child) {
+  padding-right: 16px;
+}
+
+/* Prevent column overlapping */
+.data-table-container th,
+.data-table-container td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Improve table header alignment */
+.data-table-container thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 40;
+}
+
+/* Fix sticky positioning for Risk ID and Actions columns */
+@media (max-width: 1024px) {
+  .data-table-container th:nth-child(1),
+  .data-table-container td:nth-child(1) {
+    position: sticky !important;
+    left: 0 !important;
+    background: white !important;
+    z-index: 30 !important;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+  }
+  
+  .data-table-container th:nth-child(2),
+  .data-table-container td:nth-child(2) {
+    position: sticky !important;
+    left: 140px !important;
+    background: white !important;
+    z-index: 30 !important;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+  }
+}
+
+/* Ensure table cells don't collapse */
+.data-table-container td {
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+/* Ensure tooltips appear above all table elements */
+[data-tooltip],
+.tooltip {
+  z-index: 9999 !important;
+}
+
+/* Ensure tooltip containers have proper stacking context */
+.group {
+  position: relative;
+  z-index: 1;
+}
+
+/* Force tooltips to appear above sticky elements */
+.group:hover .absolute {
+  z-index: 9999 !important;
+  position: relative;
+}
+
+/* Special handling for wide columns like Risk Statement */
+.data-table-container td[style*="width: 500px"] .group:hover .absolute .max-w-md {
+  max-width: 32rem !important;
+  width: max-content !important;
+  min-width: 24rem !important;
+}
+
+/* Mobile card view improvements */
+@media (max-width: 1024px) {
+  .mobile-card {
+    @apply bg-white border border-gray-200 rounded-lg p-4 mb-3;
+  }
+  
+  .mobile-card-header {
+    @apply flex items-start justify-between mb-3;
+  }
+  
+  .mobile-card-content {
+    @apply space-y-2;
+  }
+  
+  .mobile-card-field {
+    @apply flex flex-col space-y-1;
+  }
+  
+  .mobile-card-label {
+    @apply text-xs font-medium text-gray-500 uppercase tracking-wide;
+  }
+  
+  .mobile-card-value {
+    @apply text-sm text-gray-900;
+  }
 }
 
 /* Risk ID button styles */

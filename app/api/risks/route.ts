@@ -97,6 +97,13 @@ export async function PUT(request: NextRequest) {
     const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const availableAssetIds = createAssetIdMap(informationAssets)
     
+    // Convert impactCIA string back to impact array for database storage
+    if (updateData.impactCIA) {
+      // Convert comma-separated string back to array
+      updateData.impact = (updateData.impactCIA?.split(', ') || []).filter((item: string) => item.trim() !== '')
+      delete updateData.impactCIA // Remove the string version as it's not stored in DB
+    }
+    
     // Validate and transform the update data
     const validation = validateAndTransformRiskData({ riskId, ...updateData }, availableAssetIds)
     
@@ -108,11 +115,20 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 })
     }
     
-    const { riskId: validatedRiskId, ...validatedUpdateData } = validation.transformedData!
+    const { riskId: validatedRiskId, _id, ...validatedUpdateData } = validation.transformedData!
+    
+    // Remove any MongoDB-specific fields that shouldn't be updated
+    const cleanUpdateData = { ...validatedUpdateData }
+    // _id is already removed by destructuring, but let's be explicit
+    if ('_id' in cleanUpdateData) {
+      delete (cleanUpdateData as any)._id
+    }
+    
+
     
     const result = await collection.updateOne(
       { riskId: validatedRiskId },
-      { $set: { ...validatedUpdateData, updatedAt: new Date().toISOString() } }
+      { $set: { ...cleanUpdateData, updatedAt: new Date().toISOString() } }
     )
     
     if (result.matchedCount === 0) {
