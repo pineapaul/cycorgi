@@ -818,14 +818,14 @@ export default function SystemSettingsPage() {
         />
       </Modal>
 
-      {/* Risk Treatment Due Dates Edit Modal */}
-      <Modal
-        isOpen={showEditDueDatesDialog}
-        onClose={handleCancelEditDueDates}
-        title="Edit Risk Treatment Due Dates"
-        subtitle="Configure automatic due dates for risk treatments based on risk ratings"
-        maxWidth="md"
-      >
+             {/* Risk Treatment Due Dates Edit Modal */}
+       <Modal
+         isOpen={showEditDueDatesDialog}
+         onClose={handleCancelEditDueDates}
+         title="Edit Risk Treatment Due Dates"
+         subtitle="Configure automatic due dates for risk treatments based on risk ratings"
+         maxWidth="lg"
+       >
         <EditDueDatesForm
           value={editingDueDates}
           onChange={setEditingDueDates}
@@ -870,7 +870,7 @@ function EditDueDatesForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6">
       <div className="grid gap-6 md:grid-cols-2">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-center space-x-2 mb-3">
