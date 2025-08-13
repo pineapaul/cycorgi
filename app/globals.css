@@ -235,22 +235,29 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   word-wrap: break-word;
 }
 
-/* Ensure tooltips appear above all table elements */
-[data-tooltip],
-.tooltip {
-  z-index: 9999 !important;
+/* Tooltip portal styles - tooltips are now rendered at document body level */
+.tooltip,
+[data-tooltip] {
+  position: relative;
 }
 
-/* Ensure tooltip containers have proper stacking context */
-.group {
+/* Ensure tooltips appear above all table elements */
+.data-table-container {
   position: relative;
   z-index: 1;
 }
 
-/* Force tooltips to appear above sticky elements */
-.group:hover .absolute {
-  z-index: 9999 !important;
-  position: relative;
+.data-table-container * {
+  z-index: auto;
+}
+
+/* Override any conflicting z-index values */
+.data-table-container thead th,
+.data-table-container th:nth-child(1),
+.data-table-container td:nth-child(1),
+.data-table-container th:nth-child(2),
+.data-table-container td:nth-child(2) {
+  z-index: 30 !important;
 }
 
 /* Special handling for wide columns like Risk Statement */
