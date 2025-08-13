@@ -37,24 +37,29 @@ export default function AuthButton() {
     }
   }, [isMenuOpen])
 
+  // Loading state with skeleton animation
   if (status === 'loading') {
     return (
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3 px-3 py-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-16 h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="text-xs text-gray-500">Loading...</div>
+        <div className="hidden md:block space-y-1">
+          <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
+          <div className="w-16 h-2 bg-gray-200 rounded animate-pulse" />
+        </div>
       </div>
     )
   }
 
+  // Sign in button - modern and inviting
   if (!session) {
     return (
       <button
         onClick={() => signIn('google')}
-        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+        className="group flex items-center space-x-2 px-4 py-2.5 bg-white text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 hover:border-purple-200 animate-pulse"
+        style={{ color: '#898AC4' }}
       >
-        <Icon name="login" className="w-4 h-4" />
-        <span>Sign In</span>
+        <Icon name="login" className="w-4 h-4 transition-transform group-hover:scale-110" />
+        <span className="font-medium">Sign In</span>
       </button>
     )
   }
@@ -62,70 +67,110 @@ export default function AuthButton() {
   // Compute anchor rect for portal positioning
   const anchorRect = anchorRef.current?.getBoundingClientRect()
 
+  // Fallback position if anchor rect is not available
+  const menuPosition = anchorRect ? {
+    top: anchorRect.bottom + 16, // Increased from 8 to 16 for better spacing
+    left: Math.max(8, Math.min(anchorRect.left, window.innerWidth - 8 - 288))
+  } : {
+    top: 80, // Fallback position below topbar
+    left: window.innerWidth - 300 // Right-aligned fallback
+  }
+
   return (
     <div className="relative">
-      {/* Tiny debug pill; remove later */}
-      <div className="absolute -top-8 left-0 bg-yellow-100 text-xs text-yellow-800 px-2 py-1 rounded border border-yellow-300 z-[60] whitespace-nowrap">
-        Session: {status} | Menu: {isMenuOpen ? 'Open' : 'Closed'}
-      </div>
-
+      {/* User button - clean and interactive */}
       <button
         ref={anchorRef}
         onClick={() => setIsMenuOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={isMenuOpen}
-        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+        className="group flex items-center space-x-3 p-2.5 rounded-xl hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:ring-offset-2 transition-all duration-200 border border-transparent hover:border-purple-100"
       >
+        {/* User avatar */}
         {session.user?.image ? (
-          // Prefer next/image in your app; <img> is fine for debugging
           <img
             src={session.user.image}
             alt={session.user.name || 'User'}
-            className="w-8 h-8 rounded-full"
+            className="w-9 h-9 rounded-full ring-2 ring-white shadow-sm group-hover:ring-purple-100 transition-all duration-200"
           />
         ) : (
-          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-            <Icon name="user" className="w-5 h-5 text-gray-600" />
+          <div className="w-9 h-9 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm group-hover:ring-purple-100 transition-all duration-200">
+            <Icon name="user" className="w-5 h-5 text-purple-600" />
           </div>
         )}
+        
+        {/* User info - responsive */}
         <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-          <p className="text-xs text-gray-500">{session.user?.role}</p>
+          <p className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+            {session.user?.name}
+          </p>
+          <p className="text-xs font-medium" style={{ color: '#898AC4' }}>
+            {session.user?.role}
+          </p>
         </div>
+        
+        {/* Dropdown arrow */}
         <Icon
           name="chevron-down"
-          className={`w-4 h-4 text-gray-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 transition-all duration-200 ${isMenuOpen ? 'rotate-180 text-purple-500' : 'text-gray-400 group-hover:text-gray-600'}`}
         />
       </button>
 
-      {/* MENU IN A PORTAL */}
-      {isMenuOpen && typeof window !== 'undefined' && anchorRect &&
+      {/* Dropdown menu in portal */}
+      {isMenuOpen && typeof window !== 'undefined' &&
         createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
-            // Fixed + viewport coords avoids clipping; z-[999] beats most headers
-            className="fixed z-[999] w-64 bg-white rounded-lg shadow-lg border py-2"
-            style={{
-              top: anchorRect.bottom + 8,
-              left: Math.max(8, Math.min(anchorRect.left, window.innerWidth - 8 - 256)), // keep on-screen
-            }}
-          >
-            <div className="px-4 py-2 border-b">
-              <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-              <p className="text-xs text-gray-500">{session.user?.email}</p>
-              <div className="flex items-center gap-2 mt-1">
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-[9998] bg-black/20"
+              onClick={() => setIsMenuOpen(false)}
+            />
+            <div
+              ref={menuRef}
+              role="menu"
+              className="fixed z-[9999] w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 py-4 transition-all duration-200 ease-out"
+              style={{
+                top: menuPosition.top,
+                left: menuPosition.left,
+              }}
+            >
+            {/* User header section */}
+            <div className="px-4 py-4 border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                {session.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || 'User'}
+                    className="w-12 h-12 rounded-full ring-2 ring-purple-100"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center ring-2 ring-purple-100">
+                    <Icon name="user" className="w-6 h-6 text-purple-600" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {session.user?.name}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {session.user?.email}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Role and status badges */}
+              <div className="flex items-center gap-2 mt-4">
                 {session.user?.role && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                     {session.user.role}
                   </span>
                 )}
                 {session.user?.status && (
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
                       session.user.status === 'Active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-green-50 text-green-700 border-green-100'
+                        : 'bg-yellow-50 text-yellow-700 border-yellow-100'
                     }`}
                   >
                     {session.user.status}
@@ -134,15 +179,16 @@ export default function AuthButton() {
               </div>
             </div>
 
-            <div className="py-1">
+            {/* Menu items */}
+            <div className="py-3">
               <button
                 onClick={() => {
                   setIsMenuOpen(false)
                   console.log('Navigate to profile')
                 }}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="group flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors duration-150"
               >
-                <Icon name="user" className="w-4 h-4 mr-3" />
+                <Icon name="user" className="w-4 h-4 mr-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
                 Profile
               </button>
               <button
@@ -150,26 +196,28 @@ export default function AuthButton() {
                   setIsMenuOpen(false)
                   console.log('Navigate to settings')
                 }}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="group flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors duration-150"
               >
-                <Icon name="settings" className="w-4 h-4 mr-3" />
+                <Icon name="settings" className="w-4 h-4 mr-3 text-gray-400 group-hover:text-purple-500 transition-colors" />
                 Settings
               </button>
             </div>
 
-            <div className="border-t">
+            {/* Sign out section */}
+            <div className="border-t border-gray-100 pt-3 pb-1">
               <button
                 onClick={() => {
                   setIsMenuOpen(false)
                   signOut({ callbackUrl: '/auth/signin' })
                 }}
-                className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                className="group flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
               >
-                <Icon name="logout" className="w-4 h-4 mr-3" />
+                <Icon name="logout" className="w-4 h-4 mr-3 text-red-400 group-hover:text-red-500 transition-colors" />
                 Sign Out
               </button>
             </div>
-          </div>,
+          </div>
+          </>,
           document.body
         )
       }

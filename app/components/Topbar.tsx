@@ -61,7 +61,7 @@ export default function Topbar() {
   const tabs = getTabs()
 
   return (
-    <header className="h-16 flex items-center justify-between px-3 md:px-6 shadow-sm overflow-hidden" style={{ backgroundColor: '#FFF2E0', borderBottom: '1px solid #C0C9EE' }}>
+    <header className="h-20 flex items-center justify-between px-3 md:px-6 py-4 shadow-md overflow-hidden" style={{ backgroundColor: '#FFF2E0', borderBottom: '1px solid #C0C9EE' }}>
       {/* Tabs */}
       <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto">
         {tabs.map((tab) => (
