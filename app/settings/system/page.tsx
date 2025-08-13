@@ -505,19 +505,27 @@ export default function SystemSettingsPage() {
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Retention Period (days)
-                    </label>
-                    <input
-                      type="number"
-                      min="30"
-                      max="3650"
-                      value={settings.security.retentionDays}
-                      onChange={(e) => handleSettingChange("security", "retentionDays", parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
+                                     <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Retention Period (days)
+                     </label>
+                     <input
+                       type="number"
+                       min="30"
+                       max="3650"
+                       value={settings.security.retentionDays}
+                       onChange={(e) => {
+                         const value = parseInt(e.target.value);
+                         if (!isNaN(value) && value >= 30 && value <= 3650) {
+                           handleSettingChange("security", "retentionDays", value);
+                         }
+                       }}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     />
+                     <p className="mt-1 text-xs text-gray-500">
+                       Must be between 30 and 3650 days
+                     </p>
+                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -559,12 +567,16 @@ export default function SystemSettingsPage() {
         />
       </Modal>
 
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
-          <Toast key={toast.id} {...toast} />
-        ))}
-      </div>
+             {/* Toast Container */}
+       <div className="fixed top-4 right-4 z-50 space-y-2">
+         {toasts.map(toast => (
+           <Toast 
+             key={toast.id} 
+             {...toast} 
+             onClose={() => removeToast(toast.id)}
+           />
+         ))}
+       </div>
     </div>
   );
 }
