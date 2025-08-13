@@ -86,7 +86,8 @@ import {
   faHome,
   faRefresh,
   faCircleXmark,
-  faFileExport
+  faFileExport,
+  faListCheck
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -166,6 +167,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'user-group': faUsers,
     'people-group': faUsers,
     'shield-exclamation': faShieldHalved,
+    'shield-halved': faShieldHalved,
     'message-circle': faMessage,
     send: faPaperPlane,
     comments: faComments,
@@ -194,6 +196,7 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'x-circle': faCircleXmark,
     'circle-xmark': faCircleXmark,
     'file-export': faFileExport,
+    'list-check': faListCheck,
   }
 
   const icon = icons[name]
@@ -279,6 +282,7 @@ function getFallbackEmoji(name: string): string {
     'user-group': '👥',
     'people-group': '👥',
     'shield-exclamation': '🛡️',
+    'shield-halved': '🛡️',
     'shield-x': '🛡️❌',
     'message-circle': '💬',
     send: '📤',
@@ -307,6 +311,7 @@ function getFallbackEmoji(name: string): string {
     'x-circle': '❌',
     'circle-xmark': '❌',
     'file-export': '📤',
+    'list-check': '✅',
   }
   return emojiMap[name] || '📄'
 } 
