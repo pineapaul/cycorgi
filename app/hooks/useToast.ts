@@ -14,7 +14,7 @@ export function useToast() {
   const [toasts, setToasts] = useState<ToastProps[]>([])
 
   const showToast = useCallback((options: ToastOptions) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    const id = crypto.randomUUID()
     const newToast: ToastProps = {
       id,
       type: options.type,
