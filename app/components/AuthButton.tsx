@@ -55,7 +55,7 @@ export default function AuthButton() {
     return (
       <button
         onClick={() => signIn('google')}
-        className="group flex items-center space-x-2 px-4 py-2.5 bg-white text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 hover:border-purple-200 animate-pulse"
+        className="group flex items-center space-x-2 px-4 py-2.5 bg-white text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 hover:border-purple-200"
         style={{ color: '#898AC4' }}
       >
         <Icon name="login" className="w-4 h-4 transition-transform group-hover:scale-110" />
