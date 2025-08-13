@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Icon from './Icon'
 import AuthButton from './AuthButton'
+import { signOut } from 'next-auth/react'
 
 export default function Topbar() {
   const [notifications] = useState(3)
