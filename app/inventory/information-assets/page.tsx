@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
@@ -49,11 +49,7 @@ export default function InformationAssetsPage() {
     'availability', 'criticality', 'additionalInfo', 'actions'
   ]))
 
-  useEffect(() => {
-    fetchAssets()
-  }, [])
-
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/information-assets')
@@ -70,7 +66,11 @@ export default function InformationAssetsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchAssets()
+  }, [fetchAssets])
 
   const allColumns: Column[] = [
     {

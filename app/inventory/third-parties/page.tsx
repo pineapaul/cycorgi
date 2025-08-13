@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
@@ -54,23 +54,7 @@ export default function ThirdPartiesPage() {
     sortOrder: 'asc'
   })
 
-  useEffect(() => {
-    fetchThirdParties()
-    fetchInformationAssets()
-  }, [])
-
-  // Handle filter changes
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(prev => ({ ...prev, ...newFilters }))
-    fetchThirdParties(1, { ...filters, ...newFilters })
-  }
-
-  // Handle pagination
-  const handlePageChange = (newPage: number) => {
-    fetchThirdParties(newPage, filters)
-  }
-
-  const fetchThirdParties = async (page = 1, newFilters = filters) => {
+  const fetchThirdParties = useCallback(async (page = 1, newFilters = filters) => {
     try {
       setLoading(true)
       
@@ -101,9 +85,9 @@ export default function ThirdPartiesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, pagination.limit])
 
-  const fetchInformationAssets = async () => {
+  const fetchInformationAssets = useCallback(async () => {
     try {
       const response = await fetch('/api/information-assets')
       const result = await response.json()
@@ -111,9 +95,25 @@ export default function ThirdPartiesPage() {
       if (result.success) {
         setInformationAssets(result.data)
       }
-    } catch (error) {
-      console.error('Error fetching information assets:', error)
+    } catch (err) {
+      console.error('Error fetching information assets:', err)
     }
+  }, [])
+
+  useEffect(() => {
+    fetchThirdParties()
+    fetchInformationAssets()
+  }, [fetchThirdParties, fetchInformationAssets])
+
+  // Handle filter changes
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(prev => ({ ...prev, ...newFilters }))
+    fetchThirdParties(1, { ...filters, ...newFilters })
+  }
+
+  // Handle pagination
+  const handlePageChange = (newPage: number) => {
+    fetchThirdParties(newPage, filters)
   }
 
 
