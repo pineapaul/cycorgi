@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
     
     // Fetch available information assets for validation
     const informationAssetsCollection = db.collection('information-assets')
-    const informationAssets = await informationAssetsCollection.find({}) as unknown as InformationAsset[]
+    const informationAssets = await informationAssetsCollection.find({}).toArray() as unknown as InformationAsset[]
     const availableAssetIds = createAssetIdMap(informationAssets)
     
     // Convert impactCIA string back to impact array for database storage

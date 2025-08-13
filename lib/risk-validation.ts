@@ -341,38 +341,104 @@ export function validateRiskId(riskId: string): string | null {
 /**
  * Transforms a risk object for API response, including information asset details
  */
-export function transformRiskForResponse(risk: RiskData & { _id?: string | ObjectId }, assetMap: Map<string, InformationAsset>): RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] } {
+export function transformRiskForResponse(risk: RiskData & { _id?: string | ObjectId }, assetMap: Map<string, InformationAsset>): RiskData & { _id?: string; informationAssetDetails?: InformationAsset[]; _transformationStatus?: 'success' | 'partial' | 'failed' } {
   try {
-    const transformedRisk = { ...risk } as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
+    const transformedRisk = { ...risk } as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[]; _transformationStatus?: 'success' | 'partial' | 'failed' }
     
     // Convert ObjectId to string if present
     if (transformedRisk._id && typeof transformedRisk._id === 'object') {
-      transformedRisk._id = (transformedRisk._id as any).toString()
+      try {
+        transformedRisk._id = (transformedRisk._id as any).toString()
+      } catch (idError) {
+        console.warn('Failed to convert ObjectId to string:', idError)
+        // Continue with transformation, but mark as partial
+        transformedRisk._transformationStatus = 'partial'
+      }
     }
 
-  // Don't set impactCIA - let the frontend handle the conversion from impact array to impactCIA string
-  // This prevents conflicts and ensures the frontend always has the correct format
+    // Don't set impactCIA - let the frontend handle the conversion from impact array to impactCIA string
+    // This prevents conflicts and ensures the frontend always has the correct format
 
-  // Add information asset details if we have asset IDs
-  if (transformedRisk.informationAsset && Array.isArray(transformedRisk.informationAsset)) {
-    transformedRisk.informationAssetDetails = transformedRisk.informationAsset
-      .map(assetId => assetMap.get(assetId))
-      .filter((asset): asset is InformationAsset => asset !== undefined)
-    
-    // Convert informationAsset IDs to informationAssets string for UI compatibility
-    transformedRisk.informationAssets = transformedRisk.informationAsset
-      .map(assetId => {
-        const asset = assetMap.get(assetId)
-        return asset ? asset.informationAsset : assetId
-      })
-      .join(', ')
-  }
+    // Add information asset details if we have asset IDs
+    if (transformedRisk.informationAsset && Array.isArray(transformedRisk.informationAsset)) {
+      try {
+        transformedRisk.informationAssetDetails = transformedRisk.informationAsset
+          .map(assetId => assetMap.get(assetId))
+          .filter((asset): asset is InformationAsset => asset !== undefined)
+        
+        // Convert informationAsset IDs to informationAssets string for UI compatibility
+        transformedRisk.informationAssets = transformedRisk.informationAsset
+          .map(assetId => {
+            const asset = assetMap.get(assetId)
+            return asset ? asset.informationAsset : assetId
+          })
+          .join(', ')
+        
+        // Check if we successfully mapped all assets
+        const mappedCount = transformedRisk.informationAssetDetails.length
+        const totalCount = transformedRisk.informationAsset.length
+        if (mappedCount < totalCount) {
+          console.warn(`Partial asset mapping: ${mappedCount}/${totalCount} assets found in assetMap for risk ${transformedRisk.riskId || 'unknown'}`)
+          if (transformedRisk._transformationStatus !== 'partial') {
+            transformedRisk._transformationStatus = 'partial'
+          }
+        }
+      } catch (assetError) {
+        console.error('Error processing information assets:', assetError)
+        console.error('Risk ID:', transformedRisk.riskId)
+        console.error('Asset IDs:', transformedRisk.informationAsset)
+        transformedRisk._transformationStatus = 'partial'
+        // Set fallback values
+        transformedRisk.informationAssetDetails = []
+        transformedRisk.informationAssets = Array.isArray(transformedRisk.informationAsset) 
+          ? transformedRisk.informationAsset.join(', ') 
+          : String(transformedRisk.informationAsset || '')
+      }
+    }
+
+    // Mark as successful if no issues occurred
+    if (!transformedRisk._transformationStatus) {
+      transformedRisk._transformationStatus = 'success'
+    }
 
     return transformedRisk
   } catch (error) {
-    console.error('Error in transformRiskForResponse:', error)
-    // Return the original risk data if transformation fails
-    return risk as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
+    // Log detailed error information
+    console.error('Critical error in transformRiskForResponse:', error)
+    console.error('Risk data that caused error:', {
+      riskId: risk.riskId,
+      functionalUnit: risk.functionalUnit,
+      _id: risk._id,
+      informationAssetCount: Array.isArray(risk.informationAsset) ? risk.informationAsset.length : 'not array'
+    })
+    console.error('Asset map size:', assetMap.size)
+    
+    // Create a fallback response with error indication
+    const fallbackRisk = {
+      ...risk,
+      _transformationStatus: 'failed' as const,
+      _transformationError: error instanceof Error ? error.message : String(error),
+      informationAssetDetails: [],
+      informationAssets: Array.isArray(risk.informationAsset) 
+        ? risk.informationAsset.join(', ') 
+        : String(risk.informationAsset || '')
+    } as RiskData & { 
+      _id?: string; 
+      informationAssetDetails?: InformationAsset[]; 
+      _transformationStatus: 'failed';
+      _transformationError: string;
+    }
+    
+    // Convert ObjectId to string if present in fallback
+    if (fallbackRisk._id && typeof fallbackRisk._id === 'object') {
+      try {
+        fallbackRisk._id = (fallbackRisk._id as any).toString()
+      } catch (idError) {
+        console.warn('Failed to convert ObjectId in fallback:', idError)
+      }
+    }
+    
+    return fallbackRisk
   }
 }
 
@@ -381,4 +447,50 @@ export function transformRiskForResponse(risk: RiskData & { _id?: string | Objec
  */
 export function createAssetIdMap(assets: InformationAsset[]): Set<string> {
   return new Set(assets.map(asset => asset.id))
+}
+
+/**
+ * Helper function to check if a risk transformation was successful
+ */
+export function isRiskTransformationSuccessful(risk: any): boolean {
+  return risk && risk._transformationStatus === 'success'
+}
+
+/**
+ * Helper function to get transformation status information
+ */
+export function getTransformationStatus(risk: any): {
+  status: 'success' | 'partial' | 'failed' | 'unknown';
+  error?: string;
+  details?: string;
+} {
+  if (!risk) {
+    return { status: 'unknown' }
+  }
+  
+  const status = risk._transformationStatus || 'unknown'
+  
+  if (status === 'failed') {
+    return {
+      status: 'failed',
+      error: risk._transformationError || 'Unknown transformation error',
+      details: `Risk ID: ${risk.riskId || 'unknown'}`
+    }
+  }
+  
+  if (status === 'partial') {
+    return {
+      status: 'partial',
+      details: `Risk ID: ${risk.riskId || 'unknown'} - Some transformations may have failed`
+    }
+  }
+  
+  if (status === 'success') {
+    return {
+      status: 'success',
+      details: `Risk ID: ${risk.riskId || 'unknown'} - All transformations successful`
+    }
+  }
+  
+  return { status: 'unknown' }
 } 
