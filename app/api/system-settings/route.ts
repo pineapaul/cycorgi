@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import clientPromise from '@/lib/mongodb'
+import getClientPromise from '@/lib/mongodb'
 import { USER_ROLES } from '@/lib/constants'
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const client = await clientPromise()
+    const client = await getClientPromise()
     const db = client.db('cycorgi')
     const collection = db.collection('system-settings')
     
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Get the latest user role from database to ensure it's current
-    const client = await clientPromise()
+    const client = await getClientPromise()
     const db = client.db('cycorgi')
     const userCollection = db.collection('users')
     
@@ -133,7 +133,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const client = await clientPromise()
+    const client = await getClientPromise()
     const db = client.db('cycorgi')
     const userCollection = db.collection('users')
     
