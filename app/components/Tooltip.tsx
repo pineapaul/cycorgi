@@ -91,9 +91,9 @@ export default function Tooltip({
   return (
     <div className={`relative group ${className}`}>
       {children}
-      <div className={`absolute ${getPositionClasses()} hidden group-hover:block z-10`}>
+      <div className={`absolute ${getPositionClasses()} hidden group-hover:block z-[9999]`}>
         <div 
-          className="text-white text-xs rounded-lg p-2 shadow-lg max-w-xs break-words"
+          className="text-white text-xs rounded-lg p-2 shadow-lg max-w-md break-words"
           style={themeStyles}
         >
           {content}

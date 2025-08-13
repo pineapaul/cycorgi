@@ -68,6 +68,20 @@ export default function DataTable<T = Record<string, unknown>>({
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columns.map(col => col.key)))
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
 
   // Constants
@@ -264,6 +278,55 @@ export default function DataTable<T = Record<string, unknown>>({
 
   const handleHideAllColumns = () => {
     setVisibleColumns(new Set())
+  }
+
+  // Get responsive columns based on screen size
+  const getResponsiveColumns = () => {
+    return columns.filter(column => visibleColumns.has(column.key)).map(col => ({
+      ...col,
+      responsive: {
+        // Small screens: Show only essential columns
+        sm: ['riskId', 'actions', 'currentPhase', 'currentRiskRating'].includes(col.key),
+        // Medium screens: Add functional unit and basic info
+        md: ['riskId', 'actions', 'functionalUnit', 'currentPhase', 'currentRiskRating', 'threat'].includes(col.key),
+        // Large screens: Add more detailed columns
+        lg: ['riskId', 'actions', 'functionalUnit', 'currentPhase', 'currentRiskRating', 'threat', 'vulnerability', 'riskStatement'].includes(col.key),
+        // Extra large: Show all columns
+        xl: true
+      }
+    }))
+  }
+
+  // Get columns that should be visible for current view mode
+  const getVisibleColumnsForView = () => {
+    if (viewMode === 'cards') {
+      return getResponsiveColumns()
+    }
+    
+    // For table view, always show all visible columns but apply responsive hiding
+    return getResponsiveColumns()
+  }
+
+  // Helper function to get status color (moved from parent component)
+  const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
+    
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'bg-gray-100 text-gray-800'
+      case 'identification':
+        return 'bg-blue-100 text-blue-800'
+      case 'analysis':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'evaluation':
+        return 'bg-purple-100 text-purple-800'
+      case 'treatment':
+        return 'bg-orange-100 text-orange-800'
+      case 'monitoring':
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
   }
 
   // Generate page numbers for pagination
@@ -648,7 +711,42 @@ export default function DataTable<T = Record<string, unknown>>({
 
       {/* Table with sticky headers */}
       <div className="bg-white rounded-lg border border-gray-200 relative">
-        {/* Table container with fixed height and scroll */}
+        {/* View Mode Toggle for Mobile */}
+        <div className="lg:hidden flex justify-end p-3 border-b border-gray-200">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'table' 
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                  : 'bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200'
+              }`}
+            >
+              Table
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'cards' 
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                  : 'bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200'
+              }`}
+            >
+              Cards
+            </button>
+          </div>
+        </div>
+        
+        {/* Auto-switch to cards on very small screens */}
+        {isMobile && viewMode === 'table' && (
+          <div className="lg:hidden px-3 py-2 bg-blue-50 border-b border-blue-200">
+            <p className="text-xs text-blue-700 text-center">
+              💡 Tip: Switch to Cards view for better mobile experience
+            </p>
+          </div>
+        )}
+
+        {/* Table container with responsive behavior */}
         <div 
           ref={tableContainerRef}
           className="overflow-x-auto overflow-y-auto data-table-container" 
@@ -657,7 +755,8 @@ export default function DataTable<T = Record<string, unknown>>({
             minHeight: '400px'
           }}
         >
-          <table className="w-full table-fixed">
+          {/* Desktop Table View */}
+          <table className={`w-full ${viewMode === 'table' ? 'table-auto' : 'table-fixed'}`}>
             <thead className="bg-gray-50 sticky top-0 z-20">
               <tr>
                 {selectable && (
@@ -680,33 +779,34 @@ export default function DataTable<T = Record<string, unknown>>({
                     />
                   </th>
                 )}
-                {columns.filter(column => visibleColumns.has(column.key)).map((column) => (
+                {getVisibleColumnsForView().map((column) => (
                   <th
                     key={column.key}
                     scope="col"
-                    className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
+                    className={`px-2 py-2 sm:px-3 md:px-4 lg:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
                       column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'
                     }`}
                     style={{ 
                       color: '#22223B',
                       width: column.width || 'auto',
-                      minWidth: column.width || '150px'
+                      minWidth: column.width || '120px',
+                      maxWidth: column.width || 'none'
                     }}
                   >
-                    <div className={`flex items-center space-x-1 ${
-                      column.align === 'center' ? 'justify-center' : 
-                      column.align === 'right' ? 'justify-end' : 'justify-start'
-                    }`}>
-                      <span>{column.label}</span>
-                      {sortColumn === column.key && (
-                        <Icon 
-                          name={sortDirection === 'asc' ? 'sort-up' : 'sort-down'} 
-                          size={12} 
-                          className="text-blue-500"
-                        />
-                      )}
-                    </div>
+                                         <div className={`flex items-center space-x-1 ${
+                       column.align === 'center' ? 'justify-center' : 
+                       column.align === 'right' ? 'justify-end' : 'justify-start'
+                     }`}>
+                       <span className="text-xs sm:text-sm break-words leading-tight">{column.label}</span>
+                       {sortColumn === column.key && (
+                         <Icon 
+                           name={sortDirection === 'asc' ? 'sort-up' : 'sort-down'} 
+                           size={12} 
+                           className="text-blue-500 flex-shrink-0 ml-1"
+                         />
+                       )}
+                     </div>
                   </th>
                 ))}
               </tr>
@@ -715,9 +815,8 @@ export default function DataTable<T = Record<string, unknown>>({
               {paginatedData.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick && onRowClick(row)}
-
                 >
                   {selectable && (
                     <td
@@ -733,7 +832,7 @@ export default function DataTable<T = Record<string, unknown>>({
                       />
                     </td>
                   )}
-                  {columns.filter(column => visibleColumns.has(column.key)).map((column) => {
+                  {getVisibleColumnsForView().map((column) => {
                     const cellValue = (row as any)[column.key]
                     return (
                     <td
@@ -745,23 +844,24 @@ export default function DataTable<T = Record<string, unknown>>({
                       style={{ 
                         color: '#22223B',
                         width: column.width || 'auto',
-                        minWidth: column.width || '150px'
+                        minWidth: column.width || '120px',
+                        maxWidth: column.width || 'none'
                       }}
                     >
                         <div className={`w-full ${
                         column.align === 'center' ? 'flex justify-center' : 
                         column.align === 'right' ? 'flex justify-end' : ''
                       }`}>
-                                                {column.render
-                            ? column.render(cellValue, row as any)
-                            : (
-                                <Tooltip content={cellValue ? String(cellValue) : '-'} theme="dark">
-                                  <span className="block break-words">
-                                    {cellValue ? String(cellValue) : '-'}
-                                  </span>
-                                </Tooltip>
-                              )
-                        }
+                                                                         {column.render
+                             ? column.render(cellValue, row as any)
+                             : (
+                                 <Tooltip content={cellValue ? String(cellValue) : '-'} theme="dark">
+                                   <span className="block break-words max-w-full">
+                                     {cellValue ? String(cellValue) : '-'}
+                                   </span>
+                                 </Tooltip>
+                               )
+                         }
                       </div>
                     </td>
                     )
@@ -770,6 +870,104 @@ export default function DataTable<T = Record<string, unknown>>({
               ))}
             </tbody>
           </table>
+
+                    {/* Mobile Card View */}
+          {viewMode === 'cards' && (
+            <div className="lg:hidden space-y-3 p-3">
+              {paginatedData.map((row, rowIndex) => (
+                <div
+                  key={rowIndex}
+                  className={`bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
+                    onRowClick ? 'cursor-pointer' : ''
+                  }`}
+                  onClick={() => onRowClick && onRowClick(row)}
+                >
+                  {/* Primary Info Row */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          {(row as any).riskId || 'N/A'}
+                        </span>
+                        {getResponsiveColumns().find(col => col.key === 'currentPhase') && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor((row as any).currentPhase)}`}>
+                            {(row as any).currentPhase || 'N/A'}
+                          </span>
+                        )}
+                      </div>
+                      {getResponsiveColumns().find(col => col.key === 'functionalUnit') && (
+                        <p className="text-sm text-gray-600 truncate">
+                          {(row as any).functionalUnit || 'N/A'}
+                        </p>
+                      )}
+                    </div>
+                    {getResponsiveColumns().find(col => col.key === 'actions') && (
+                      <div className="flex-shrink-0 ml-2">
+                        {columns.find(col => col.key === 'actions')?.render?.((row as any).actions, row as Record<string, unknown>)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Risk Rating and Key Info */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    {getResponsiveColumns().find(col => col.key === 'currentRiskRating') && (row as any).currentRiskRating && (
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          Risk Rating
+                        </span>
+                        <div className="text-gray-900">
+                          {columns.find(col => col.key === 'currentRiskRating')?.render?.((row as any).currentRiskRating, row as Record<string, unknown>) || (row as any).currentRiskRating}
+                        </div>
+                      </div>
+                    )}
+                    {getResponsiveColumns().find(col => col.key === 'threat') && (row as any).threat && (
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          Threat
+                        </span>
+                        <div className="text-gray-900 truncate">
+                          {(row as any).threat}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Risk Statement (if available) */}
+                  {getResponsiveColumns().find(col => col.key === 'riskStatement') && (row as any).riskStatement && (
+                    <div className="mb-3">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
+                        Risk Statement
+                      </span>
+                      <p className="text-sm text-gray-900 line-clamp-3">
+                        {(row as any).riskStatement}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Additional Info Row */}
+                  <div className="grid grid-cols-1 gap-2 text-sm pt-2 border-t border-gray-100">
+                    {getResponsiveColumns().filter(col => ['vulnerability', 'informationAssets'].includes(col.key)).map((column) => {
+                      const cellValue = (row as any)[column.key]
+                      if (!cellValue) return null
+                      
+                      return (
+                        <div key={column.key} className="space-y-1">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            {column.label}
+                          </span>
+                          <div className="text-gray-900">
+                            {column.render ? column.render(cellValue, row as Record<string, unknown>) : (
+                              <span className="truncate block">{String(cellValue)}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Empty state */}
