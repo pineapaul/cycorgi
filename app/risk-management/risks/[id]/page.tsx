@@ -1220,6 +1220,20 @@ export default function RiskInformation() {
       if (result.success) {
         // Update the local state with the actual API response data
         // The risk details will be updated in the refresh section below
+        
+        // Immediately update the editedRisk state with the saved values to ensure UI consistency
+        const savedRiskData = {
+          ...editedRisk,
+          impactCIA: editedRisk.impactCIA, // Keep the current edited value
+          informationAssets: selectedInformationAssets.length > 0 
+            ? selectedInformationAssets.map(assetId => {
+                const asset = informationAssets.find(a => a.id === assetId)
+                return asset?.informationAsset || assetId
+              }).join(', ')
+            : ''
+        }
+        setEditedRisk(savedRiskData)
+        
         setIsEditing(false)
         setOriginalRisk(null)
         
@@ -1238,12 +1252,42 @@ export default function RiskInformation() {
           const riskResult = await riskResponse.json()
           const informationAssetsResult = await informationAssetsResponse.json()
           
+
+          
           if (riskResult.success) {
             // Update with the latest risk data from database
-            // The API response should already have the transformed data with proper field names
-            setRiskDetails(riskResult.data)
+            // Transform the impact field to impactCIA for UI display
+            const transformedRiskData = {
+              ...riskResult.data,
+              impactCIA: riskResult.data.impact ? (Array.isArray(riskResult.data.impact) ? riskResult.data.impact.join(', ') : riskResult.data.impact) : 'Not specified',
+              informationAssets: selectedInformationAssets.length > 0 
+                ? selectedInformationAssets.map(assetId => {
+                    const asset = informationAssets.find(a => a.id === assetId)
+                    return asset?.informationAsset || assetId
+                  }).join(', ')
+                : ''
+            }
+            
+
+            setRiskDetails(transformedRiskData)
+            // Also update the editedRisk state to reflect the new values in the form
+            setEditedRisk(transformedRiskData)
+
           } else {
             console.warn('Failed to refresh risk details:', riskResult.error)
+            // Use fallback data if refresh fails
+            const fallbackRiskDetails = {
+              ...result.data,
+              impactCIA: result.data.impact ? (Array.isArray(result.data.impact) ? result.data.impact.join(', ') : result.data.impact) : 'Not specified',
+              informationAssets: selectedInformationAssets.length > 0 
+                ? selectedInformationAssets.map(assetId => {
+                    const asset = informationAssets.find(a => a.id === assetId)
+                    return asset?.informationAsset || assetId
+                  }).join(', ')
+                : ''
+            }
+            setRiskDetails(fallbackRiskDetails)
+            setEditedRisk(fallbackRiskDetails)
           }
           
           if (informationAssetsResult.success) {
@@ -1266,6 +1310,7 @@ export default function RiskInformation() {
               : ''
           }
           setRiskDetails(fallbackRiskDetails)
+          setEditedRisk(fallbackRiskDetails)
         }
         
         showToast({
@@ -1715,9 +1760,7 @@ export default function RiskInformation() {
                             id="edit-confidentiality-register"
                             checked={editedRisk?.impactCIA?.includes('Confidentiality')}
                             onChange={(e) => {
-                              const currentCIA = Array.isArray(editedRisk?.impactCIA) 
-                                ? editedRisk.impactCIA 
-                                : (editedRisk?.impactCIA?.split(', ') || [])
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Confidentiality']
                                 : currentCIA.filter(item => item !== 'Confidentiality')
@@ -1745,9 +1788,7 @@ export default function RiskInformation() {
                             id="edit-integrity-register"
                             checked={editedRisk?.impactCIA?.includes('Integrity')}
                             onChange={(e) => {
-                              const currentCIA = Array.isArray(editedRisk?.impactCIA) 
-                                ? editedRisk.impactCIA 
-                                : (editedRisk?.impactCIA?.split(', ') || [])
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Integrity']
                                 : currentCIA.filter(item => item !== 'Integrity')
@@ -1775,9 +1816,7 @@ export default function RiskInformation() {
                             id="edit-availability-register"
                             checked={editedRisk?.impactCIA?.includes('Availability')}
                             onChange={(e) => {
-                              const currentCIA = Array.isArray(editedRisk?.impactCIA) 
-                                ? editedRisk.impactCIA 
-                                : (editedRisk?.impactCIA?.split(', ') || [])
+                              const currentCIA = editedRisk?.impactCIA?.split(', ').filter(item => item.trim() !== '') || []
                               const newCIA = e.target.checked
                                 ? [...currentCIA, 'Availability']
                                 : currentCIA.filter(item => item !== 'Availability')
@@ -1803,9 +1842,7 @@ export default function RiskInformation() {
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {riskDetails.impactCIA ? (
-                        (Array.isArray(riskDetails.impactCIA) 
-                          ? riskDetails.impactCIA 
-                          : (riskDetails.impactCIA?.split(', ') || [])).map((cia: string, index: number) => {
+                        (riskDetails.impactCIA?.split(', ').filter(item => item.trim() !== '') || []).map((cia: string, index: number) => {
                           const config = getCIAConfig(cia)
                           return (
                             <span

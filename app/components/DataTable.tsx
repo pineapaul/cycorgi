@@ -657,7 +657,7 @@ export default function DataTable<T = Record<string, unknown>>({
             minHeight: '400px'
           }}
         >
-          <table className="w-full table-auto">
+          <table className="w-full table-fixed">
             <thead className="bg-gray-50 sticky top-0 z-20">
               <tr>
                 {selectable && (
@@ -687,15 +687,11 @@ export default function DataTable<T = Record<string, unknown>>({
                     className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-3 text-xs font-medium uppercase tracking-wider bg-gray-50 ${
                       column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'
-                    } ${
-                      column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
-                        ? column.width 
-                        : ''
                     }`}
                     style={{ 
                       color: '#22223B',
-                      width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
-                      minWidth: column.width === 'auto' ? '150px' : undefined
+                      width: column.width || 'auto',
+                      minWidth: column.width || '150px'
                     }}
                   >
                     <div className={`flex items-center space-x-1 ${
@@ -745,15 +741,11 @@ export default function DataTable<T = Record<string, unknown>>({
                       className={`px-2 py-3 sm:px-3 md:px-4 lg:px-6 md:py-4 text-xs md:text-sm ${
                         column.align === 'center' ? 'text-center' : 
                         column.align === 'right' ? 'text-right' : 'text-left'
-                      } ${
-                        column.width && typeof column.width === 'string' && column.width.startsWith('w-') 
-                          ? column.width 
-                          : ''
                       }`}
                       style={{ 
                         color: '#22223B',
-                        width: column.width && !column.width.startsWith('w-') ? column.width : 'auto',
-                        minWidth: column.width === 'auto' ? '150px' : undefined
+                        width: column.width || 'auto',
+                        minWidth: column.width || '150px'
                       }}
                     >
                         <div className={`w-full ${

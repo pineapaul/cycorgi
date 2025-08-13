@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import DataTable, { Column } from '@/app/components/DataTable'
 import Icon from '@/app/components/Icon'
 import Tooltip from '@/app/components/Tooltip'
-import { getCIAConfig, extractRiskNumber, formatInformationAssets } from '@/lib/utils'
+import { getCIAConfig, extractRiskNumber, mapAssetIdsToNames } from '@/lib/utils'
 import { CIA_DELIMITERS } from '@/lib/constants'
 import { useToast } from '@/app/components/Toast'
 
@@ -79,55 +79,65 @@ const renderCIAValues = (value: unknown) => {
 // Get columns for draft risks
 const getColumns = (): Column[] => [
   { key: 'riskId', label: 'Risk ID', sortable: true, width: '140px' },
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'functionalUnit', label: 'Functional Unit', sortable: true },
-  { key: 'currentPhase', label: 'Current Phase', sortable: true },
-  { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true },
-  { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true },
-  { key: 'raisedBy', label: 'Raised By', sortable: true },
-  { key: 'riskOwner', label: 'Risk Owner', sortable: true },
-  { key: 'affectedSites', label: 'Affected Sites', sortable: true },
-  { key: 'informationAssets', label: 'Information Assets', sortable: true },
-  { key: 'threat', label: 'Threat', sortable: true },
-  { key: 'vulnerability', label: 'Vulnerability', sortable: true },
-  { key: 'riskStatement', label: 'Risk Statement', sortable: true },
-  { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, render: renderCIAValues },
-  { key: 'currentControls', label: 'Current Controls', sortable: true },
-  { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true },
-  { key: 'consequence', label: 'Consequence', sortable: true },
-  { key: 'likelihood', label: 'Likelihood', sortable: true },
-  { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true },
-  { key: 'riskAction', label: 'Risk Action', sortable: true },
-  { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true },
-  { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true },
-  { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true },
-  { key: 'residualConsequence', label: 'Residual Consequence', sortable: true },
-  { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true },
-  { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true },
-  { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true },
-  { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true },
+  { key: 'actions', label: 'Submit for Review', sortable: false, width: '140px' },
+  { key: 'functionalUnit', label: 'Functional Unit', sortable: true, width: '150px' },
+  { key: 'currentPhase', label: 'Current Phase', sortable: true, width: '130px' },
+  { key: 'jiraTicket', label: 'JIRA Ticket', sortable: true, width: '120px' },
+  { key: 'dateRiskRaised', label: 'Date Risk Raised', sortable: true, width: '140px' },
+  { key: 'raisedBy', label: 'Raised By', sortable: true, width: '120px' },
+  { key: 'riskOwner', label: 'Risk Owner', sortable: true, width: '120px' },
+  { key: 'affectedSites', label: 'Affected Sites', sortable: true, width: '120px' },
+  { key: 'informationAssets', label: 'Information Assets', sortable: true, width: '300px' },
+  { key: 'threat', label: 'Threat', sortable: true, width: '400px' },
+  { key: 'vulnerability', label: 'Vulnerability', sortable: true, width: '400px' },
+  { key: 'riskStatement', label: 'Risk Statement', sortable: true, width: '500px' },
+  { key: 'impactCIA', label: 'Impact (CIA)', sortable: true, width: '120px', render: renderCIAValues },
+  { key: 'currentControls', label: 'Current Controls', sortable: true, width: '200px' },
+  { key: 'currentControlsReference', label: 'Current Controls Reference', sortable: true, width: '200px' },
+  { key: 'consequence', label: 'Consequence', sortable: true, width: '120px' },
+  { key: 'likelihood', label: 'Likelihood', sortable: true, width: '120px' },
+  { key: 'currentRiskRating', label: 'Current Risk Rating', sortable: true, width: '150px' },
+  { key: 'riskAction', label: 'Risk Action', sortable: true, width: '140px' },
+  { key: 'reasonForAcceptance', label: 'Reason for Acceptance', sortable: true, width: '200px' },
+  { key: 'dateOfSSCApproval', label: 'Date of SSC Approval', sortable: true, width: '160px' },
+  { key: 'dateRiskTreatmentsApproved', label: 'Date Risk Treatments Approved', sortable: true, width: '200px' },
+  { key: 'residualConsequence', label: 'Residual Consequence', sortable: true, width: '150px' },
+  { key: 'residualLikelihood', label: 'Residual Likelihood', sortable: true, width: '150px' },
+  { key: 'residualRiskRating', label: 'Residual Risk Rating', sortable: true, width: '160px' },
+  { key: 'residualRiskAcceptedByOwner', label: 'Residual Risk Accepted By Owner', sortable: true, width: '220px' },
+  { key: 'dateResidualRiskAccepted', label: 'Date Residual Risk Accepted', sortable: true, width: '180px' },
 ]
 
 export default function DraftRisks() {
   const router = useRouter()
   const { showToast } = useToast()
 
-
   const [risks, setRisks] = useState<any[]>([])
+  const [informationAssets, setInformationAssets] = useState<Array<{ id: string; informationAsset: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch risks from MongoDB
+  // Fetch risks and information assets from MongoDB
   useEffect(() => {
-    const fetchRisks = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/risks')
-        const result = await response.json()
         
-        if (result.success) {
+        // Fetch both risks and information assets in parallel
+        const [risksResponse, assetsResponse] = await Promise.all([
+          fetch('/api/risks'),
+          fetch('/api/information-assets')
+        ])
+        
+        const risksResult = await risksResponse.json()
+        const assetsResult = await assetsResponse.json()
+        
+        if (risksResult.success && assetsResult.success) {
+          // Set information assets for mapping
+          setInformationAssets(assetsResult.data || [])
+          
           // Filter for draft risks only and transform the data
-          const transformedRisks = result.data
+          const transformedRisks = risksResult.data
             .filter((risk: any) => risk.currentPhase === 'Draft')
             .map((risk: any) => {
             // Create a new object with only the properties we need - simplified
@@ -149,11 +159,11 @@ export default function DraftRisks() {
               functionalUnit: risk.functionalUnit,
               currentPhase: getPhaseDisplayName(risk.currentPhase),
                               jiraTicket: `RISK-${extractRiskNumber(risk.riskId)}`,
-              dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toISOString().split('T')[0] : '2024-01-15',
+              dateRiskRaised: risk.createdAt ? new Date(risk.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jan 2024',
               raisedBy: risk.riskOwner,
               riskOwner: risk.riskOwner,
               affectedSites: 'All Sites',
-              informationAssets: formatInformationAssets(risk.informationAsset) || '',
+              informationAssets: risk.informationAsset || '',
               threat: risk.threat,
               vulnerability: risk.vulnerability,
               riskStatement: risk.riskStatement,
@@ -166,38 +176,38 @@ export default function DraftRisks() {
               currentRiskRating: risk.riskRating,
               riskAction: 'Requires treatment',
               reasonForAcceptance: risk.reasonForAcceptance || '',
-              dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toISOString().split('T')[0] : '',
+              dateOfSSCApproval: risk.dateOfSSCApproval ? new Date(risk.dateOfSSCApproval).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
               riskTreatments: '',
-              dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toISOString().split('T')[0] : '',
+              dateRiskTreatmentsApproved: risk.dateRiskTreatmentsApproved ? new Date(risk.dateRiskTreatmentsApproved).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
               dateRiskTreatmentsAssigned: '',
               residualConsequence: risk.residualConsequence || '',
               residualLikelihood: risk.residualLikelihood || '',
               residualRiskRating: risk.residualRiskRating || '',
               residualRiskAcceptedByOwner: risk.residualRiskAcceptedByOwner || '',
-              dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toISOString().split('T')[0] : '',
+              dateResidualRiskAccepted: risk.dateResidualRiskAccepted ? new Date(risk.dateResidualRiskAccepted).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
               dateRiskTreatmentCompleted: '',
             }
             return transformed
           })
           setRisks(transformedRisks)
         } else {
-          setError(result.error || 'Failed to fetch risks')
+          setError(risksResult.error || assetsResult.error || 'Failed to fetch data')
         }
       } catch (err) {
         if (err instanceof TypeError) {
-          setError('Network error: Failed to fetch risks. Please check your connection.')
+          setError('Network error: Failed to fetch data. Please check your connection.')
         } else if (err instanceof SyntaxError) {
           setError('Parsing error: Received malformed data from the server.')
         } else {
-          setError('Unexpected error: Failed to fetch risks.')
+          setError('Unexpected error: Failed to fetch data.')
         }
-        console.error('Error fetching risks:', err)
+        console.error('Error fetching data:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchRisks()
+    fetchData()
   }, [])
 
   const handleRowClick = (row: any) => {
@@ -230,15 +240,38 @@ export default function DraftRisks() {
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    if (!priority) return 'bg-gray-100 text-gray-800'
+  const getConsequenceColor = (consequence: string) => {
+    if (!consequence) return 'bg-gray-100 text-gray-800'
     
-    switch (priority.toLowerCase()) {
-      case 'high':
+    switch (consequence.toLowerCase()) {
+      case 'critical':
         return 'bg-red-100 text-red-800'
-      case 'medium':
+      case 'major':
+        return 'bg-orange-100 text-orange-800'
+      case 'moderate':
         return 'bg-yellow-100 text-yellow-800'
-      case 'low':
+      case 'minor':
+        return 'bg-blue-100 text-blue-800'
+      case 'insignificant':
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getLikelihoodColor = (likelihood: string) => {
+    if (!likelihood) return 'bg-gray-100 text-gray-800'
+    
+    switch (likelihood.toLowerCase()) {
+      case 'almost certain':
+        return 'bg-red-100 text-red-800'
+      case 'likely':
+        return 'bg-orange-100 text-orange-800'
+      case 'possible':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'unlikely':
+        return 'bg-blue-100 text-blue-800'
+      case 'rare':
         return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
@@ -249,8 +282,10 @@ export default function DraftRisks() {
     if (!level) return 'bg-gray-100 text-gray-800'
     
     switch (level.toLowerCase()) {
-      case 'high':
+      case 'extreme':
         return 'bg-red-100 text-red-800'
+      case 'high':
+        return 'bg-orange-100 text-orange-800'
       case 'medium':
         return 'bg-yellow-100 text-yellow-800'
       case 'low':
@@ -280,15 +315,6 @@ export default function DraftRisks() {
              if (col.key === 'actions') {
          return (
            <div className="flex items-center space-x-2">
-             <Tooltip content="View Risk Details">
-               <Link
-                 href={`/risk-management/risks/${row.riskId}`}
-                 className="inline-flex items-center justify-center w-8 h-8 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                 onClick={(e) => e.stopPropagation()}
-               >
-                 <Icon name="eye" size={12} />
-               </Link>
-             </Tooltip>
              <Tooltip content="Submit for Review">
                <button
                  onClick={(e) => {
@@ -328,16 +354,49 @@ export default function DraftRisks() {
       }
       if (col.key === 'likelihood' || col.key === 'residualLikelihood') {
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLikelihoodColor(value)}`}>
             {value}
           </span>
         )
       }
       if (col.key === 'consequence' || col.key === 'residualConsequence') {
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConsequenceColor(value)}`}>
             {value}
           </span>
+        )
+      }
+      if (col.key === 'informationAssets') {
+        if (!value || value === '') {
+          return (
+            <span className="text-gray-400 text-xs italic">No assets specified</span>
+          )
+        }
+        
+        // Use the mapAssetIdsToNames utility function
+        const assetNames = mapAssetIdsToNames(value, informationAssets)
+        
+        if (!assetNames) {
+          return (
+            <span className="text-gray-400 text-xs italic">No assets specified</span>
+          )
+        }
+        
+        // Split the comma-separated names and render as chips
+        const assetNameArray = assetNames.split(', ').filter(name => name.trim())
+        
+        return (
+          <div className="flex flex-wrap gap-1.5 overflow-hidden">
+            {assetNameArray.map((assetName, index) => (
+              <span
+                key={`${assetName}-${index}`}
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200 transition-all duration-200 hover:scale-105 flex-shrink-0"
+                title={assetName}
+              >
+                {assetName}
+              </span>
+            ))}
+          </div>
         )
       }
 
