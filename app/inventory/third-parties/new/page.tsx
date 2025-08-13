@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import Link from 'next/link'
@@ -32,11 +32,7 @@ export default function NewThirdPartyPage() {
     status: 'Active'
   })
 
-  useEffect(() => {
-    fetchInformationAssets()
-  }, [])
-
-  const fetchInformationAssets = async () => {
+  const fetchInformationAssets = useCallback(async () => {
     try {
       const response = await fetch('/api/information-assets')
       const result = await response.json()
@@ -47,7 +43,11 @@ export default function NewThirdPartyPage() {
     } catch (error) {
       console.error('Error fetching information assets:', error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchInformationAssets()
+  }, [fetchInformationAssets])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

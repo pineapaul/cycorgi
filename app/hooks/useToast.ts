@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Toast, ToastProps } from '@/app/components/Toast'
+import type { ToastProps } from '@/app/components/Toast'
 
 export interface ToastOptions {
   type: 'success' | 'error' | 'warning' | 'info'
@@ -20,6 +20,17 @@ export function useToast() {
     timeoutsRef.current.clear()
   }, [])
 
+  const removeToast = useCallback((id: string) => {
+    // Clear the timeout if it exists
+    const timeout = timeoutsRef.current.get(id)
+    if (timeout) {
+      clearTimeout(timeout)
+      timeoutsRef.current.delete(id)
+    }
+    
+    setToasts(prev => prev.filter(toast => toast.id !== id))
+  }, [])
+
   // Auto-remove toast after duration
   const scheduleToastRemoval = useCallback((id: string, duration: number) => {
     const timeout = setTimeout(() => {
@@ -27,7 +38,7 @@ export function useToast() {
     }, duration)
     
     timeoutsRef.current.set(id, timeout)
-  }, [])
+  }, [removeToast])
 
   const showToast = useCallback((options: ToastOptions) => {
     const id = crypto.randomUUID()
@@ -46,18 +57,7 @@ export function useToast() {
     
     // Schedule auto-removal
     scheduleToastRemoval(id, newToast.duration || 5000)
-  }, [scheduleToastRemoval])
-
-  const removeToast = useCallback((id: string) => {
-    // Clear the timeout if it exists
-    const timeout = timeoutsRef.current.get(id)
-    if (timeout) {
-      clearTimeout(timeout)
-      timeoutsRef.current.delete(id)
-    }
-    
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }, [])
+  }, [scheduleToastRemoval, removeToast])
 
   // Cleanup on unmount
   useEffect(() => {

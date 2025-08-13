@@ -170,20 +170,20 @@ export default function RiskMatrix({
 
   React.useEffect(() => {
     if (selected) setActive({ l: selected.likelihoodIndex, c: selected.consequenceIndex });
-  }, [selected?.likelihoodIndex, selected?.consequenceIndex]);
+  }, [selected]);
 
   const currentRiskCoords = useMemo(() => 
     currentRisk 
       ? findMatrixCoordinates(currentRisk.likelihoodRating, currentRisk.consequenceRating, likelihoodLabels, consequenceLabels)
       : null,
-    [currentRisk?.likelihoodRating, currentRisk?.consequenceRating, likelihoodLabels, consequenceLabels]
+    [currentRisk, likelihoodLabels, consequenceLabels]
   );
   
   const residualRiskCoords = useMemo(() => 
     residualRisk 
       ? findMatrixCoordinates(residualRisk.residualLikelihood, residualRisk.residualConsequence, likelihoodLabels, consequenceLabels)
       : null,
-    [residualRisk?.residualLikelihood, residualRisk?.residualConsequence, likelihoodLabels, consequenceLabels]
+    [residualRisk, likelihoodLabels, consequenceLabels]
   );
 
   const handleSelect = (lIndex: number, cIndex: number) => {

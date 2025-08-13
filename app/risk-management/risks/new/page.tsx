@@ -182,7 +182,7 @@ export default function NewRisk() {
     fetchInformationAssets()
     fetchSOAControls()
     generateAndSetRiskId()
-  }, [])
+  }, [showToast])
 
   // Modal functions
   const openAssetModal = () => {
