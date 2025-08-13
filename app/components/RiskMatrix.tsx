@@ -309,13 +309,14 @@ export default function RiskMatrix({
          </div>
        )}
 
-       {/* Edit Mode Selector */}
-       {isEditing && (
+       {/* Edit Mode Selector - Only show when both current and residual risk editing is needed */}
+       {isEditing && onResidualRiskSelect && (
          <div className={`${
            compact ? 'mb-3' : 'mb-4'
          } flex justify-center`}>
            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
              <button
+               type="button"
                onClick={() => setEditMode('current')}
                className={`${
                  editMode === 'current'
@@ -328,6 +329,7 @@ export default function RiskMatrix({
                Edit Current Risk
              </button>
              <button
+               type="button"
                onClick={() => setEditMode('residual')}
                className={`${
                  editMode === 'residual'
@@ -343,8 +345,8 @@ export default function RiskMatrix({
          </div>
        )}
 
-       {/* Active Edit Mode Indicator */}
-       {isEditing && (
+       {/* Active Edit Mode Indicator - Only show when both modes are available */}
+       {isEditing && onResidualRiskSelect && (
          <div className={`${
            compact ? 'mb-3' : 'mb-4'
          } flex justify-center`}>
@@ -437,6 +439,7 @@ export default function RiskMatrix({
                  return (
                    <div key={`cell-${lIdx}-${cIdx}`} className="relative group">
                      <button
+                       type="button"
                        role="gridcell"
                        aria-label={`${rating} risk, ${lLabel} likelihood by ${consequenceLabels[cIdx]} consequence`}
                        className={`${cellClass(rating, isSelected, isCurrentRisk, isResidualRisk, isEditing)} ${

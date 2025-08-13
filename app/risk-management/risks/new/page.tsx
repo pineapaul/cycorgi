@@ -5,11 +5,29 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
+import RiskMatrix from '@/app/components/RiskMatrix'
 
 interface InformationAsset {
   id: string
   informationAsset: string
   category: string
+}
+
+interface SOAControl {
+  _id?: string
+  id: string
+  title: string
+  description: string
+  controlStatus: string
+  controlApplicability: string
+  justification?: string[]
+  implementationDetails?: string
+  relatedRisks?: string[]
+  controlSetId: string
+  controlSetTitle: string
+  controlSetDescription: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface RiskFormData {
@@ -91,16 +109,25 @@ export default function NewRisk() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<RiskFormErrors>({})
   const [informationAssets, setInformationAssets] = useState<InformationAsset[]>([])
+  const [generatingRiskId, setGeneratingRiskId] = useState(false)
   
   // Modal states
   const [showAssetModal, setShowAssetModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [tempSelectedAssets, setTempSelectedAssets] = useState<string[]>([])
   const [selectedLetter, setSelectedLetter] = useState('')
+  
+  // SOA Controls Modal States
+  const [showSOAControlsModal, setShowSOAControlsModal] = useState(false)
+  const [soaControls, setSoaControls] = useState<SOAControl[]>([])
+  const [soaSearchTerm, setSoaSearchTerm] = useState('')
+  const [soaSelectedLetter, setSoaSelectedLetter] = useState('')
+  const [soaModalType, setSoaModalType] = useState<'currentControlsReference' | 'applicableControlsAfterTreatment' | null>(null)
+  const [tempSelectedSOAControls, setTempSelectedSOAControls] = useState<string[]>([])
 
-  const mandatoryFields = ['raisedBy', 'informationAsset', 'threat', 'vulnerability', 'riskStatement', 'consequenceRating', 'likelihoodRating', 'riskRating', 'impactCIA']
+  const mandatoryFields = ['raisedBy', 'informationAsset', 'threat', 'vulnerability', 'riskStatement', 'consequenceRating', 'likelihoodRating', 'riskRating', 'impactCIA', 'riskOwner', 'functionalUnit']
 
-  // Fetch information assets on component mount
+  // Fetch information assets and generate risk ID on component mount
   useEffect(() => {
     const fetchInformationAssets = async () => {
       try {
@@ -117,7 +144,44 @@ export default function NewRisk() {
       }
     }
 
+    const fetchSOAControls = async () => {
+      try {
+        const response = await fetch('/api/compliance/soa')
+        const result = await response.json()
+        
+        if (result.success) {
+          setSoaControls(result.data)
+        } else {
+          console.error('Failed to fetch SOA controls:', result.error)
+        }
+      } catch (error) {
+        console.error('Error fetching SOA controls:', error)
+      }
+    }
+
+    const generateAndSetRiskId = async () => {
+      try {
+        setGeneratingRiskId(true)
+        const nextRiskId = await generateNextRiskId()
+        setFormData(prev => ({
+          ...prev,
+          riskId: nextRiskId
+        }))
+      } catch (error) {
+        console.error('Error generating risk ID:', error)
+        showToast({
+          title: 'Warning',
+          message: 'Failed to auto-generate risk ID. Please enter manually.',
+          type: 'warning'
+        })
+      } finally {
+        setGeneratingRiskId(false)
+      }
+    }
+
     fetchInformationAssets()
+    fetchSOAControls()
+    generateAndSetRiskId()
   }, [])
 
   // Modal functions
@@ -133,6 +197,50 @@ export default function NewRisk() {
     setSearchTerm('')
     setTempSelectedAssets([])
     setSelectedLetter('')
+  }
+
+  // SOA Controls Modal functions
+  const openSOAControlsModal = (type: 'currentControlsReference' | 'applicableControlsAfterTreatment') => {
+    setSoaModalType(type)
+    setTempSelectedSOAControls([...formData[type]])
+    setSoaSearchTerm('')
+    setSoaSelectedLetter('')
+    setShowSOAControlsModal(true)
+  }
+
+  const closeSOAControlsModal = () => {
+    setShowSOAControlsModal(false)
+    setSoaModalType(null)
+    setSoaSearchTerm('')
+    setSoaSelectedLetter('')
+    setTempSelectedSOAControls([])
+  }
+
+  const handleSOAControlSelection = (controlId: string, checked: boolean) => {
+    setTempSelectedSOAControls(prev => 
+      checked 
+        ? [...prev, controlId]
+        : prev.filter(id => id !== controlId)
+    )
+  }
+
+  const applySOAControlSelection = () => {
+    if (soaModalType) {
+      setFormData(prev => ({
+        ...prev,
+        [soaModalType]: tempSelectedSOAControls
+      }))
+      
+      // Clear error when SOA controls are selected
+      if (errors[soaModalType]) {
+        setErrors(prev => ({
+          ...prev,
+          [soaModalType]: undefined
+        }))
+      }
+    }
+    
+    closeSOAControlsModal()
   }
 
   const handleAssetSelection = (assetId: string, checked: boolean) => {
@@ -179,8 +287,10 @@ export default function NewRisk() {
       newErrors.impactCIA = 'Please select at least one CIA component'
     }
 
-    // Validate Risk ID format
-    if (formData.riskId.trim()) {
+    // Validate Risk ID format and presence
+    if (!formData.riskId.trim()) {
+      newErrors.riskId = 'Risk ID is required'
+    } else {
       const riskIdPattern = /^RISK-\d+$/i
       if (!riskIdPattern.test(formData.riskId.trim())) {
         newErrors.riskId = 'Risk ID must be in format RISK-XXX (where XXX is numeric)'
@@ -230,6 +340,41 @@ export default function NewRisk() {
       setErrors(prev => ({
         ...prev,
         impactCIA: undefined
+      }))
+    }
+  }
+
+  const handleRiskMatrixSelect = (args: {
+    likelihoodIndex: number;
+    consequenceIndex: number;
+    likelihood: string;
+    consequence: string;
+    rating: string;
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      likelihoodRating: args.likelihood,
+      consequenceRating: args.consequence,
+      riskRating: args.rating
+    }))
+    
+    // Clear errors when risk matrix selection is made
+    if (errors.likelihoodRating) {
+      setErrors(prev => ({
+        ...prev,
+        likelihoodRating: undefined
+      }))
+    }
+    if (errors.consequenceRating) {
+      setErrors(prev => ({
+        ...prev,
+        consequenceRating: undefined
+      }))
+    }
+    if (errors.riskRating) {
+      setErrors(prev => ({
+        ...prev,
+        riskRating: undefined
       }))
     }
   }
@@ -297,6 +442,25 @@ export default function NewRisk() {
     router.push('/risk-management/register')
   }
 
+  // Generate next risk ID
+  const generateNextRiskId = async (): Promise<string> => {
+    try {
+      const response = await fetch('/api/risks/next-id')
+      const result = await response.json()
+      
+      if (result.success) {
+        return result.data.nextRiskId
+      } else {
+        console.error('Failed to generate risk ID:', result.error)
+        throw new Error(result.error || 'Failed to generate risk ID')
+      }
+    } catch (error) {
+      console.error('Error generating risk ID:', error)
+      // Fallback to a safe default
+      return 'RISK-001'
+    }
+  }
+
   // Filter and sort assets for modal
   const filteredAssets = informationAssets
     .filter(asset =>
@@ -349,21 +513,61 @@ export default function NewRisk() {
                 <div>
                   <label htmlFor="riskId" className="block text-sm font-medium text-gray-700 mb-2">
                     Risk ID <span className="text-red-500">*</span>
+                    {generatingRiskId && (
+                      <span className="ml-2 text-sm text-gray-500">(Generating...)</span>
+                    )}
                   </label>
-                  <input
-                    type="text"
-                    id="riskId"
-                    value={formData.riskId}
-                    onChange={(e) => handleInputChange('riskId', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.riskId 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                    placeholder="e.g., RISK-001"
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      id="riskId"
+                      value={formData.riskId}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-200 bg-gray-50 text-gray-700 rounded-md shadow-sm cursor-not-allowed"
+                      placeholder={generatingRiskId ? "Generating..." : "Auto-generated"}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setGeneratingRiskId(true)
+                          const nextRiskId = await generateNextRiskId()
+                          setFormData(prev => ({
+                            ...prev,
+                            riskId: nextRiskId
+                          }))
+                          showToast({
+                            title: 'Success',
+                            message: 'New risk ID generated successfully',
+                            type: 'success'
+                          })
+                        } catch (error) {
+                          console.error('Error regenerating risk ID:', error)
+                          showToast({
+                            title: 'Error',
+                            message: 'Failed to generate new risk ID',
+                            type: 'error'
+                          })
+                        } finally {
+                          setGeneratingRiskId(false)
+                        }
+                      }}
+                      disabled={generatingRiskId}
+                      className={`px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                        generatingRiskId
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 focus:ring-purple-500'
+                      }`}
+                      title="Generate new risk ID"
+                    >
+                      <Icon name="refresh" size={16} />
+                    </button>
+                  </div>
                   {errors.riskId && (
                     <p className="mt-1 text-sm text-red-600">{errors.riskId}</p>
+                  )}
+                  {!errors.riskId && !generatingRiskId && formData.riskId && (
+                    <p className="mt-1 text-sm text-green-600">✓ Auto-generated risk ID</p>
                   )}
                 </div>
 
@@ -386,6 +590,50 @@ export default function NewRisk() {
                   />
                   {errors.raisedBy && (
                     <p className="mt-1 text-sm text-red-600">{errors.raisedBy}</p>
+                  )}
+                </div>
+
+                {/* Risk Owner */}
+                <div>
+                  <label htmlFor="riskOwner" className="block text-sm font-medium text-gray-700 mb-2">
+                    Risk Owner <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="riskOwner"
+                    value={formData.riskOwner}
+                    onChange={(e) => handleInputChange('riskOwner', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                      errors.riskOwner 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                    }`}
+                    placeholder="Enter risk owner name"
+                  />
+                  {errors.riskOwner && (
+                    <p className="mt-1 text-sm text-red-600">{errors.riskOwner}</p>
+                  )}
+                </div>
+
+                {/* Functional Unit */}
+                <div>
+                  <label htmlFor="functionalUnit" className="block text-sm font-medium text-gray-700 mb-2">
+                    Functional Unit <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="functionalUnit"
+                    value={formData.functionalUnit}
+                    onChange={(e) => handleInputChange('functionalUnit', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                      errors.functionalUnit 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                    }`}
+                    placeholder="e.g., IT, Finance, HR"
+                  />
+                  {errors.functionalUnit && (
+                    <p className="mt-1 text-sm text-red-600">{errors.functionalUnit}</p>
                   )}
                 </div>
 
@@ -499,6 +747,130 @@ export default function NewRisk() {
                   <p className="mt-1 text-sm text-red-600">{errors.riskStatement}</p>
                 )}
               </div>
+
+              {/* Impact Assessment (CIA) */}
+              <div className="mt-6">
+                <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA) <span className="text-red-500">*</span></h3>
+                <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                    errors.impactCIA 
+                      ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                      : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      id="confidentiality"
+                      checked={formData.impactCIA?.includes('Confidentiality')}
+                      onChange={(e) => handleImpactChange('Confidentiality', e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                      formData.impactCIA?.includes('Confidentiality')
+                        ? 'bg-red-500 border-red-500'
+                        : 'border-gray-300 group-hover:border-red-400'
+                    }`}>
+                      {formData.impactCIA?.includes('Confidentiality') && (
+                        <Icon name="check" size={12} className="text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Confidentiality</div>
+                      <div className="text-xs text-gray-500">Data privacy & access control</div>
+                    </div>
+                  </label>
+
+                  <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                    errors.impactCIA 
+                      ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                      : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      id="integrity"
+                      checked={formData.impactCIA?.includes('Integrity')}
+                      onChange={(e) => handleImpactChange('Integrity', e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                      formData.impactCIA?.includes('Integrity')
+                        ? 'bg-orange-500 border-orange-500'
+                        : 'border-gray-300 group-hover:border-orange-400'
+                    }`}>
+                      {formData.impactCIA?.includes('Integrity') && (
+                        <Icon name="check" size={12} className="text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Integrity</div>
+                      <div className="text-xs text-gray-500">Data accuracy & consistency</div>
+                    </div>
+                  </label>
+
+                  <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
+                    errors.impactCIA 
+                      ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      id="availability"
+                      checked={formData.impactCIA?.includes('Availability')}
+                      onChange={(e) => handleImpactChange('Availability', e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
+                      formData.impactCIA?.includes('Availability')
+                        ? 'bg-blue-500 border-blue-500'
+                        : 'border-gray-300 group-hover:border-blue-400'
+                    }`}>
+                      {formData.impactCIA?.includes('Availability') && (
+                        <Icon name="check" size={12} className="text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Availability</div>
+                      <div className="text-xs text-gray-500">System accessibility & uptime</div>
+                    </div>
+                  </label>
+                </div>
+                {errors.impactCIA && (
+                  <p className="mt-2 text-sm text-red-600">{errors.impactCIA}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Risk Assessment Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Icon name="chart-bar" size={16} className="mr-2 text-purple-500" />
+                Risk Assessment
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">Click on a cell in the risk matrix below to automatically set the likelihood, consequence, and risk rating:</p>
+              
+              {/* Risk Matrix */}
+              <div className="mb-6">
+                <RiskMatrix
+                  onSelect={handleRiskMatrixSelect}
+                  isEditing={true}
+                  compact={false}
+                  selected={
+                    formData.likelihoodRating && formData.consequenceRating
+                      ? {
+                          likelihoodIndex: ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain'].indexOf(formData.likelihoodRating),
+                          consequenceIndex: ['Insignificant', 'Minor', 'Moderate', 'Major', 'Critical'].indexOf(formData.consequenceRating)
+                        }
+                      : null
+                  }
+                  // For new risk creation, we only edit current risk, not residual
+                  currentRisk={null}
+                  residualRisk={null}
+                  // Disable residual risk editing for new risks
+                  onResidualRiskSelect={undefined}
+                />
+              </div>
+
+
             </div>
 
             {/* Optional Fields Section */}
@@ -508,35 +880,9 @@ export default function NewRisk() {
                 Additional Information (Optional)
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Functional Unit */}
-                <div>
-                  <label htmlFor="functionalUnit" className="block text-sm font-medium text-gray-700 mb-2">
-                    Functional Unit
-                  </label>
-                  <input
-                    type="text"
-                    id="functionalUnit"
-                    value={formData.functionalUnit}
-                    onChange={(e) => handleInputChange('functionalUnit', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    placeholder="e.g., IT, Finance, HR"
-                  />
-                </div>
 
-                {/* Risk Owner */}
-                <div>
-                  <label htmlFor="riskOwner" className="block text-sm font-medium text-gray-700 mb-2">
-                    Risk Owner
-                  </label>
-                  <input
-                    type="text"
-                    id="riskOwner"
-                    value={formData.riskOwner}
-                    onChange={(e) => handleInputChange('riskOwner', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    placeholder="Enter risk owner name"
-                  />
-                </div>
+
+
 
                 {/* Affected Sites */}
                 <div>
@@ -555,226 +901,125 @@ export default function NewRisk() {
 
                 {/* Current Controls */}
                 <div>
-                  <label htmlFor="currentControls" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Current Controls
                   </label>
-                  <textarea
-                    id="currentControls"
-                    value={Array.isArray(formData.currentControls) ? formData.currentControls.join('\n') : ''}
-                    onChange={(e) => handleInputChange('currentControls', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
-                    rows={3}
-                    placeholder="Enter current controls (one per line)..."
-                  />
+                  <div className="space-y-2">
+                    {formData.currentControls.map((control, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={control}
+                          onChange={(e) => {
+                            const newControls = [...formData.currentControls]
+                            newControls[index] = e.target.value
+                            handleInputChange('currentControls', newControls)
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                          placeholder="Enter current control..."
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newControls = formData.currentControls.filter((_, i) => i !== index)
+                            handleInputChange('currentControls', newControls)
+                          }}
+                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                          title="Remove control"
+                        >
+                          <Icon name="x" size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newControls = [...formData.currentControls, '']
+                        handleInputChange('currentControls', newControls)
+                      }}
+                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-md text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors flex items-center justify-center"
+                    >
+                      <Icon name="plus" size={16} className="mr-2" />
+                      Add Current Control
+                    </button>
+                  </div>
                 </div>
 
                 {/* Current Controls Reference */}
                 <div>
-                  <label htmlFor="currentControlsReference" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Current Controls Reference
                   </label>
-                  <textarea
-                    id="currentControlsReference"
-                    value={Array.isArray(formData.currentControlsReference) ? formData.currentControlsReference.join('\n') : ''}
-                    onChange={(e) => handleInputChange('currentControlsReference', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
-                    rows={3}
-                    placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
-                  />
+                  <div className="space-y-2">
+                    {formData.currentControlsReference.map((controlRef, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700">
+                          {controlRef}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newControlRefs = formData.currentControlsReference.filter((_, i) => i !== index)
+                            handleInputChange('currentControlsReference', newControlRefs)
+                          }}
+                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                          title="Remove control reference"
+                        >
+                          <Icon name="x" size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => openSOAControlsModal('currentControlsReference')}
+                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-md text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors flex items-center justify-center"
+                    >
+                      <Icon name="plus" size={16} className="mr-2" />
+                      Select SOA Controls
+                    </button>
+                  </div>
                 </div>
 
                 {/* Applicable Controls After Treatment */}
                 <div>
-                  <label htmlFor="applicableControlsAfterTreatment" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Applicable Controls After Treatment
                   </label>
-                  <textarea
-                    id="applicableControlsAfterTreatment"
-                    value={Array.isArray(formData.applicableControlsAfterTreatment) ? formData.applicableControlsAfterTreatment.join('\n') : ''}
-                    onChange={(e) => handleInputChange('applicableControlsAfterTreatment', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
-                    rows={3}
-                    placeholder="Enter SOA control IDs (one per line, e.g., A.5.1, A.6.2)..."
-                  />
+                  <div className="space-y-2">
+                    {formData.applicableControlsAfterTreatment.map((control, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700">
+                          {control}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newControls = formData.applicableControlsAfterTreatment.filter((_, i) => i !== index)
+                            handleInputChange('applicableControlsAfterTreatment', newControls)
+                          }}
+                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                          title="Remove control"
+                        >
+                          <Icon name="x" size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => openSOAControlsModal('applicableControlsAfterTreatment')}
+                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-md text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors flex items-center justify-center"
+                    >
+                      <Icon name="plus" size={16} className="mr-2" />
+                      Select SOA Controls
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Risk Assessment */}
-              <div className="mt-6">
-                <h3 className="text-md font-medium text-gray-900 mb-3">Risk Assessment <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-gray-600 mb-4">Assess the consequence and likelihood of this risk:</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  {/* Consequence Rating */}
-                  <div>
-                    <label htmlFor="consequenceRating" className="block text-sm font-medium text-gray-700 mb-2">
-                      Consequence Rating <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="consequenceRating"
-                      value={formData.consequenceRating}
-                      onChange={(e) => handleInputChange('consequenceRating', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                        errors.consequenceRating 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                      }`}
-                    >
-                      <option value="">Select consequence rating</option>
-                      <option value="Insignificant">Insignificant</option>
-                      <option value="Minor">Minor</option>
-                      <option value="Moderate">Moderate</option>
-                      <option value="Major">Major</option>
-                      <option value="Critical">Critical</option>
-                    </select>
-                    {errors.consequenceRating && (
-                      <p className="mt-1 text-sm text-red-600">{errors.consequenceRating}</p>
-                    )}
-                  </div>
 
-                  {/* Likelihood Rating */}
-                  <div>
-                    <label htmlFor="likelihoodRating" className="block text-sm font-medium text-gray-700 mb-2">
-                      Likelihood Rating <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="likelihoodRating"
-                      value={formData.likelihoodRating}
-                      onChange={(e) => handleInputChange('likelihoodRating', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                        errors.likelihoodRating 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                      }`}
-                    >
-                      <option value="">Select likelihood rating</option>
-                      <option value="Rare">Rare</option>
-                      <option value="Unlikely">Unlikely</option>
-                      <option value="Possible">Possible</option>
-                      <option value="Likely">Likely</option>
-                      <option value="Almost Certain">Almost Certain</option>
-                    </select>
-                    {errors.likelihoodRating && (
-                      <p className="mt-1 text-sm text-red-600">{errors.likelihoodRating}</p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Risk Rating */}
-                <div className="mt-6">
-                  <label htmlFor="riskRating" className="block text-sm font-medium text-gray-700 mb-2">
-                    Risk Rating <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="riskRating"
-                    value={formData.riskRating}
-                    onChange={(e) => handleInputChange('riskRating', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.riskRating 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  >
-                    <option value="">Select risk rating</option>
-                    <option value="Low">Low</option>
-                    <option value="Moderate">Moderate</option>
-                    <option value="High">High</option>
-                    <option value="Extreme">Extreme</option>
-                  </select>
-                  {errors.riskRating && (
-                    <p className="mt-1 text-sm text-red-600">{errors.riskRating}</p>
-                  )}
-                </div>
 
-                {/* Impact Assessment */}
-                <h3 className="text-md font-medium text-gray-900 mb-3">Impact Assessment (CIA) <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-gray-600 mb-4">Select which CIA components are affected by this risk:</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                   <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                     errors.impactCIA 
-                       ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
-                       : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
-                   }`}>
-                   <input
-                     type="checkbox"
-                     id="confidentiality"
-                     checked={formData.impactCIA?.includes('Confidentiality')}
-                     onChange={(e) => handleImpactChange('Confidentiality', e.target.checked)}
-                     className="sr-only"
-                   />
-                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impactCIA?.includes('Confidentiality')
-                       ? 'bg-red-500 border-red-500'
-                       : 'border-gray-300 group-hover:border-red-400'
-                   }`}>
-                     {formData.impactCIA?.includes('Confidentiality') && (
-                       <Icon name="check" size={12} className="text-white" />
-                     )}
-                   </div>
-                   <div>
-                     <div className="font-medium text-gray-900">Confidentiality</div>
-                     <div className="text-xs text-gray-500">Data privacy & access control</div>
-                   </div>
-                 </label>
 
-                 <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                   errors.impactCIA 
-                     ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
-                     : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
-                 }`}>
-                   <input
-                     type="checkbox"
-                     id="integrity"
-                     checked={formData.impactCIA?.includes('Integrity')}
-                     onChange={(e) => handleImpactChange('Integrity', e.target.checked)}
-                     className="sr-only"
-                   />
-                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impactCIA?.includes('Integrity')
-                       ? 'bg-orange-500 border-orange-500'
-                       : 'border-gray-300 group-hover:border-orange-400'
-                   }`}>
-                     {formData.impactCIA?.includes('Integrity') && (
-                       <Icon name="check" size={12} className="text-white" />
-                     )}
-                   </div>
-                   <div>
-                     <div className="font-medium text-gray-900">Integrity</div>
-                     <div className="text-xs text-gray-500">Data accuracy & consistency</div>
-                   </div>
-                 </label>
-
-                 <label className={`relative flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 group ${
-                   errors.impactCIA 
-                     ? 'border-red-300 hover:border-red-400 hover:bg-red-50' 
-                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                 }`}>
-                   <input
-                     type="checkbox"
-                     id="availability"
-                     checked={formData.impactCIA?.includes('Availability')}
-                     onChange={(e) => handleImpactChange('Availability', e.target.checked)}
-                     className="sr-only"
-                   />
-                   <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 transition-all duration-200 ${
-                     formData.impactCIA?.includes('Availability')
-                       ? 'bg-blue-500 border-blue-500'
-                       : 'border-gray-300 group-hover:border-blue-400'
-                   }`}>
-                     {formData.impactCIA?.includes('Availability') && (
-                       <Icon name="check" size={12} className="text-white" />
-                     )}
-                   </div>
-                   <div>
-                     <div className="font-medium text-gray-900">Availability</div>
-                     <div className="text-xs text-gray-500">System accessibility & uptime</div>
-                   </div>
-                 </label>
-                </div>
-                {errors.impactCIA && (
-                  <p className="mt-2 text-sm text-red-600">{errors.impactCIA}</p>
-                )}
-              </div>
             </div>
 
             {/* Form Actions */}
@@ -821,8 +1066,6 @@ export default function NewRisk() {
               >
                 <Icon name="x" size={20} />
               </button>
-            </div>
-
             {/* Search Input */}
             <div className="p-6 border-b border-gray-200">
               <div className="relative">
@@ -835,6 +1078,7 @@ export default function NewRisk() {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
+            </div>
             </div>
 
             {/* Alphabet Filter */}
@@ -912,6 +1156,147 @@ export default function NewRisk() {
                 <button
                   type="button"
                   onClick={applyAssetSelection}
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                >
+                  Apply Selection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SOA Controls Selection Modal */}
+      {showSOAControlsModal && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <Icon name="shield-check" size={20} className="text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Select SOA Controls - {soaModalType === 'currentControlsReference' ? 'Current Controls Reference' : 'Applicable Controls After Treatment'}
+                </h3>
+              </div>
+              <button
+                onClick={closeSOAControlsModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="relative">
+                <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search SOA controls by ID, title, or description..."
+                  value={soaSearchTerm}
+                  onChange={(e) => setSoaSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Alphabet Filter */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setSoaSelectedLetter('')}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    soaSelectedLetter === ''
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                {Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => setSoaSelectedLetter(soaSelectedLetter === letter ? '' : letter)}
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      soaSelectedLetter === letter
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* SOA Controls List */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {(() => {
+                let filteredControls = soaControls
+                
+                // Filter by search term
+                if (soaSearchTerm) {
+                  const searchLower = soaSearchTerm.toLowerCase()
+                  filteredControls = filteredControls.filter(control => 
+                    control.id.toLowerCase().includes(searchLower) ||
+                    control.title.toLowerCase().includes(searchLower) ||
+                    control.description.toLowerCase().includes(searchLower)
+                  )
+                }
+                
+                // Filter by selected letter
+                if (soaSelectedLetter) {
+                  filteredControls = filteredControls.filter(control => 
+                    control.id.startsWith(soaSelectedLetter)
+                  )
+                }
+                
+                return filteredControls.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Icon name="magnifying-glass" size={48} className="mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500">No SOA controls found matching your search criteria.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredControls.map((control) => (
+                      <label
+                        key={control.id}
+                        className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedSOAControls.includes(control.id)}
+                          onChange={(e) => handleSOAControlSelection(control.id, e.target.checked)}
+                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{control.id}</div>
+                          <div className="text-sm text-gray-700">{control.title}</div>
+                          <div className="text-xs text-gray-500">{control.description}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                {tempSelectedSOAControls.length} control{tempSelectedSOAControls.length !== 1 ? 's' : ''} selected
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={closeSOAControlsModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={applySOAControlSelection}
                   className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
                 >
                   Apply Selection

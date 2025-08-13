@@ -7,6 +7,7 @@ export interface InformationAsset {
 }
 
 export interface RiskData {
+  _id?: any // MongoDB ObjectId
   riskId?: string
   functionalUnit?: string
   jiraTicket?: string
@@ -15,10 +16,12 @@ export interface RiskData {
   riskOwner?: string
   affectedSites?: string
   informationAsset?: string[] | string
+  informationAssets?: string
   threat?: string
   vulnerability?: string
   riskStatement?: string
-  impactCIA?: string
+  impactCIA?: string | string[]
+  impact?: string | string[]
   currentControls?: string[]
   currentControlsReference?: string[]
   applicableControlsAfterTreatment?: string[]
@@ -241,6 +244,58 @@ export function validateAndTransformRiskData(
     errors.push('Functional unit is required and must be a non-empty string')
   }
 
+  // Validate impactCIA if provided
+  if (data.impactCIA !== undefined) {
+    if (Array.isArray(data.impactCIA)) {
+      // Ensure all items are valid CIA components
+      const validCIAComponents = ['Confidentiality', 'Integrity', 'Availability']
+      const validComponents = data.impactCIA.filter(component => 
+        typeof component === 'string' && validCIAComponents.includes(component)
+      )
+      if (validComponents.length !== data.impactCIA.length) {
+        errors.push('Invalid CIA components found. Must be one of: Confidentiality, Integrity, Availability')
+      }
+      // Don't set impactCIA in transformedData since we're storing as impact in DB
+    } else if (typeof data.impactCIA === 'string') {
+      // Convert string to array format
+      const components = data.impactCIA.split(',').map(component => component.trim()).filter(Boolean)
+      const validCIAComponents = ['Confidentiality', 'Integrity', 'Availability']
+      const validComponents = components.filter(component => validCIAComponents.includes(component))
+      if (validComponents.length !== components.length) {
+        errors.push('Invalid CIA components found. Must be one of: Confidentiality, Integrity, Availability')
+      }
+      // Don't set impactCIA in transformedData since we're storing as impact in DB
+    } else {
+      errors.push('Impact CIA must be either an array of strings or a string')
+    }
+  }
+
+  // Validate impact field if provided (for backward compatibility)
+  if (data.impact !== undefined) {
+    if (Array.isArray(data.impact)) {
+      // Ensure all items are valid CIA components
+      const validCIAComponents = ['Confidentiality', 'Integrity', 'Availability']
+      const validComponents = data.impact.filter(component => 
+        typeof component === 'string' && validCIAComponents.includes(component)
+      )
+      if (validComponents.length !== data.impact.length) {
+        errors.push('Invalid impact components found. Must be one of: Confidentiality, Integrity, Availability')
+      }
+      transformedData.impact = validComponents
+    } else if (typeof data.impact === 'string') {
+      // Convert string to array format
+      const components = data.impact.split(',').map(component => component.trim()).filter(Boolean)
+      const validCIAComponents = ['Confidentiality', 'Integrity', 'Availability']
+      const validComponents = components.filter(component => validCIAComponents.includes(component))
+      if (validComponents.length !== components.length) {
+        errors.push('Invalid impact components found. Must be one of: Confidentiality, Integrity, Availability')
+      }
+      transformedData.impact = validComponents
+    } else {
+      errors.push('Impact must be either an array of strings or a string')
+    }
+  }
+
   // Validate riskAction if provided
   if (data.riskAction && typeof data.riskAction === 'string' && data.riskAction.trim() !== '') {
     const validRiskActions = ['Avoid', 'Transfer', 'Accept', 'Mitigate']
@@ -287,21 +342,38 @@ export function validateRiskId(riskId: string): string | null {
  * Transforms a risk object for API response, including information asset details
  */
 export function transformRiskForResponse(risk: RiskData & { _id?: string | ObjectId }, assetMap: Map<string, InformationAsset>): RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] } {
-  const transformedRisk = { ...risk } as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
-  
-  // Convert ObjectId to string if present
-  if (transformedRisk._id && typeof transformedRisk._id === 'object') {
-    transformedRisk._id = (transformedRisk._id as any).toString()
-  }
+  try {
+    const transformedRisk = { ...risk } as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
+    
+    // Convert ObjectId to string if present
+    if (transformedRisk._id && typeof transformedRisk._id === 'object') {
+      transformedRisk._id = (transformedRisk._id as any).toString()
+    }
+
+  // Don't set impactCIA - let the frontend handle the conversion from impact array to impactCIA string
+  // This prevents conflicts and ensures the frontend always has the correct format
 
   // Add information asset details if we have asset IDs
   if (transformedRisk.informationAsset && Array.isArray(transformedRisk.informationAsset)) {
     transformedRisk.informationAssetDetails = transformedRisk.informationAsset
       .map(assetId => assetMap.get(assetId))
       .filter((asset): asset is InformationAsset => asset !== undefined)
+    
+    // Convert informationAsset IDs to informationAssets string for UI compatibility
+    transformedRisk.informationAssets = transformedRisk.informationAsset
+      .map(assetId => {
+        const asset = assetMap.get(assetId)
+        return asset ? asset.informationAsset : assetId
+      })
+      .join(', ')
   }
 
-  return transformedRisk
+    return transformedRisk
+  } catch (error) {
+    console.error('Error in transformRiskForResponse:', error)
+    // Return the original risk data if transformation fails
+    return risk as RiskData & { _id?: string; informationAssetDetails?: InformationAsset[] }
+  }
 }
 
 /**
