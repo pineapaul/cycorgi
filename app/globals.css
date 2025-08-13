@@ -159,6 +159,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   white-space: normal;
   word-wrap: break-word;
   min-width: fit-content;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Remove column borders and use row borders instead */
@@ -206,6 +207,57 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   top: 0;
   background: #f9fafb;
   z-index: 40;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure proper stacking context for sticky headers */
+.data-table-container {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+/* Additional sticky header fixes */
+.data-table-container thead {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.data-table-container thead th {
+  background: #f9fafb !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Ensure header background covers any scrolling content */
+.data-table-container thead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f9fafb;
+  z-index: -1;
+}
+
+/* Ensure table body doesn't overlap headers */
+.data-table-container tbody {
+  position: relative;
+  z-index: 1;
+}
+
+/* Prevent row content from overlapping headers during scroll */
+.data-table-container tbody tr {
+  position: relative;
+  z-index: 1;
+}
+
+.data-table-container tbody td {
+  position: relative;
+  z-index: 1;
 }
 
 /* Fix sticky positioning for Risk ID and Actions columns */
