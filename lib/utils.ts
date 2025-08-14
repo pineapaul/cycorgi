@@ -218,3 +218,42 @@ export function formatOptionText(...parts: unknown[]): string {
   const concatenated = parts.map(part => String(part || '')).join('')
   return escapeHtml(concatenated)
 }
+
+/**
+ * Calculate treatment due date based on risk rating and system settings
+ * Priority order: dateRiskRaised > dateRiskTreatmentsApproved > current date
+ */
+export function calculateTreatmentDueDate(
+  riskRating: string,
+  systemSettings: any,
+  dateRiskRaised?: string,
+  dateRiskTreatmentsApproved?: string
+): Date {
+  // Get the number of days to add based on risk rating (case-insensitive)
+  const normalizedRiskRating = riskRating?.toLowerCase() || 'moderate'
+  const daysToAdd = systemSettings?.riskTreatmentDueDates?.[normalizedRiskRating] || 90
+  
+  // Determine the base date in priority order
+  let baseDate: Date
+  
+  if (dateRiskRaised) {
+    baseDate = new Date(dateRiskRaised)
+  } else if (dateRiskTreatmentsApproved) {
+    baseDate = new Date(dateRiskTreatmentsApproved)
+  } else {
+    baseDate = new Date()
+  }
+  
+  // Add the calculated days
+  const dueDate = new Date(baseDate)
+  dueDate.setDate(dueDate.getDate() + daysToAdd)
+  
+  return dueDate
+}
+
+/**
+ * Format date to YYYY-MM-DD for HTML date input
+ */
+export function formatDateForInput(date: Date): string {
+  return date.toISOString().split('T')[0]
+}

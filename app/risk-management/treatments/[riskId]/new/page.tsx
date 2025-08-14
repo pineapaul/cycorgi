@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Icon from '../../../../components/Icon'
 import { useToast } from '../../../../components/Toast'
-import { mapAssetIdsToNames } from '../../../../../lib/utils'
+import { mapAssetIdsToNames, calculateTreatmentDueDate, formatDateForInput } from '../../../../../lib/utils'
 
 interface TreatmentFormData {
   riskId: string
@@ -41,6 +41,9 @@ export default function AddTreatment() {
   const [errors, setErrors] = useState<TreatmentFormErrors>({})
   const [riskDetails, setRiskDetails] = useState<any>(null)
   const [generatingTreatmentId, setGeneratingTreatmentId] = useState(false)
+  const [systemSettings, setSystemSettings] = useState<any>(null)
+  const [calculatedDueDate, setCalculatedDueDate] = useState<string>('')
+  const [loadingSettings, setLoadingSettings] = useState(true)
 
   const mandatoryFields = ['treatmentId', 'riskTreatment', 'riskTreatmentOwner', 'dateRiskTreatmentDue']
 
@@ -89,18 +92,28 @@ export default function AddTreatment() {
     }
   }
 
-  // Fetch risk details and generate treatment ID
+  // Fetch risk details, system settings, and generate treatment ID
   useEffect(() => {
-    const fetchRiskDetailsAndGenerateId = async () => {
+    const fetchDataAndGenerateId = async () => {
       if (!riskId) return
 
       try {
-        // Fetch risk details
-        const response = await fetch(`/api/risks/${riskId}`)
-        const result = await response.json()
+        setLoadingSettings(true)
+        // Fetch risk details and system settings in parallel
+        const [riskResponse, settingsResponse] = await Promise.all([
+          fetch(`/api/risks/${riskId}`),
+          fetch('/api/system-settings')
+        ])
         
-        if (result.success) {
-          setRiskDetails(result.data)
+        const riskResult = await riskResponse.json()
+        const settingsResult = await settingsResponse.json()
+        
+        if (riskResult.success) {
+          setRiskDetails(riskResult.data)
+        }
+        
+        if (settingsResult.success) {
+          setSystemSettings(settingsResult.data)
         }
 
         // Generate treatment ID
@@ -111,14 +124,57 @@ export default function AddTreatment() {
           treatmentId: newTreatmentId
         }))
       } catch (error) {
-        console.error('Error fetching risk details or generating treatment ID:', error)
+        console.error('Error fetching data or generating treatment ID:', error)
       } finally {
         setGeneratingTreatmentId(false)
+        setLoadingSettings(false)
       }
     }
 
-    fetchRiskDetailsAndGenerateId()
+    fetchDataAndGenerateId()
   }, [riskId])
+
+  // Calculate due date when risk details and system settings are available
+  useEffect(() => {
+    if (riskDetails && systemSettings) {
+      try {
+        const dueDate = calculateTreatmentDueDate(
+          riskDetails.riskRating,
+          systemSettings,
+          riskDetails.dateRiskRaised,
+          riskDetails.dateRiskTreatmentsApproved
+        )
+        
+        const formattedDueDate = formatDateForInput(dueDate)
+        setCalculatedDueDate(formattedDueDate)
+        
+        // Set the calculated due date as the initial value
+        setFormData(prev => ({
+          ...prev,
+          dateRiskTreatmentDue: formattedDueDate
+        }))
+        
+        console.log('Due date calculated:', {
+          riskRating: riskDetails.riskRating,
+          dateRiskRaised: riskDetails.dateRiskRaised,
+          dateRiskTreatmentsApproved: riskDetails.dateRiskTreatmentsApproved,
+          calculatedDueDate: formattedDueDate,
+          systemSettings: systemSettings.riskTreatmentDueDates
+        })
+      } catch (error) {
+        console.error('Error calculating due date:', error)
+        // Fallback to current date + 90 days if calculation fails
+        const fallbackDate = new Date()
+        fallbackDate.setDate(fallbackDate.getDate() + 90)
+        const formattedFallbackDate = formatDateForInput(fallbackDate)
+        setCalculatedDueDate(formattedFallbackDate)
+        setFormData(prev => ({
+          ...prev,
+          dateRiskTreatmentDue: formattedFallbackDate
+        }))
+      }
+    }
+  }, [riskDetails, systemSettings])
 
   const validateForm = (): boolean => {
     const newErrors: TreatmentFormErrors = {}
@@ -253,12 +309,12 @@ export default function AddTreatment() {
                 <span className="font-medium text-gray-700">Risk Statement:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.riskStatement}</p>
               </div>
-                              <div>
-                  <span className="font-medium text-gray-700">Information Asset:</span>
-                  <p className="text-gray-600 mt-1">
-                    {mapAssetIdsToNames(riskDetails.informationAsset, riskDetails.informationAssetDetails || [])}
-                  </p>
-                </div>
+              <div>
+                <span className="font-medium text-gray-700">Information Asset:</span>
+                <p className="text-gray-600 mt-1">
+                  {mapAssetIdsToNames(riskDetails.informationAsset, riskDetails.informationAssetDetails || [])}
+                </p>
+              </div>
               <div>
                 <span className="font-medium text-gray-700">Risk Rating:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.riskRating}</p>
@@ -267,6 +323,25 @@ export default function AddTreatment() {
                 <span className="font-medium text-gray-700">Risk Owner:</span>
                 <p className="text-gray-600 mt-1">{riskDetails.riskOwner}</p>
               </div>
+              {(riskDetails.dateRiskRaised || riskDetails.dateRiskTreatmentsApproved) && (
+                <div className="md:col-span-2">
+                  <span className="font-medium text-gray-700">Due Date Calculation Basis:</span>
+                  <div className="mt-1 space-y-1 text-xs text-gray-600">
+                    {riskDetails.dateRiskRaised && (
+                      <div>• Risk Raised: {new Date(riskDetails.dateRiskRaised).toLocaleDateString()}</div>
+                    )}
+                    {riskDetails.dateRiskTreatmentsApproved && (
+                      <div>• Treatments Approved: {new Date(riskDetails.dateRiskTreatmentsApproved).toLocaleDateString()}</div>
+                    )}
+                    {!riskDetails.dateRiskRaised && !riskDetails.dateRiskTreatmentsApproved && (
+                      <div>• Using current date as base</div>
+                    )}
+                    {systemSettings && (
+                      <div>• Due date calculation: +{systemSettings.riskTreatmentDueDates?.[riskDetails.riskRating?.toLowerCase()] || 90} days</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -374,18 +449,57 @@ export default function AddTreatment() {
                 <div>
                   <label htmlFor="dateRiskTreatmentDue" className="block text-sm font-medium text-gray-700 mb-2">
                     Due Date <span className="text-red-500">*</span>
+                    {calculatedDueDate && (
+                      <span className="text-xs text-gray-500 ml-2">
+                        (Calculated: {calculatedDueDate})
+                      </span>
+                    )}
+                    {loadingSettings && (
+                      <span className="text-xs text-blue-500 ml-2">
+                        (Calculating...)
+                      </span>
+                    )}
                   </label>
-                  <input
-                    type="date"
-                    id="dateRiskTreatmentDue"
-                    value={formData.dateRiskTreatmentDue}
-                    onChange={(e) => handleInputChange('dateRiskTreatmentDue', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
-                      errors.dateRiskTreatmentDue 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                    }`}
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="date"
+                      id="dateRiskTreatmentDue"
+                      value={formData.dateRiskTreatmentDue}
+                      onChange={(e) => handleInputChange('dateRiskTreatmentDue', e.target.value)}
+                      disabled={loadingSettings}
+                      className={`flex-1 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors ${
+                        errors.dateRiskTreatmentDue 
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                      } ${loadingSettings ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                    />
+                    {calculatedDueDate && formData.dateRiskTreatmentDue !== calculatedDueDate && !loadingSettings && (
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('dateRiskTreatmentDue', calculatedDueDate)}
+                        className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                        title="Reset to calculated due date"
+                      >
+                        <Icon name="arrow-clockwise" size={14} />
+                      </button>
+                    )}
+                  </div>
+                  {calculatedDueDate && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Due date calculated based on {riskDetails?.riskRating} risk rating. 
+                      You can modify this date as needed.
+                    </p>
+                  )}
+                  {!systemSettings && !loadingSettings && (
+                    <p className="mt-1 text-xs text-yellow-600">
+                      System settings not available. Using default due date calculation.
+                    </p>
+                  )}
+                  {loadingSettings && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Loading system settings to calculate due date...
+                    </p>
+                  )}
                   {errors.dateRiskTreatmentDue && (
                     <p className="mt-1 text-sm text-red-600">{errors.dateRiskTreatmentDue}</p>
                   )}

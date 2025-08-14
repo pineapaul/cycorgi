@@ -178,20 +178,20 @@ export default function Treatments() {
 
 
   const columns: Column[] = [
-    { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
+    { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '160px' },
     { key: 'treatmentJira', label: 'Jira Ticket', sortable: true, width: '180px' },
-    { key: 'actions', label: 'Add to workshop agenda', sortable: false, width: '120px' },
+    { key: 'actions', label: 'Add to workshop agenda', sortable: false, width: '200px' },
     { key: 'treatmentType', label: 'Treatment', sortable: true },
     { key: 'treatmentStatus', label: 'Status', sortable: true, width: '100px' },
-    { key: 'timeRemaining', label: 'Time Remaining', sortable: true, width: '140px' },
+    { key: 'timeRemaining', label: 'Time Remaining', sortable: true },
     { key: 'targetCompletionDate', label: 'Due Date', sortable: true, width: '110px' },
     { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true, width: '130px' },
-    { key: 'numberOfExtensions', label: 'Extensions', sortable: true, width: '100px' },
+    { key: 'numberOfExtensions', label: 'Extensions', sortable: true, width: '140px' },
     { key: 'riskId', label: 'Risk ID', sortable: true, width: '120px' },
-    { key: 'treatmentOwner', label: 'Owner', sortable: true, width: '150px' },
+    { key: 'treatmentOwner', label: 'Owner', sortable: true, width: '180px' },
     { key: 'actualCompletionDate', label: 'Completion Date', sortable: true, width: '130px' },
-    { key: 'closureApprovedBy', label: 'Approved By', sortable: true, width: '150px' },
-    { key: 'createdAt', label: 'Created Date', sortable: true, width: '110px' },
+    { key: 'closureApprovedBy', label: 'Approved By', sortable: true },
+    { key: 'createdAt', label: 'Created Date', sortable: true },
   ].map(col => ({
     ...col,
     render: (value: any, row: any) => {
