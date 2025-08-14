@@ -2530,6 +2530,7 @@ export default function RiskInformation() {
               { key: 'riskTreatment', label: 'Risk Treatment', sortable: true, width: 'auto' },
               { key: 'actions', label: 'Add to Workshop Agenda', sortable: false, width: '180px', align: 'center' as const },
               { key: 'treatmentId', label: 'Treatment ID', sortable: true, width: '140px' },
+              { key: 'treatmentJira', label: 'Jira Ticket', sortable: true, width: '160px' },
               { key: 'riskTreatmentOwner', label: 'Risk Treatment Owner', sortable: true, width: '180px' },
               { key: 'dateRiskTreatmentDue', label: 'Date Risk Treatment Due', sortable: true, width: '160px' },
               { key: 'extendedDueDate', label: 'Extended Due Date', sortable: true, width: '160px' },
@@ -2545,6 +2546,23 @@ export default function RiskInformation() {
                     <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
                       {value}
                     </span>
+                  )
+                }
+                if (col.key === 'treatmentJira') {
+                  if (!value || value === 'Not specified') {
+                    return <span className="text-gray-400">-</span>
+                  }
+                  return (
+                    <a
+                      href={value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                    >
+                      <Icon name="link" size={12} className="mr-1" />
+                      {value.split('/').pop() || value}
+                    </a>
                   )
                 }
                 if (col.key === 'numberOfExtensions') {
