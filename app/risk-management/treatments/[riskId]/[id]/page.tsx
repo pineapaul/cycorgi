@@ -317,7 +317,11 @@ export default function TreatmentInformation() {
     return `${day} ${month} ${year}`
   }
 
-  const getClosureStatusColor = (status: string) => {
+  const getClosureStatusColor = (status: string | undefined | null) => {
+    if (!status || typeof status !== 'string') {
+      return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+    
     switch (status.toLowerCase()) {
       case TREATMENT_STATUS.APPROVED.toLowerCase():
         return 'bg-green-100 text-green-800 border-green-200'
@@ -614,25 +618,9 @@ export default function TreatmentInformation() {
                        <p className="text-sm text-gray-900 mt-1 font-medium">{treatment.riskTreatmentOwner || 'Not assigned'}</p>
                      </div>
                      <div>
-                       <span className="text-xs text-gray-500 uppercase tracking-wide">Due Date</span>
-                       <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.dateRiskTreatmentDue)}</p>
-                     </div>
-                     <div>
-                       <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Jira Ticket</span>
                        <div className="mt-1">
-                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getClosureStatusColor(treatment.closureApproval)}`}>
-                           {treatment.closureApproval}
-                         </span>
-                       </div>
-                     </div>
-                     <div>
-                       <span className="text-xs text-gray-500 uppercase tracking-wide">Extensions</span>
-                       <p className="text-sm text-gray-900 mt-1">{treatment.numberOfExtensions}</p>
-                     </div>
-                     {treatment.treatmentJira && (
-                       <div>
-                         <span className="text-xs text-gray-500 uppercase tracking-wide">Jira Ticket</span>
-                         <div className="mt-1">
+                         {treatment.treatmentJira ? (
                            <a
                              href={treatment.treatmentJira}
                              target="_blank"
@@ -642,9 +630,23 @@ export default function TreatmentInformation() {
                              <Icon name="link" size={12} className="mr-1" />
                              {treatment.treatmentJira.split('/').pop() || treatment.treatmentJira}
                            </a>
-                         </div>
+                         ) : (
+                           <span className="text-sm text-gray-400">Not specified</span>
+                         )}
                        </div>
-                     )}
+                     </div>
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Due Date</span>
+                       <p className="text-sm text-gray-900 mt-1">{formatDate(treatment.dateRiskTreatmentDue)}</p>
+                     </div>
+                     <div>
+                       <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                       <div className="mt-1">
+                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getClosureStatusColor(treatment.closureApproval)}`}>
+                           {treatment.closureApproval || 'Not specified'}
+                         </span>
+                       </div>
+                     </div>
                      {treatment.extendedDueDate && (
                        <div>
                          <span className="text-xs text-gray-500 uppercase tracking-wide">Extended Due Date</span>
@@ -749,7 +751,14 @@ export default function TreatmentInformation() {
               <div>
                <div className="flex items-center mb-3">
                  <div className="w-1 h-4 bg-purple-600 rounded-full mr-3"></div>
-                 <h3 className="text-base font-semibold text-gray-900">Due Date Extensions</h3>
+                 <h3 className="text-base font-semibold text-gray-900">
+                   Due Date Extensions
+                   {treatment.numberOfExtensions > 0 && (
+                     <span className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                       {treatment.numberOfExtensions} extension{treatment.numberOfExtensions !== 1 ? 's' : ''}
+                     </span>
+                   )}
+                 </h3>
                </div>
                
                {treatment.extensions && treatment.extensions.length > 0 ? (

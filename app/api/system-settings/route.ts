@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import getClientPromise from '@/lib/mongodb'
-import { USER_ROLES } from '@/lib/constants'
 
 export async function GET() {
   try {
@@ -61,7 +60,7 @@ export async function PUT(request: NextRequest) {
     
     const currentUser = await userCollection.findOne({ email: session.user.email })
     
-    if (!currentUser || currentUser.role !== USER_ROLES.ADMIN) {
+    if (!currentUser || !currentUser.roles?.includes('Admin')) {
       return NextResponse.json({ 
         success: false, 
         error: 'Access denied. Admin role required.' 
@@ -142,8 +141,8 @@ export async function POST() {
     return NextResponse.json({ 
       success: true, 
       data: {
-        sessionRole: session.user.role,
-        databaseRole: currentUser?.role || 'Not found',
+        sessionRole: session.user.roles?.[0] || 'No role assigned',
+        databaseRole: currentUser?.roles?.join(', ') || 'No roles',
         email: session.user.email,
         name: session.user.name,
         status: currentUser?.status || 'Unknown'

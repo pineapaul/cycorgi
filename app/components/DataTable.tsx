@@ -752,12 +752,13 @@ export default function DataTable<T = Record<string, unknown>>({
           className="overflow-x-auto overflow-y-auto data-table-container" 
           style={{ 
             maxHeight: 'calc(100vh - 380px)', 
-            minHeight: '400px'
+            minHeight: '400px',
+            position: 'relative'
           }}
         >
           {/* Desktop Table View */}
           <table className={`w-full ${viewMode === 'table' ? 'table-auto' : 'table-fixed'}`}>
-            <thead className="bg-gray-50 sticky top-0 z-20">
+            <thead className="bg-gray-50 sticky top-0 z-40">
               <tr>
                 {selectable && (
                   <th

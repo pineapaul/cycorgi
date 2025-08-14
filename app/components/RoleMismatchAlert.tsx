@@ -13,16 +13,23 @@ export default function RoleMismatchAlert() {
       if (!session?.user?.email) return
 
       try {
-        // Check if there's a role mismatch by fetching current user data
-        const response = await fetch(`/api/users?email=${encodeURIComponent(session.user.email)}`)
+        // Check if there's a role mismatch by fetching current user data from system-settings debug endpoint
+        const response = await fetch('/api/system-settings', { method: 'POST' })
         if (response.ok) {
           const data = await response.json()
           if (data.success && data.data) {
-            const currentDbRole = data.data.role
-            setDbRole(currentDbRole)
+            const currentDbRoles = data.data.databaseRole
+            setDbRole(currentDbRoles)
             
             // Show alert if there's a mismatch
-            if (currentDbRole !== session.user.role) {
+            const sessionRoles = session.user.roles || []
+            const dbRolesArray = currentDbRoles !== 'No roles' ? currentDbRoles.split(', ') : []
+            
+            // Check if there's any mismatch between session and database roles
+            const hasMismatch = sessionRoles.length !== dbRolesArray.length || 
+              !sessionRoles.every(role => dbRolesArray.includes(role))
+            
+            if (hasMismatch) {
               setShowAlert(true)
             } else {
               setShowAlert(false)
@@ -55,7 +62,7 @@ export default function RoleMismatchAlert() {
             Role Mismatch Detected
           </h3>
           <div className="mt-2 text-sm text-yellow-700">
-            <p>Your session shows: <strong>{session?.user?.role}</strong></p>
+            <p>Your session shows: <strong>{session?.user?.roles?.join(', ') || 'No roles'}</strong></p>
             <p>Database shows: <strong>{dbRole}</strong></p>
             <p className="mt-2">Your session will automatically sync shortly.</p>
           </div>

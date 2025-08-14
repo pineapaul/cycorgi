@@ -87,7 +87,23 @@ import {
   faRefresh,
   faCircleXmark,
   faFileExport,
-  faListCheck
+  faListCheck,
+  faDeleteLeft,
+  faEraser,
+  faCalendarCheck,
+  faCalendarMinus,
+  faUserMinus,
+  faSuitcase,
+  faPrint,
+  faBolt,
+  faPaperclip,
+  faTrophy,
+  faFolderOpen,
+  faPerson,
+  faPersonDress,
+  faHandshake,
+  faGauge,
+  faUserSecret
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -197,6 +213,23 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'circle-xmark': faCircleXmark,
     'file-export': faFileExport,
     'list-check': faListCheck,
+    'delete-left': faDeleteLeft,
+    ban: faBan,
+    eraser: faEraser,
+    'calendar-mark': faCalendarCheck,
+    'calendar-minus': faCalendarMinus,
+    'user-minus': faUserMinus,
+    suitcase: faSuitcase,
+    print: faPrint,
+    bolt: faBolt,
+    paperclip: faPaperclip,
+    trophy: faTrophy,
+    'folder-open': faFolderOpen,
+    person: faPerson,
+    'person-dress': faPersonDress,
+    handshake: faHandshake,
+    gauge: faGauge,
+    'user-secret': faUserSecret,
   }
 
   const icon = icons[name]
@@ -312,6 +345,23 @@ function getFallbackEmoji(name: string): string {
     'circle-xmark': '❌',
     'file-export': '📤',
     'list-check': '✅',
+    'delete-left': '⌫',
+    ban: '🚫',
+    eraser: '🧽',
+    'calendar-mark': '📅✅',
+    'calendar-minus': '📅➖',
+    'user-minus': '👤➖',
+    suitcase: '💼',
+    print: '🖨️',
+    bolt: '⚡',
+    paperclip: '📎',
+    trophy: '🏆',
+    'folder-open': '📂',
+    person: '👤',
+    'person-dress': '👗',
+    handshake: '🤝',
+    gauge: '📊',
+    'user-secret': '🕵️',
   }
   return emojiMap[name] || '📄'
 } 

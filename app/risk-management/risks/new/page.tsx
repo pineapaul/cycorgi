@@ -950,25 +950,34 @@ export default function NewRisk() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Current Controls Reference
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Select controls from the SOA that are currently implemented or applicable to this risk
+                  </p>
                   <div className="space-y-2">
-                    {formData.currentControlsReference.map((controlRef, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700">
-                          {controlRef}
+                    {formData.currentControlsReference.map((controlRef, index) => {
+                      const soaControl = soaControls.find(control => control.id === controlRef)
+                      return (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50">
+                            <div className="font-mono text-purple-600 text-sm">{controlRef}</div>
+                            {soaControl && (
+                              <div className="text-gray-700 text-xs mt-1">{soaControl.title}</div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newControlRefs = formData.currentControlsReference.filter((_, i) => i !== index)
+                              handleInputChange('currentControlsReference', newControlRefs)
+                            }}
+                            className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                            title="Remove control reference"
+                          >
+                            <Icon name="x" size={16} />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newControlRefs = formData.currentControlsReference.filter((_, i) => i !== index)
-                            handleInputChange('currentControlsReference', newControlRefs)
-                          }}
-                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                          title="Remove control reference"
-                        >
-                          <Icon name="x" size={16} />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                     <button
                       type="button"
                       onClick={() => openSOAControlsModal('currentControlsReference')}
@@ -985,25 +994,34 @@ export default function NewRisk() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Applicable Controls After Treatment
                   </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Select controls from the SOA that will be applicable after implementing risk treatments
+                  </p>
                   <div className="space-y-2">
-                    {formData.applicableControlsAfterTreatment.map((control, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700">
-                          {control}
+                    {formData.applicableControlsAfterTreatment.map((control, index) => {
+                      const soaControl = soaControls.find(controlItem => controlItem.id === control)
+                      return (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50">
+                            <div className="font-mono text-purple-600 text-sm">{control}</div>
+                            {soaControl && (
+                              <div className="text-gray-700 text-xs mt-1">{soaControl.title}</div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newControls = formData.applicableControlsAfterTreatment.filter((_, i) => i !== index)
+                              handleInputChange('applicableControlsAfterTreatment', newControls)
+                            }}
+                            className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                            title="Remove control"
+                          >
+                            <Icon name="x" size={16} />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newControls = formData.applicableControlsAfterTreatment.filter((_, i) => i !== index)
-                            handleInputChange('applicableControlsAfterTreatment', newControls)
-                          }}
-                          className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                          title="Remove control"
-                        >
-                          <Icon name="x" size={16} />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                     <button
                       type="button"
                       onClick={() => openSOAControlsModal('applicableControlsAfterTreatment')}
@@ -1177,6 +1195,9 @@ export default function NewRisk() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Select SOA Controls - {soaModalType === 'currentControlsReference' ? 'Current Controls Reference' : 'Applicable Controls After Treatment'}
                 </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Select controls from the SOA to reference in this risk assessment
+                </p>
               </div>
               <button
                 onClick={closeSOAControlsModal}
@@ -1192,7 +1213,7 @@ export default function NewRisk() {
                 <Icon name="magnifying-glass" size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search SOA controls by ID, title, or description..."
+                  placeholder="Search SOA controls by ID (e.g., A.5.1), title, or description..."
                   value={soaSearchTerm}
                   onChange={(e) => setSoaSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -1228,6 +1249,29 @@ export default function NewRisk() {
                 ))}
               </div>
             </div>
+
+            {/* Selected Controls Summary */}
+            {tempSelectedSOAControls.length > 0 && (
+              <div className="px-6 py-3 bg-purple-50 border-b border-purple-200">
+                <div className="text-sm font-medium text-purple-800 mb-2">
+                  Selected Controls ({tempSelectedSOAControls.length}):
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tempSelectedSOAControls.map((controlId) => {
+                    const control = soaControls.find(c => c.id === controlId)
+                    return (
+                      <span
+                        key={controlId}
+                        className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                      >
+                        <span className="font-mono mr-1">{controlId}</span>
+                        {control && <span className="text-purple-600">- {control.title}</span>}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* SOA Controls List */}
             <div className="flex-1 overflow-y-auto p-6">

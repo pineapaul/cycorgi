@@ -11,3 +11,4 @@
   [31mremotes/origin/pineapaul/add-risks[m
   [31mremotes/origin/pineapaul/risk-info-enhancements[m
   [31mremotes/origin/pineapaul/risk-treatments[m
+[33m1aaae2a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msandbox[m[33m)[m feat: implement automatic treatment due date calculation based on risk rating and system settings
