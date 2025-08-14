@@ -162,7 +162,11 @@ export default function Treatments() {
     setSelectedTreatmentForWorkshop(null)
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined | null) => {
+    if (!status || typeof status !== 'string') {
+      return 'bg-gray-100 text-gray-800'
+    }
+    
     switch (status.toLowerCase()) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800'

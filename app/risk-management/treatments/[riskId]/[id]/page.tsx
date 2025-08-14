@@ -317,7 +317,11 @@ export default function TreatmentInformation() {
     return `${day} ${month} ${year}`
   }
 
-  const getClosureStatusColor = (status: string) => {
+  const getClosureStatusColor = (status: string | undefined | null) => {
+    if (!status || typeof status !== 'string') {
+      return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+    
     switch (status.toLowerCase()) {
       case TREATMENT_STATUS.APPROVED.toLowerCase():
         return 'bg-green-100 text-green-800 border-green-200'
@@ -621,7 +625,7 @@ export default function TreatmentInformation() {
                        <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
                        <div className="mt-1">
                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getClosureStatusColor(treatment.closureApproval)}`}>
-                           {treatment.closureApproval}
+                           {treatment.closureApproval || 'Not specified'}
                          </span>
                        </div>
                      </div>
