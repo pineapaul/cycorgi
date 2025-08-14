@@ -8,7 +8,7 @@ import Modal from "@/app/components/Modal";
 import RiskMatrix from "@/app/components/RiskMatrix";
 import { Toast } from "@/app/components/Toast";
 import { useToast } from "@/app/hooks/useToast";
-import { USER_ROLES } from "@/lib/constants";
+
 
 /**
  * Modern System Configuration Page
@@ -85,7 +85,7 @@ export default function SystemSettingsPage() {
   const { data: session } = useSession();
   
   // Check if user has admin role
-  const isAdmin = session?.user?.role === USER_ROLES.ADMIN;
+  const isAdmin = session?.user?.roles?.includes('Admin') || false;
   
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);

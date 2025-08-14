@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import getClientPromise from '@/lib/mongodb'
-import { USER_ROLES, USER_STATUS, UserRole, UserStatus } from '@/lib/constants'
+import { USER_STATUS, UserStatus } from '@/lib/constants'
 import { ObjectId } from 'mongodb'
 
 // GET - Fetch all users (Admin only)
@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (session.user.role !== USER_ROLES.ADMIN) {
+    if (!session.user.roles?.includes('Admin')) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
@@ -39,20 +39,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (session.user.role !== USER_ROLES.ADMIN) {
+    if (!session.user.roles?.includes('Admin')) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { name, email, role, status } = body
+    const { name, email, roles, status } = body
 
     // Validation
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
 
-    if (role && !Object.values(USER_ROLES).includes(role as UserRole)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (roles && (!Array.isArray(roles) || roles.length === 0)) {
+      return NextResponse.json({ error: 'At least one role is required' }, { status: 400 })
     }
 
     if (status && !Object.values(USER_STATUS).includes(status as UserStatus)) {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const newUser = {
       name,
       email,
-      role: role || USER_ROLES.VIEWER,
+      roles: roles || [],
       status: status || USER_STATUS.PENDING,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -99,23 +99,23 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (session.user.role !== USER_ROLES.ADMIN) {
+    if (!session.user.roles?.includes('Admin')) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
     const body = await request.json()
     console.log('User update request body:', body)
     
-    const { id, role, status } = body
+    const { id, roles, status } = body
 
     if (!id) {
       console.log('Missing user ID in request body')
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    if (role && !Object.values(USER_ROLES).includes(role as UserRole)) {
-      console.log('Invalid role provided:', role)
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    if (roles && (!Array.isArray(roles) || roles.length === 0)) {
+      console.log('Invalid roles provided:', roles)
+      return NextResponse.json({ error: 'At least one role is required' }, { status: 400 })
     }
 
     if (status && !Object.values(USER_STATUS).includes(status as UserStatus)) {
@@ -131,7 +131,7 @@ export async function PUT(request: NextRequest) {
       updatedBy: session.user.id
     }
 
-    if (role) updateData.role = role
+    if (roles) updateData.roles = roles
     if (status) updateData.status = status
 
     console.log('Update data:', updateData)

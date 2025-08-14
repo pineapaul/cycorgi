@@ -26,7 +26,7 @@ export default withAuth(
 
     // Additional role-based checks can be added here
     // For example, admin-only routes:
-    if (pathname.startsWith('/admin/') && token.role !== 'Admin') {
+    if (pathname.startsWith('/admin/') && !token.roles?.includes('Admin')) {
       return NextResponse.redirect(new URL('/unauthorized', req.url))
     }
 

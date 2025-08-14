@@ -105,7 +105,7 @@ export default function AuthButton() {
             {session.user?.name}
           </p>
           <p className="text-xs font-medium" style={{ color: '#898AC4' }}>
-            {session.user?.role}
+            {session.user?.roles?.[0] || 'No role'}
           </p>
         </div>
         
@@ -160,9 +160,9 @@ export default function AuthButton() {
               
               {/* Role and status badges */}
               <div className="flex items-center gap-2 mt-4">
-                {session.user?.role && (
+                {session.user?.roles && session.user.roles.length > 0 && (
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                    {session.user.role}
+                    {session.user.roles.join(', ')}
                   </span>
                 )}
                 {session.user?.status && (

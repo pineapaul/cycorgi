@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { USER_ROLES, USER_STATUS } from "./constants"
+import { USER_STATUS } from "./constants"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,16 +23,16 @@ export const authOptions: NextAuthOptions = {
           // Fetch fresh user data from database
           const dbUser = await db.collection('users').findOne({ email: user.email })
           
-          if (dbUser) {
-            // Update the user object with fresh data from database
-            user.id = dbUser._id.toString()
-            user.role = dbUser.role || USER_ROLES.VIEWER
-            user.status = dbUser.status || USER_STATUS.PENDING
-          } else {
-            // Set default values for new users
-            user.role = USER_ROLES.VIEWER
-            user.status = USER_STATUS.PENDING
-          }
+                     if (dbUser) {
+             // Update the user object with fresh data from database
+             user.id = dbUser._id.toString()
+             user.roles = dbUser.roles || []
+             user.status = dbUser.status || USER_STATUS.PENDING
+           } else {
+             // Set default values for new users
+             user.roles = ['Guest']
+             user.status = USER_STATUS.PENDING
+           }
           
           await client.close()
         }
@@ -45,21 +45,21 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async session({ session, token }) {
-      // Add user ID and role to the session from the JWT token
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string || USER_ROLES.VIEWER
-        session.user.status = token.status as string || USER_STATUS.PENDING
-      }
+             // Add user ID and roles to the session from the JWT token
+       if (session.user) {
+         session.user.id = token.id as string
+         session.user.roles = token.roles as string[] || []
+         session.user.status = token.status as string || USER_STATUS.PENDING
+       }
       return session
     },
     async jwt({ token, user, account, trigger }) {
-      // Add user info to JWT token
-      if (user) {
-        token.id = user.id
-        token.role = (user as any).role || USER_ROLES.VIEWER
-        token.status = (user as any).status || USER_STATUS.PENDING
-      }
+             // Add user info to JWT token
+       if (user) {
+         token.id = user.id
+         token.roles = (user as any).roles || ['Guest']
+         token.status = (user as any).status || USER_STATUS.PENDING
+       }
       
       // Handle force refresh trigger
       if (trigger === 'update') {
@@ -75,11 +75,11 @@ export const authOptions: NextAuthOptions = {
             // Fetch fresh user data from database using email from token
             const dbUser = await db.collection('users').findOne({ email: token.email })
             
-            if (dbUser) {
-              // Update token with fresh data
-              token.role = dbUser.role || USER_ROLES.VIEWER
-              token.status = dbUser.status || USER_STATUS.PENDING
-            }
+                         if (dbUser) {
+               // Update token with fresh data
+               token.roles = dbUser.roles || []
+               token.status = dbUser.status || USER_STATUS.PENDING
+             }
             
             await client.close()
           }
@@ -115,18 +115,18 @@ export const authOptions: NextAuthOptions = {
           await client.connect()
           const db = client.db()
           
-          // Set default role and status for new users
-          await db.collection('users').updateOne(
-            { email: user.email },
-            {
-              $set: {
-                role: USER_ROLES.VIEWER,
-                status: USER_STATUS.PENDING,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              }
-            }
-          )
+                     // Set default roles and status for new users
+           await db.collection('users').updateOne(
+             { email: user.email },
+             {
+               $set: {
+                 roles: ['Guest'],
+                 status: USER_STATUS.PENDING,
+                 createdAt: new Date(),
+                 updatedAt: new Date()
+               }
+             }
+           )
           
           await client.close()
         }
@@ -137,28 +137,4 @@ export const authOptions: NextAuthOptions = {
   }
 }
 
-// Type augmentation for NextAuth
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-      role: string
-      status: string
-    }
-  }
 
-  interface User {
-    role?: string
-    status?: string
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: string
-    status?: string
-  }
-}

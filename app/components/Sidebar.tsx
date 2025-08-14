@@ -92,9 +92,9 @@ export default function Sidebar() {
 
   // Get user role display
   const getUserRole = () => {
-    if (session?.user?.role) {
+    if (session?.user?.roles && session.user.roles.length > 0) {
       // Capitalize first letter and replace underscores with spaces
-      return session.user.role
+      return session.user.roles[0]
         .replace(/_/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase())
     }
