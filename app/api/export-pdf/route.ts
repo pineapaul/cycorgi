@@ -7,28 +7,52 @@ export const dynamic = 'force-dynamic'
 /**
  * Sanitizes filename to prevent header injection attacks
  * Removes or replaces dangerous characters that could be used in HTTP header injection
+ * Uses efficient string operations to avoid ReDoS vulnerabilities
  */
 function sanitizeFilename(filename: string): string {
   if (!filename || typeof filename !== 'string') {
     return 'export.pdf'
   }
   
-  // Remove or replace dangerous characters that could be used in header injection
+  // Limit input length first to prevent processing extremely long strings
+  if (filename.length > 200) {
+    filename = filename.substring(0, 200)
+  }
+  
   let sanitized = filename
-    // Remove null bytes and control characters
-    .replace(/[\x00-\x1f\x7f]/g, '')
-    // Remove or replace characters that could break HTTP headers
-    .replace(/[<>:"|?*\\/]/g, '_')
-    // Remove multiple consecutive underscores
-    .replace(/_+/g, '_')
-    // Remove leading/trailing underscores and dots
-    .replace(/^[._]+|[._]+$/g, '')
-    // Ensure it has a .pdf extension
-    .replace(/\.pdf$/i, '')
-    // Limit length to prevent header size issues
-    .substring(0, 100)
-    // Add .pdf extension
-    + '.pdf'
+  
+  // Remove null bytes and control characters (safe regex - no quantifiers)
+  sanitized = sanitized.replace(/[\x00-\x1f\x7f]/g, '')
+  
+  // Replace dangerous characters with underscores (safe regex - no quantifiers)
+  sanitized = sanitized.replace(/[<>:"|?*\\/]/g, '_')
+  
+  // Efficiently remove consecutive underscores and dots using string operations
+  // This avoids the ReDoS vulnerability of /[._]+/ regex
+  while (sanitized.includes('__') || sanitized.includes('..')) {
+    sanitized = sanitized.replace('__', '_').replace('..', '.')
+  }
+  
+  // Remove leading and trailing underscores and dots efficiently
+  while (sanitized.startsWith('_') || sanitized.startsWith('.')) {
+    sanitized = sanitized.substring(1)
+  }
+  while (sanitized.endsWith('_') || sanitized.endsWith('.')) {
+    sanitized = sanitized.substring(0, sanitized.length - 1)
+  }
+  
+  // Remove .pdf extension if present (safe regex - no quantifiers)
+  if (sanitized.toLowerCase().endsWith('.pdf')) {
+    sanitized = sanitized.substring(0, sanitized.length - 4)
+  }
+  
+  // Limit length to prevent header size issues
+  if (sanitized.length > 100) {
+    sanitized = sanitized.substring(0, 100)
+  }
+  
+  // Add .pdf extension
+  sanitized = sanitized + '.pdf'
   
   // Fallback if sanitization results in empty or invalid filename
   if (!sanitized || sanitized === '.pdf' || sanitized.length < 5) {
