@@ -7,11 +7,7 @@ import { cn } from '@/lib/utils'
 import Icon from './Icon'
 import { useState } from 'react'
 
-const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-  // Program menu will be inserted here
-  { name: 'Compliance', href: '/compliance', icon: 'compliance' },
-]
+
 
 const programItems = [
   { name: 'Scope', href: '/program/scope' },
@@ -77,7 +73,7 @@ export default function Sidebar() {
     if (session?.user?.name) {
       return session.user.name
         .split(' ')
-        .map(n => n[0])
+        .map((n: string) => n[0])
         .join('')
         .toUpperCase()
         .slice(0, 2)
@@ -96,7 +92,7 @@ export default function Sidebar() {
       // Capitalize first letter and replace underscores with spaces
       return session.user.roles[0]
         .replace(/_/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase())
+        .replace(/\b\w/g, (l: string) => l.toUpperCase())
     }
     return 'User'
   }
@@ -118,23 +114,54 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 md:p-4 space-y-1 overflow-y-auto">
-        {/* Dashboard */}
-        <Link
-          key={navItems[0].href}
-          href={navItems[0].href}
-          className={cn(
-            'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-            pathname === navItems[0].href
-              ? 'text-white shadow-lg'
-              : 'text-white hover:text-white'
+        {/* Dashboard Menu */}
+        <div className="relative group">
+          <button
+            className={cn(
+              'flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none',
+              openMenu === 'dashboard' ? 'bg-[#A2AADB] text-white shadow-lg' : 'text-white hover:text-white'
+            )}
+            style={{ backgroundColor: openMenu === 'dashboard' ? '#A2AADB' : 'transparent' }}
+            onClick={() => handleMenuToggle('dashboard')}
+          >
+            <Icon name="dashboard" size={20} />
+            <span>Dashboard</span>
+            <span
+              className={cn(
+                "ml-auto transition-opacity",
+                openMenu === 'dashboard' ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              {openMenu === 'dashboard' ? '▲' : '▼'}
+            </span>
+          </button>
+          {openMenu === 'dashboard' && (
+            <div className="ml-7 mt-1 space-y-1">
+              <Link
+                href="/dashboard"
+                className={cn(
+                  'block px-3 py-1 rounded text-sm transition-all',
+                  pathname === '/dashboard'
+                    ? 'bg-white text-[#898AC4] font-semibold'
+                    : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                )}
+              >
+                Overview
+              </Link>
+              <Link
+                href="/dashboard/approvals"
+                className={cn(
+                  'block px-3 py-1 rounded text-sm transition-all',
+                  pathname === '/dashboard/approvals'
+                    ? 'bg-white text-[#898AC4] font-semibold'
+                    : 'text-white hover:bg-[#A2AADB] hover:text-white'
+                )}
+              >
+                Approvals
+              </Link>
+            </div>
           )}
-          style={{
-            backgroundColor: pathname === navItems[0].href ? '#A2AADB' : 'transparent'
-          }}
-        >
-          <Icon name={navItems[0].icon} size={20} />
-          <span>{navItems[0].name}</span>
-        </Link>
+        </div>
 
         {/* Program Menu */}
         <div className="relative group">
