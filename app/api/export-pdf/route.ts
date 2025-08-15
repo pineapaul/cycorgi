@@ -17,8 +17,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Starting PDF generation...')
+    console.log('HTML content length:', html.length)
+
     // Launch browser with serverless-optimized flags
-    browser = await puppeteer.launch({
+    const launchOptions = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -36,22 +39,70 @@ export async function POST(request: NextRequest) {
         '--disable-ipc-flooding-protection',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-update',
+        '--disable-domain-reliability',
+        '--disable-features=AudioServiceOutOfProcess',
+        '--disable-ipc-flooding-protection',
+        '--no-default-browser-check',
+        '--no-first-run',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
       ],
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    })
+    }
+
+    console.log('Launching browser with options:', JSON.stringify(launchOptions, null, 2))
+    
+    browser = await puppeteer.launch(launchOptions)
+    console.log('Browser launched successfully')
 
     page = await browser.newPage()
+    console.log('Page created successfully')
 
     // Set content and wait for it to load
+    console.log('Setting HTML content...')
     await page.setContent(html, {
       waitUntil: 'networkidle0',
       timeout: 30000,
     })
+    console.log('HTML content set successfully')
 
     // Wait a bit more to ensure content is fully rendered
-    await page.waitForTimeout(1000)
+    console.log('Waiting for content to render...')
+    await page.waitForTimeout(2000)
+    console.log('Content rendering wait completed')
 
     // Generate PDF with optimized settings
+    console.log('Generating PDF...')
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -64,6 +115,7 @@ export async function POST(request: NextRequest) {
       displayHeaderFooter: false,
       preferCSSPageSize: true,
     })
+    console.log('PDF generated successfully, buffer size:', pdfBuffer.length)
 
     // Return PDF as response with proper headers
     return new NextResponse(pdfBuffer, {
@@ -78,8 +130,15 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('PDF generation error:', error)
+    console.error('Error stack:', error.stack)
+    
+    // Return more detailed error information
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      { 
+        error: 'Failed to generate PDF',
+        details: error.message,
+        stack: error.stack
+      },
       { status: 500 }
     )
   } finally {
@@ -87,6 +146,7 @@ export async function POST(request: NextRequest) {
     if (page) {
       try {
         await page.close()
+        console.log('Page closed successfully')
       } catch (closeError) {
         console.error('Error closing page:', closeError)
       }
@@ -95,6 +155,7 @@ export async function POST(request: NextRequest) {
     if (browser) {
       try {
         await browser.close()
+        console.log('Browser closed successfully')
       } catch (closeError) {
         console.error('Error closing browser:', closeError)
       }

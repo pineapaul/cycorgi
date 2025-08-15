@@ -112,8 +112,13 @@ export default function StatementOfApplicabilityPage() {
   const handleExportPDF = async (exportViewMode: 'expanded' | 'compact') => {
     setIsExporting(true);
     try {
+      console.log('Starting PDF export for view mode:', exportViewMode);
+      console.log('Filtered controls available:', filteredControls.length);
+      
       // Generate HTML content based on the selected view mode
       const htmlContent = generatePDFHTML(exportViewMode);
+      console.log('Generated HTML content length:', htmlContent.length);
+      console.log('HTML content preview:', htmlContent.substring(0, 500) + '...');
       
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -171,6 +176,27 @@ export default function StatementOfApplicabilityPage() {
       if (applicability === CONTROL_APPLICABILITY.APPLICABLE) return 'background: #dcfce7; color: #166534';
       return 'background: #f3f4f6; color: #374151';
     };
+
+    // Safety check for filteredControls
+    if (!filteredControls || filteredControls.length === 0) {
+      console.error('No filtered controls available for PDF generation');
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Statement of Applicability - No Data</title>
+          </head>
+          <body>
+            <h1>No Data Available</h1>
+            <p>No controls found to generate PDF.</p>
+          </body>
+        </html>
+      `;
+    }
+
+    console.log('Generating PDF HTML for view mode:', viewMode);
+    console.log('Filtered controls count:', filteredControls.length);
     
     let controlsHTML = '';
     
@@ -179,9 +205,9 @@ export default function StatementOfApplicabilityPage() {
       controlsHTML = filteredControls.map(controlSet => `
         <div style="margin-bottom: 30px; page-break-inside: avoid;">
           <h3 style="color: #1f2937; font-size: 18px; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">
-            ${controlSet.id} - ${controlSet.title}
+            ${controlSet.id || 'Unknown'} - ${controlSet.title || 'Untitled'}
           </h3>
-          <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description}</p>
+          <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description || 'No description available'}</p>
           
           <!-- Control Set Summary Stats -->
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
