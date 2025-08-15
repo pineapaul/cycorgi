@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Db, Collection } from "mongodb"
+import { randomUUID } from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -220,12 +222,21 @@ export function formatOptionText(...parts: unknown[]): string {
 }
 
 /**
+ * Interface for system settings related to risk treatment due dates
+ */
+export interface RiskTreatmentSettings {
+  riskTreatmentDueDates?: {
+    [key: string]: number
+  }
+}
+
+/**
  * Calculate treatment due date based on risk rating and system settings
  * Priority order: dateRiskRaised > dateRiskTreatmentsApproved > current date
  */
 export function calculateTreatmentDueDate(
   riskRating: string,
-  systemSettings: any,
+  systemSettings: RiskTreatmentSettings,
   dateRiskRaised?: string,
   dateRiskTreatmentsApproved?: string
 ): Date {
@@ -256,4 +267,79 @@ export function calculateTreatmentDueDate(
  */
 export function formatDateForInput(date: Date): string {
   return date.toISOString().split('T')[0]
+}
+
+/**
+ * Interface for database operations needed for ID generation
+ */
+export interface DatabaseOperations {
+  collection(name: string): Collection
+}
+
+/**
+ * Generate the next approval request ID with improved fallback mechanism
+ * @param db MongoDB database instance or any object with collection method
+ * @returns Promise<string> Next request ID in format REQ-0001, REQ-0002, etc.
+ */
+export async function generateNextRequestId(db: DatabaseOperations | Db): Promise<string> {
+  try {
+    const collection = db.collection('approvals')
+    const lastApproval = await collection
+      .findOne({}, { sort: { requestId: -1 } })
+    
+    let nextNumber = 1
+    if (lastApproval?.requestId) {
+      const lastNumber = parseInt(lastApproval.requestId.split('-')[1])
+      if (!isNaN(lastNumber)) {
+        nextNumber = lastNumber + 1
+      }
+    }
+    
+    return `REQ-${nextNumber.toString().padStart(4, '0')}`
+  } catch (error) {
+    console.error('Error generating request ID:', error)
+    // Improved fallback: Use UUID + timestamp for uniqueness
+    const timestamp = Date.now().toString(36) // Base36 for shorter strings
+    const uuid = randomUUID().slice(0, 8) // First 8 chars of UUID
+    return `REQ-${timestamp}-${uuid}`
+  }
+}
+
+/**
+ * Generate a unique identifier with prefix
+ * @param prefix - The prefix for the ID (e.g., 'RISK', 'REQ', 'TREAT')
+ * @param db - Database instance for sequential ID generation
+ * @param collectionName - Collection name to query for the last ID
+ * @returns Promise<string> Unique identifier
+ */
+export async function generateUniqueId(
+  prefix: string,
+  db: DatabaseOperations | Db,
+  collectionName: string
+): Promise<string> {
+  try {
+    const collection = db.collection(collectionName)
+    const lastDoc = await collection
+      .findOne({}, { sort: { [`${prefix.toLowerCase()}Id`]: -1 } })
+    
+    let nextNumber = 1
+    if (lastDoc && lastDoc[`${prefix.toLowerCase()}Id`]) {
+      const lastId = lastDoc[`${prefix.toLowerCase()}Id`] as string
+      const match = lastId.match(new RegExp(`^${prefix}-(\\d+)`, 'i'))
+      if (match && match[1]) {
+        const lastNumber = parseInt(match[1])
+        if (!isNaN(lastNumber)) {
+          nextNumber = lastNumber + 1
+        }
+      }
+    }
+    
+    return `${prefix}-${nextNumber.toString().padStart(4, '0')}`
+  } catch (error) {
+    console.error(`Error generating ${prefix} ID:`, error)
+    // Fallback: timestamp + random suffix for uniqueness
+    const timestamp = Date.now().toString(36)
+    const randomSuffix = Math.random().toString(36).slice(2, 6)
+    return `${prefix}-${timestamp}-${randomSuffix}`
+  }
 }

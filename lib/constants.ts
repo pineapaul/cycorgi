@@ -112,6 +112,15 @@ export const USER_STATUS = {
   PENDING: 'Pending'
 } as const
 
+// Approval status constants
+export const APPROVAL_STATUS = {
+  PENDING: 'Pending',
+  REVIEWING: 'Reviewing',
+  REVIEWED: 'Reviewed',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected'
+} as const
+
 // Data parsing constants
 export const CIA_DELIMITERS = {
   PRIMARY: ', ',
@@ -135,3 +144,4 @@ export type ControlJustification = typeof CONTROL_JUSTIFICATION[keyof typeof CON
 export type ControlStatus = typeof CONTROL_STATUS[keyof typeof CONTROL_STATUS]
 export type ControlApplicability = typeof CONTROL_APPLICABILITY[keyof typeof CONTROL_APPLICABILITY]
 export type UserStatus = typeof USER_STATUS[keyof typeof USER_STATUS]
+export type ApprovalStatus = typeof APPROVAL_STATUS[keyof typeof APPROVAL_STATUS]
