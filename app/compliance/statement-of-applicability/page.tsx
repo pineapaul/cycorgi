@@ -112,13 +112,8 @@ export default function StatementOfApplicabilityPage() {
   const handleExportPDF = async (exportViewMode: 'expanded' | 'compact') => {
     setIsExporting(true);
     try {
-      console.log('Starting PDF export for view mode:', exportViewMode);
-      console.log('Filtered controls available:', filteredControls.length);
-      
       // Generate HTML content based on the selected view mode
       const htmlContent = generatePDFHTML(exportViewMode);
-      console.log('Generated HTML content length:', htmlContent.length);
-      console.log('HTML content preview:', htmlContent.substring(0, 500) + '...');
       
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -179,7 +174,6 @@ export default function StatementOfApplicabilityPage() {
 
     // Safety check for filteredControls
     if (!filteredControls || filteredControls.length === 0) {
-      console.error('No filtered controls available for PDF generation');
       return `
         <!DOCTYPE html>
         <html>
@@ -194,9 +188,6 @@ export default function StatementOfApplicabilityPage() {
         </html>
       `;
     }
-
-    console.log('Generating PDF HTML for view mode:', viewMode);
-    console.log('Filtered controls count:', filteredControls.length);
     
     let controlsHTML = '';
     
@@ -385,8 +376,6 @@ export default function StatementOfApplicabilityPage() {
 
   const handleSaveControl = async (updatedControl: Control) => {
     try {
-      console.log('Saving control:', updatedControl);
-      
       // Clean the data - only send fields that can be updated
       const cleanedControl = {
         id: updatedControl.id,
@@ -397,8 +386,6 @@ export default function StatementOfApplicabilityPage() {
         relatedRisks: updatedControl.relatedRisks
       };
       
-      console.log('Cleaned control data:', cleanedControl);
-      
       const response = await fetch('/api/compliance/soa', {
         method: 'PUT',
         headers: {
@@ -407,10 +394,7 @@ export default function StatementOfApplicabilityPage() {
         body: JSON.stringify(cleanedControl),
       });
 
-      console.log('Response status:', response.status);
-      
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(`Failed to update control: ${responseData.error || response.statusText}`);
@@ -1169,12 +1153,8 @@ function EditControlModal({ control, onSave, onClose }: EditControlModalProps) {
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  console.log('Modal initialized with control:', control);
-  console.log('Form data:', formData);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form with data:', formData);
     setIsSaving(true);
     try {
       await onSave(formData);

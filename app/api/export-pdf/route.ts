@@ -4,6 +4,40 @@ import puppeteer, { Browser, Page } from 'puppeteer'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+/**
+ * Sanitizes filename to prevent header injection attacks
+ * Removes or replaces dangerous characters that could be used in HTTP header injection
+ */
+function sanitizeFilename(filename: string): string {
+  if (!filename || typeof filename !== 'string') {
+    return 'export.pdf'
+  }
+  
+  // Remove or replace dangerous characters that could be used in header injection
+  let sanitized = filename
+    // Remove null bytes and control characters
+    .replace(/[\x00-\x1f\x7f]/g, '')
+    // Remove or replace characters that could break HTTP headers
+    .replace(/[<>:"|?*\\/]/g, '_')
+    // Remove multiple consecutive underscores
+    .replace(/_+/g, '_')
+    // Remove leading/trailing underscores and dots
+    .replace(/^[._]+|[._]+$/g, '')
+    // Ensure it has a .pdf extension
+    .replace(/\.pdf$/i, '')
+    // Limit length to prevent header size issues
+    .substring(0, 100)
+    // Add .pdf extension
+    + '.pdf'
+  
+  // Fallback if sanitization results in empty or invalid filename
+  if (!sanitized || sanitized === '.pdf' || sanitized.length < 5) {
+    return 'export.pdf'
+  }
+  
+  return sanitized
+}
+
 type LaunchOpts = Parameters<typeof puppeteer.launch>[0]
 
 async function launchBrowser(opts?: LaunchOpts) {
@@ -32,8 +66,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const { html, filename = 'export.pdf' } = await req.json()
+    
+    // Validate required fields
     if (!html || typeof html !== 'string') {
       return new Response(JSON.stringify({ error: 'HTML content is required' }), { status: 400 })
+    }
+    
+    // Validate filename parameter
+    if (filename !== undefined && (typeof filename !== 'string' || filename.length > 200)) {
+      return new Response(JSON.stringify({ error: 'Invalid filename parameter' }), { status: 400 })
     }
 
     const maxRetries = 2
@@ -86,12 +127,16 @@ export async function POST(req: NextRequest) {
         console.log(`Attempt ${attempt + 1}: PDF generated successfully, size: ${pdf.length} bytes`)
         
         // Success: return immediately
+        const safeFilename = sanitizeFilename(filename)
         return new Response(pdf, {
           status: 200,
           headers: {
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${filename.replace(/"/g, '')}"`,
+            'Content-Disposition': `attachment; filename="${safeFilename}"`,
             'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'Content-Security-Policy': "default-src 'none'",
           },
         })
       } catch (err) {
