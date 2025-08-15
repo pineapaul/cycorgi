@@ -29,9 +29,7 @@ function sanitizeFilename(filename: string): string {
   
   // Efficiently remove consecutive underscores and dots using string operations
   // This avoids the ReDoS vulnerability of /[._]+/ regex
-  while (sanitized.includes('__') || sanitized.includes('..')) {
-    sanitized = sanitized.replace('__', '_').replace('..', '.')
-  }
+  sanitized = sanitized.replace(/_+/g, '_').replace(/\.+/g, '.')
   
   // Remove leading and trailing underscores and dots efficiently
   while (sanitized.startsWith('_') || sanitized.startsWith('.')) {
