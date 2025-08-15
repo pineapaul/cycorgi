@@ -171,6 +171,23 @@ export default function StatementOfApplicabilityPage() {
       if (applicability === CONTROL_APPLICABILITY.APPLICABLE) return 'background: #dcfce7; color: #166534';
       return 'background: #f3f4f6; color: #374151';
     };
+
+    // Safety check for filteredControls
+    if (!filteredControls || filteredControls.length === 0) {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Statement of Applicability - No Data</title>
+          </head>
+          <body>
+            <h1>No Data Available</h1>
+            <p>No controls found to generate PDF.</p>
+          </body>
+        </html>
+      `;
+    }
     
     let controlsHTML = '';
     
@@ -179,9 +196,9 @@ export default function StatementOfApplicabilityPage() {
       controlsHTML = filteredControls.map(controlSet => `
         <div style="margin-bottom: 30px; page-break-inside: avoid;">
           <h3 style="color: #1f2937; font-size: 18px; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">
-            ${controlSet.id} - ${controlSet.title}
+            ${controlSet.id || 'Unknown'} - ${controlSet.title || 'Untitled'}
           </h3>
-          <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description}</p>
+          <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">${controlSet.description || 'No description available'}</p>
           
           <!-- Control Set Summary Stats -->
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
@@ -359,8 +376,6 @@ export default function StatementOfApplicabilityPage() {
 
   const handleSaveControl = async (updatedControl: Control) => {
     try {
-      console.log('Saving control:', updatedControl);
-      
       // Clean the data - only send fields that can be updated
       const cleanedControl = {
         id: updatedControl.id,
@@ -371,8 +386,6 @@ export default function StatementOfApplicabilityPage() {
         relatedRisks: updatedControl.relatedRisks
       };
       
-      console.log('Cleaned control data:', cleanedControl);
-      
       const response = await fetch('/api/compliance/soa', {
         method: 'PUT',
         headers: {
@@ -381,10 +394,7 @@ export default function StatementOfApplicabilityPage() {
         body: JSON.stringify(cleanedControl),
       });
 
-      console.log('Response status:', response.status);
-      
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(`Failed to update control: ${responseData.error || response.statusText}`);
@@ -1143,12 +1153,8 @@ function EditControlModal({ control, onSave, onClose }: EditControlModalProps) {
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  console.log('Modal initialized with control:', control);
-  console.log('Form data:', formData);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form with data:', formData);
     setIsSaving(true);
     try {
       await onSave(formData);
