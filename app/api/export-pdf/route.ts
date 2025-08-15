@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { chromium } from 'playwright'
+import puppeteer from 'puppeteer'
+
+// Force Node.js runtime for Puppeteer compatibility
+export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   let browser
@@ -13,19 +16,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Launch browser
-    browser = await chromium.launch({
+    // Launch browser with serverless-optimized flags
+    browser = await puppeteer.launch({
       headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+      ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     })
 
     const page = await browser.newPage()
 
     // Set content and wait for it to load
     await page.setContent(html, {
-      waitUntil: 'networkidle',
+      waitUntil: 'networkidle0',
+      timeout: 30000,
     })
 
-    // Generate PDF
+    // Generate PDF with optimized settings
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -35,14 +55,19 @@ export async function POST(request: NextRequest) {
         bottom: '20mm',
         left: '20mm',
       },
+      displayHeaderFooter: false,
+      preferCSSPageSize: true,
     })
 
-    // Return PDF as response
+    // Return PDF as response with proper headers
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Content-Length': pdfBuffer.length.toString(),
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     })
   } catch (error) {

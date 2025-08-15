@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Icon from '../../components/Icon';
 import { RelatedRisks, RelatedRisksCompact } from '../../components/RelatedRisks';
+import { useToast } from '../../hooks/useToast';
 import { 
   CONTROL_STATUS, 
   CONTROL_APPLICABILITY,
@@ -37,6 +38,7 @@ interface ControlSet {
 }
 
 export default function StatementOfApplicabilityPage() {
+  const { showToast } = useToast();
   const [iso27001Controls, setIso27001Controls] = useState<ControlSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,8 +144,12 @@ export default function StatementOfApplicabilityPage() {
       setShowExportModal(false);
     } catch (error) {
       console.error('Export error:', error);
-      // TODO: Replace with toast notification - avoid alert() in production
-      alert('Failed to export PDF. Please try again.');
+      // Use toast notification instead of alert
+      showToast({
+        title: 'Export Failed',
+        message: 'Failed to export PDF. Please try again.',
+        type: 'error',
+      });
     } finally {
       setIsExporting(false);
     }
@@ -421,9 +427,13 @@ export default function StatementOfApplicabilityPage() {
       handleCloseEditModal();
     } catch (error) {
       console.error('Error updating control:', error);
-      // TODO: Replace with toast notification - avoid alert() in production
+      // Use toast notification instead of alert
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to save control: ${errorMessage}`);
+      showToast({
+        title: 'Save Failed',
+        message: `Failed to save control: ${errorMessage}`,
+        type: 'error',
+      });
     }
   };
 
