@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import getClientPromise from '@/lib/mongodb'
 import { APPROVAL_STATUS, ApprovalStatus } from '@/lib/constants'
-import { ObjectId } from 'mongodb'
 
 interface CreateApprovalRequest {
   request: string

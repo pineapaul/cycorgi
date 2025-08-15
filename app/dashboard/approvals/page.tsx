@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
-import { APPROVAL_STATUS, ApprovalStatus } from '@/lib/constants'
 
 export default function ApprovalsPage() {
   const { data: session } = useSession()
@@ -58,7 +57,7 @@ export default function ApprovalsPage() {
       tabs[0].count = myCount
       tabs[1].count = allCount
     }
-  }, [approvals, session?.user?.id])
+  }, [approvals, session?.user?.id, tabs])
 
   // Filter approvals based on active tab
   const filteredApprovals = activeTab === 'my' 
