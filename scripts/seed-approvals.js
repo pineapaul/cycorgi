@@ -1,6 +1,19 @@
 const { MongoClient } = require('mongodb')
+const path = require('path')
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cycorgi'
+// Load environment variables from .env.local
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') })
+
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI not found in .env.local file')
+  console.error('💡 Please ensure you have a .env.local file in your project root with MONGODB_URI set')
+  process.exit(1)
+}
+
+console.log('📋 Approvals Seeding Script')
+console.log('============================')
 
 const sampleApprovals = [
   {
@@ -93,10 +106,14 @@ async function seedApprovals() {
   const client = new MongoClient(MONGODB_URI)
   
   try {
+    console.log('🔌 Connecting to MongoDB...')
+    console.log(`📍 URI: ${MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`) // Hide credentials
     await client.connect()
-    console.log('Connected to MongoDB')
+    console.log('✅ Connected to MongoDB successfully')
     
     const db = client.db()
+    const dbName = db.databaseName
+    console.log(`🗄️  Database: ${dbName}`)
     
     // Check if approvals collection exists, if not create it
     const collections = await db.listCollections().toArray()
@@ -112,8 +129,15 @@ async function seedApprovals() {
     console.log('Cleared existing approvals')
     
     // Insert sample approvals
+    console.log('📝 Inserting sample approvals...')
     const result = await db.collection('approvals').insertMany(sampleApprovals)
-    console.log(`Inserted ${result.insertedCount} sample approvals`)
+    console.log(`✅ Inserted ${result.insertedCount} sample approvals`)
+    
+    // Display summary of inserted approvals
+    console.log('\n📊 Sample Approvals Summary:')
+    sampleApprovals.forEach((approval, index) => {
+      console.log(`  ${index + 1}. ${approval.requestId} - ${approval.request}`)
+    })
     
     // Create indexes for better performance
     await db.collection('approvals').createIndex({ requestId: 1 }, { unique: true })
@@ -123,13 +147,20 @@ async function seedApprovals() {
     await db.collection('approvals').createIndex({ submitted: -1 })
     console.log('Created indexes for approvals collection')
     
-    console.log('✅ Approvals seeding completed successfully!')
+    console.log('\n🎉 Approvals seeding completed successfully!')
+    console.log('🚀 You can now navigate to /dashboard/approvals to view the sample data')
     
   } catch (error) {
     console.error('❌ Error seeding approvals:', error)
+    if (error.name === 'MongoServerSelectionError') {
+      console.error('💡 Make sure your MongoDB server is running and accessible')
+      console.error('💡 Check your MONGODB_URI in .env.local file')
+    }
   } finally {
-    await client.close()
-    console.log('Disconnected from MongoDB')
+    if (client) {
+      await client.close()
+      console.log('🔌 Disconnected from MongoDB')
+    }
   }
 }
 
