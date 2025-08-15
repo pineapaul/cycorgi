@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // Wait a bit more to ensure content is fully rendered
     console.log('Waiting for content to render...')
-    await page.waitForTimeout(2000)
+    await new Promise(resolve => setTimeout(resolve, 2000))
     console.log('Content rendering wait completed')
 
     // Generate PDF with optimized settings
@@ -130,14 +130,19 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('PDF generation error:', error)
-    console.error('Error stack:', error.stack)
+    
+    // Type-safe error handling
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('Error stack:', errorStack)
     
     // Return more detailed error information
     return NextResponse.json(
       { 
         error: 'Failed to generate PDF',
-        details: error.message,
-        stack: error.stack
+        details: errorMessage,
+        stack: errorStack
       },
       { status: 500 }
     )
