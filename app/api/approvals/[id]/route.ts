@@ -5,6 +5,12 @@ import getClientPromise from '@/lib/mongodb'
 import { APPROVAL_STATUS, ApprovalStatus } from '@/lib/constants'
 import { ObjectId } from 'mongodb'
 
+interface UpdateApprovalRequest {
+  status?: ApprovalStatus
+  approvedDate?: string
+  approvers?: string[]
+}
+
 // GET - Fetch a specific approval by ID
 export async function GET(
   request: NextRequest,
@@ -59,7 +65,7 @@ export async function PUT(
     }
 
     const { id } = params
-    const body = await request.json()
+    const body: UpdateApprovalRequest = await request.json()
     const { status, approvedDate, approvers } = body
 
     if (!ObjectId.isValid(id)) {
@@ -86,7 +92,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Only approvers can update status' }, { status: 403 })
     }
 
-    const updateData: any = {
+    const updateData: Record<string, any> = {
       updatedAt: new Date(),
       updatedBy: session.user.id
     }

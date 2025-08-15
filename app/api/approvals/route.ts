@@ -5,6 +5,13 @@ import getClientPromise from '@/lib/mongodb'
 import { APPROVAL_STATUS, ApprovalStatus } from '@/lib/constants'
 import { ObjectId } from 'mongodb'
 
+interface CreateApprovalRequest {
+  request: string
+  category: string
+  type: string
+  approvers: string[]
+}
+
 // GET - Fetch approvals (filtered by user role and permissions)
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +31,7 @@ export async function GET(request: NextRequest) {
     const db = client.db()
     
     // Build filter based on query parameters
-    const filter: any = {}
+    const filter: Record<string, any> = {}
     
     if (status && Object.values(APPROVAL_STATUS).includes(status as ApprovalStatus)) {
       filter.status = status
@@ -72,11 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { request, category, type, approvers } = body
+    const body: CreateApprovalRequest = await request.json()
+    const { request: requestText, category, type, approvers } = body
 
     // Validation
-    if (!request || !category || !type) {
+    if (!requestText || !category || !type) {
       return NextResponse.json({ 
         error: 'Request, category, and type are required' 
       }, { status: 400 })
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const newApproval = {
       requestId,
-      request,
+      request: requestText,
       category,
       type,
       requester: session.user.id,
