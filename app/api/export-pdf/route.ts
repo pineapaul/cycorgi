@@ -1,204 +1,135 @@
-import { NextRequest, NextResponse } from 'next/server'
-import puppeteer from 'puppeteer'
+import type { NextRequest } from 'next/server'
+import puppeteer, { Browser, Page } from 'puppeteer'
 
-// Force Node.js runtime for Puppeteer compatibility
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
-  let browser: any
-  let page: any
-  let retryCount = 0
-  const maxRetries = 2
+type LaunchOpts = Parameters<typeof puppeteer.launch>[0]
 
-  const attemptPDFGeneration = async (htmlContent: string): Promise<Buffer> => {
-    try {
-      if (!browser || browser.isConnected() === false) {
-        throw new Error('Browser not available or disconnected')
-      }
+async function launchBrowser(opts?: LaunchOpts) {
+  return puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--font-render-hinting=none',
+      '--no-first-run',
+      '--no-zygote',
+      '--hide-scrollbars',
+      '--mute-audio',
+    ],
+    // Only use this if you KNOW it’s correct in prod; otherwise let Puppeteer manage Chromium.
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    ...opts,
+  })
+}
 
-      if (!page || page.isClosed()) {
-        console.log('Creating new page...')
-        page = await browser.newPage()
-        console.log('Page created successfully')
-      }
-
-      // Set content and wait for it to load
-      console.log('Setting HTML content...')
-      await page.setContent(htmlContent, {
-        waitUntil: 'networkidle0',
-        timeout: 30000,
-      })
-      console.log('HTML content set successfully')
-
-      // Wait a bit more to ensure content is fully rendered
-      console.log('Waiting for content to render...')
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Content rendering wait completed')
-
-      // Check if page is still open before generating PDF
-      if (page.isClosed()) {
-        throw new Error('Page was closed before PDF generation could start')
-      }
-
-      // Generate PDF with optimized settings
-      console.log('Generating PDF...')
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20mm',
-          right: '20mm',
-          bottom: '20mm',
-          left: '20mm',
-        },
-        displayHeaderFooter: false,
-        preferCSSPageSize: true,
-      })
-      console.log('PDF generated successfully, buffer size:', pdfBuffer.length)
-      
-      return pdfBuffer
-    } catch (error) {
-      console.error(`PDF generation attempt ${retryCount + 1} failed:`, error)
-      
-      // If page is closed, try to recreate it
-      if (page && !page.isClosed()) {
-        try {
-          await page.close()
-        } catch (closeError) {
-          console.error('Error closing page:', closeError)
-        }
-        page = null
-      }
-      
-      throw error
-    }
-  }
+export async function POST(req: NextRequest) {
+  let browser: Browser | null = null
+  let page: Page | null = null
 
   try {
-    const { html, filename = 'export.pdf' } = await request.json()
-
-    if (!html) {
-      return NextResponse.json(
-        { error: 'HTML content is required' },
-        { status: 400 }
-      )
+    const { html, filename = 'export.pdf' } = await req.json()
+    if (!html || typeof html !== 'string') {
+      return new Response(JSON.stringify({ error: 'HTML content is required' }), { status: 400 })
     }
 
-    console.log('Starting PDF generation...')
-    console.log('HTML content length:', html.length)
+    const maxRetries = 2
+    let lastError: unknown
 
-    // Launch browser with serverless-optimized flags (cleaned up)
-    const launchOptions = {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--disable-background-networking',
-        '--disable-client-side-phishing-detection',
-        '--disable-component-update',
-        '--disable-domain-reliability',
-        '--disable-features=AudioServiceOutOfProcess',
-        '--no-default-browser-check',
-        '--hide-scrollbars',
-        '--mute-audio',
-      ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    }
-
-    console.log('Launching browser with options:', JSON.stringify(launchOptions, null, 2))
-    
-    browser = await puppeteer.launch(launchOptions)
-    console.log('Browser launched successfully')
-
-    // Try PDF generation with retry logic
-    let pdfBuffer: Buffer | undefined
-    let lastError: Error | undefined
-
-    while (retryCount <= maxRetries) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        pdfBuffer = await attemptPDFGeneration(html)
-        break // Success, exit retry loop
-      } catch (error) {
-        lastError = error as Error
-        retryCount++
+        // Check if we need to create/recreate browser or page
+        if (!browser || (browser as Browser && !(browser as Browser).isConnected())) {
+          console.log(`Attempt ${attempt + 1}: Launching browser...`)
+          browser = await launchBrowser()
+        }
         
-        if (retryCount <= maxRetries) {
-          console.log(`Retrying PDF generation (attempt ${retryCount}/${maxRetries})...`)
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000))
+        // At this point, browser should be defined and connected
+        if (!browser) {
+          throw new Error('Failed to launch browser')
+        }
+        
+        if (!page || (page as Page && (page as Page).isClosed())) {
+          console.log(`Attempt ${attempt + 1}: Creating new page...`)
+          page = await browser.newPage()
+        }
+        
+        // At this point, page should be defined and open
+        if (!page) {
+          throw new Error('Failed to create page')
+        }
+        
+        console.log(`Attempt ${attempt + 1}: Setting content and generating PDF...`)
+        await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 })
+        await page.setContent(html, { waitUntil: ['domcontentloaded', 'networkidle0'], timeout: 30_000 })
+
+        // Optional: ensure print colours/backgrounds
+        await page.addStyleTag({
+          content: `
+            @page { size: A4; margin: 20mm; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { background: #fff; }
+          `,
+        })
+
+        const pdf = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          displayHeaderFooter: false,
+          preferCSSPageSize: true,
+          margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+        })
+
+        console.log(`Attempt ${attempt + 1}: PDF generated successfully, size: ${pdf.length} bytes`)
+        
+        // Success: return immediately
+        return new Response(pdf, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${filename.replace(/"/g, '')}"`,
+            'Cache-Control': 'no-store',
+          },
+        })
+      } catch (err) {
+        lastError = err
+        console.error(`Attempt ${attempt + 1} failed:`, err)
+        
+        // Clean up resources and try again
+        if (page && !page.isClosed()) {
+          try { 
+            await page.close() 
+          } catch (closeError) {
+            console.error('Error closing page:', closeError)
+          }
+        }
+        page = null
+        
+        if (browser) {
+          try { 
+            await browser.close() 
+          } catch (closeError) {
+            console.error('Error closing browser:', closeError)
+          }
+        }
+        browser = null
+        
+        // Small backoff before retry
+        if (attempt < maxRetries) {
+          console.log(`Waiting 800ms before retry...`)
+          await new Promise(r => setTimeout(r, 800))
         }
       }
     }
 
-    if (!pdfBuffer) {
-      throw lastError || new Error('Failed to generate PDF after all retry attempts')
-    }
-
-    // Return PDF as response with proper headers
-    return new NextResponse(pdfBuffer, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdfBuffer.length.toString(),
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
-    })
-  } catch (error) {
-    console.error('PDF generation error:', error)
-    
-    // Type-safe error handling
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    const errorStack = error instanceof Error ? error.stack : undefined
-    
-    console.error('Error stack:', errorStack)
-    
-    // Return more detailed error information
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate PDF',
-        details: errorMessage,
-        stack: errorStack
-      },
-      { status: 500 }
-    )
+    // All attempts failed
+    console.error('PDF generation failed:', lastError)
+    return new Response(JSON.stringify({ error: 'Failed to generate PDF' }), { status: 500 })
   } finally {
-    // Close page first, then browser
-    if (page) {
-      try {
-        await page.close()
-        console.log('Page closed successfully')
-      } catch (closeError) {
-        console.error('Error closing page:', closeError)
-      }
-    }
-    
-    if (browser) {
-      try {
-        await browser.close()
-        console.log('Browser closed successfully')
-      } catch (closeError) {
-        console.error('Error closing browser:', closeError)
-      }
-    }
+    try { if (page && !page.isClosed()) await page.close() } catch {}
+    try { if (browser) await browser.close() } catch {}
   }
-} 
+}
