@@ -257,3 +257,27 @@ export function calculateTreatmentDueDate(
 export function formatDateForInput(date: Date): string {
   return date.toISOString().split('T')[0]
 }
+
+/**
+ * Generate the next approval request ID
+ * @param db MongoDB database instance
+ * @returns Promise<string> Next request ID in format REQ-0001, REQ-0002, etc.
+ */
+export async function generateNextRequestId(db: any): Promise<string> {
+  try {
+    const lastApproval = await db.collection('approvals')
+      .findOne({}, { sort: { requestId: -1 } })
+    
+    let nextNumber = 1
+    if (lastApproval?.requestId) {
+      const lastNumber = parseInt(lastApproval.requestId.split('-')[1])
+      nextNumber = lastNumber + 1
+    }
+    
+    return `REQ-${nextNumber.toString().padStart(4, '0')}`
+  } catch (error) {
+    console.error('Error generating request ID:', error)
+    // Fallback to timestamp-based ID if database query fails
+    return `REQ-${Date.now().toString().slice(-4)}`
+  }
+}
