@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import getClientPromise from '@/lib/mongodb'
 import { APPROVAL_STATUS, ApprovalStatus } from '@/lib/constants'
+import { Filter } from 'mongodb'
 
 interface CreateApprovalRequest {
   request: string
@@ -10,6 +11,24 @@ interface CreateApprovalRequest {
   type: string
   approvers: string[]
 }
+
+interface ApprovalDocument {
+  _id?: any
+  requestId: string
+  request: string
+  category: string
+  type: string
+  requester: string
+  submitted: Date
+  approvedDate?: Date | null
+  status: ApprovalStatus
+  approvers: string[]
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
+
 
 // GET - Fetch approvals (filtered by user role and permissions)
 export async function GET(request: NextRequest) {
@@ -28,12 +47,13 @@ export async function GET(request: NextRequest) {
 
     const client = await getClientPromise()
     const db = client.db()
+    const collection = db.collection<ApprovalDocument>('approvals')
     
     // Build filter based on query parameters
-    const filter: Record<string, any> = {}
+    const filter: Filter<ApprovalDocument> = {}
     
     if (status && Object.values(APPROVAL_STATUS).includes(status as ApprovalStatus)) {
-      filter.status = status
+      filter.status = status as ApprovalStatus
     }
     
     if (type) {
@@ -57,7 +77,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const approvals = await db.collection('approvals')
+    const approvals = await collection
       .find(filter)
       .sort({ submitted: -1 })
       .toArray()
@@ -96,9 +116,10 @@ export async function POST(request: NextRequest) {
 
     const client = await getClientPromise()
     const db = client.db()
+    const collection = db.collection<ApprovalDocument>('approvals')
     
     // Generate next request ID
-    const lastApproval = await db.collection('approvals')
+    const lastApproval = await collection
       .findOne({}, { sort: { requestId: -1 } })
     
     let nextNumber = 1
@@ -109,7 +130,7 @@ export async function POST(request: NextRequest) {
     
     const requestId = `REQ-${nextNumber.toString().padStart(4, '0')}`
 
-    const newApproval = {
+    const newApproval: Omit<ApprovalDocument, '_id'> = {
       requestId,
       request: requestText,
       category,
@@ -124,7 +145,7 @@ export async function POST(request: NextRequest) {
       createdBy: session.user.id
     }
 
-    const result = await db.collection('approvals').insertOne(newApproval)
+    const result = await collection.insertOne(newApproval)
     
     return NextResponse.json({ 
       message: 'Approval request created successfully', 

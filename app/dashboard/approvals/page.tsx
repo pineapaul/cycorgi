@@ -30,11 +30,12 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+  const [tabCounts, setTabCounts] = useState({ my: 0, all: 0 })
 
-  const tabs = [
-    { id: 'my', label: 'My Approvals', count: 0, icon: 'user' },
-    { id: 'all', label: 'All Approvals', count: 0, icon: 'user-group' }
-  ]
+  const tabs = useMemo(() => [
+    { id: 'my', label: 'My Approvals', count: tabCounts.my, icon: 'user' },
+    { id: 'all', label: 'All Approvals', count: tabCounts.all, icon: 'user-group' }
+  ], [tabCounts])
 
   // Fetch approvals from API
   useEffect(() => {
@@ -74,10 +75,9 @@ export default function ApprovalsPage() {
       const myCount = approvals.filter(a => a.requester === session?.user?.id).length
       const allCount = approvals.length
       
-      tabs[0].count = myCount
-      tabs[1].count = allCount
+      setTabCounts({ my: myCount, all: allCount })
     }
-  }, [approvals, session?.user?.id, tabs])
+  }, [approvals, session?.user?.id])
 
   // Filter approvals based on active tab
   const filteredApprovals = useMemo(() => {

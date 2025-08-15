@@ -11,6 +11,30 @@ interface UpdateApprovalRequest {
   approvers?: string[]
 }
 
+interface ApprovalDocument {
+  _id?: any
+  requestId: string
+  request: string
+  category: string
+  type: string
+  requester: string
+  submitted: Date
+  approvedDate?: Date | null
+  status: ApprovalStatus
+  approvers: string[]
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
+interface ApprovalUpdateData {
+  updatedAt: Date
+  updatedBy: string
+  status?: ApprovalStatus
+  approvedDate?: Date
+  approvers?: string[]
+}
+
 // GET - Fetch a specific approval by ID
 export async function GET(
   request: NextRequest,
@@ -31,8 +55,9 @@ export async function GET(
 
     const client = await getClientPromise()
     const db = client.db()
+    const collection = db.collection<ApprovalDocument>('approvals')
     
-    const approval = await db.collection('approvals').findOne({ _id: new ObjectId(id) })
+    const approval = await collection.findOne({ _id: new ObjectId(id) })
     
     if (!approval) {
       return NextResponse.json({ error: 'Approval not found' }, { status: 404 })
@@ -79,8 +104,9 @@ export async function PUT(
 
     const client = await getClientPromise()
     const db = client.db()
+    const collection = db.collection<ApprovalDocument>('approvals')
     
-    const approval = await db.collection('approvals').findOne({ _id: new ObjectId(id) })
+    const approval = await collection.findOne({ _id: new ObjectId(id) })
     
     if (!approval) {
       return NextResponse.json({ error: 'Approval not found' }, { status: 404 })
@@ -92,7 +118,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Only approvers can update status' }, { status: 403 })
     }
 
-    const updateData: Record<string, any> = {
+    const updateData: ApprovalUpdateData = {
       updatedAt: new Date(),
       updatedBy: session.user.id
     }
@@ -114,7 +140,7 @@ export async function PUT(
       updateData.approvers = approvers
     }
 
-    const result = await db.collection('approvals').updateOne(
+    const result = await collection.updateOne(
       { _id: new ObjectId(id) },
       { $set: updateData }
     )
@@ -154,8 +180,9 @@ export async function DELETE(
 
     const client = await getClientPromise()
     const db = client.db()
+    const collection = db.collection<ApprovalDocument>('approvals')
     
-    const result = await db.collection('approvals').deleteOne({ _id: new ObjectId(id) })
+    const result = await collection.deleteOne({ _id: new ObjectId(id) })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Approval not found' }, { status: 404 })
