@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const category = searchParams.get('category')
     const userId = searchParams.get('userId')
+    const countOnly = searchParams.get('countOnly') === 'true'
 
     const client = await getClientPromise()
     const db = client.db()
@@ -75,6 +76,11 @@ export async function GET(request: NextRequest) {
         { requester: session.user.id },
         { approvers: session.user.id }
       ]
+    }
+
+    if (countOnly) {
+      const count = await collection.countDocuments(filter)
+      return NextResponse.json({ count })
     }
 
     const approvals = await collection

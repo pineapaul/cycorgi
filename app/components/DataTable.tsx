@@ -367,7 +367,7 @@ export default function DataTable<T = Record<string, unknown>>({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 w-full ${className}`}>
       {/* Actions Bar */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
         {/* Left side - Options and Phase Buttons */}
@@ -795,7 +795,7 @@ export default function DataTable<T = Record<string, unknown>>({
                       maxWidth: column.width || 'none'
                     }}
                   >
-                                         <div className={`flex items-center space-x-1 ${
+                     <div className={`flex items-center space-x-1 ${
                        column.align === 'center' ? 'justify-center' : 
                        column.align === 'right' ? 'justify-end' : 'justify-start'
                      }`}>
