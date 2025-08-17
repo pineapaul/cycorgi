@@ -4,6 +4,9 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 
+# Install Playwright Chromium + OS deps
+RUN npx playwright@latest install --with-deps chromium
+
 # Install git/ca-certificates for npm if you fetch from git, then deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates git \
