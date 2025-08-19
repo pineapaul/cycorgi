@@ -103,7 +103,9 @@ import {
   faPersonDress,
   faHandshake,
   faGauge,
-  faUserSecret
+  faUserSecret,
+  faBug,
+  faShieldVirus
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -230,6 +232,8 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     handshake: faHandshake,
     gauge: faGauge,
     'user-secret': faUserSecret,
+    threat: faBug,
+    'shield-virus': faShieldVirus,
   }
 
   const icon = icons[name]
@@ -362,6 +366,8 @@ function getFallbackEmoji(name: string): string {
     handshake: '🤝',
     gauge: '📊',
     'user-secret': '🕵️',
+    threat: '🐛',
+    'shield-virus': '🛡️🦠',
   }
   return emojiMap[name] || '📄'
 } 
