@@ -76,7 +76,8 @@ export default function ThirdPartiesPage() {
       if (result.success) {
         setThirdParties(result.data)
         setPagination(result.pagination)
-        setFilters(result.filters)
+        // Don't update filters from the result to avoid infinite loops
+        // setFilters(result.filters)
       } else {
         console.error('Failed to fetch third parties:', result.error)
       }
@@ -85,7 +86,7 @@ export default function ThirdPartiesPage() {
     } finally {
       setLoading(false)
     }
-  }, [filters, pagination.limit])
+  }, [pagination.limit])
 
   const fetchInformationAssets = useCallback(async () => {
     try {
