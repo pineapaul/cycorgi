@@ -25,7 +25,7 @@ export async function GET(
     const client = await getClientPromise()
     const db = client.db()
     
-    // Try to find user by ObjectId first, then by string ID
+    // Try to find user by ObjectId first, then by email only
     let user = null
     
     try {
@@ -36,14 +36,15 @@ export async function GET(
       // Ignore ObjectId conversion errors
     }
     
-    // If not found by ObjectId, try by string ID (email or other identifier)
+    // If not found by ObjectId, try by email only (more secure than name-based search)
     if (!user) {
-      user = await db.collection('users').findOne({ 
-        $or: [
-          { email: id },
-          { name: id }
-        ]
-      })
+      // Validate that the ID looks like an email to prevent information disclosure
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(id)) {
+        return NextResponse.json({ error: 'Invalid user identifier format' }, { status: 400 })
+      }
+      
+      user = await db.collection('users').findOne({ email: id })
     }
 
     if (!user) {

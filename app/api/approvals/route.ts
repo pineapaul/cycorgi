@@ -83,10 +83,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ count })
     }
 
-    const approvals = await collection
-      .find(filter)
-      .sort({ submitted: -1 })
-      .toArray()
+    // Use aggregation to join with users collection and include requester names
+    const pipeline = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'requester',
+          foreignField: '_id',
+          as: 'requesterInfo'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'creatorInfo'
+        }
+      },
+      {
+        $addFields: {
+          requesterName: {
+            $ifNull: [
+              { $arrayElemAt: ['$requesterInfo.name', 0] },
+              '$requester'
+            ]
+          },
+          creatorName: {
+            $ifNull: [
+              { $arrayElemAt: ['$creatorInfo.name', 0] },
+              '$createdBy'
+            ]
+          }
+        }
+      },
+      {
+        $project: {
+          requesterInfo: 0,
+          creatorInfo: 0
+        }
+      },
+      { $sort: { submitted: -1 } }
+    ]
+
+    const approvals = await collection.aggregate(pipeline).toArray()
     
     return NextResponse.json(approvals)
   } catch (error) {

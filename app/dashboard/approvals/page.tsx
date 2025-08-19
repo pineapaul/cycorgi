@@ -15,7 +15,7 @@ interface Approval {
   category: string
   type: string
   requester: string
-  requesterName?: string
+  requesterName: string
   submitted: string
   approvedDate?: string
   status: string
@@ -23,6 +23,7 @@ interface Approval {
   createdAt: string
   updatedAt: string
   createdBy: string
+  creatorName?: string
 }
 
 export default function ApprovalsPage() {
@@ -90,23 +91,8 @@ export default function ApprovalsPage() {
         
         const data = await response.json()
         
-        // Fetch user names for requesters
-        const enrichedData = await Promise.all(
-          data.map(async (approval: Approval) => {
-            try {
-              const userResponse = await fetch(`/api/users/${approval.requester}`)
-              if (userResponse.ok) {
-                const userData = await userResponse.json()
-                return { ...approval, requesterName: userData.name || approval.requester }
-              }
-            } catch (err) {
-              console.error('Error fetching user name:', err)
-            }
-            return { ...approval, requesterName: approval.requester }
-          })
-        )
-        
-        setApprovals(enrichedData)
+        // User names are now included in the API response, no need for individual calls
+        setApprovals(data)
         setError(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch approvals')
