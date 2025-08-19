@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import Icon from '@/app/components/Icon'
 import DataTable, { Column } from '@/app/components/DataTable'
 import { APPROVAL_STATUS } from '@/lib/constants'
+import Tooltip from '@/app/components/Tooltip'
 
 interface Approval {
   _id: string
@@ -14,6 +15,7 @@ interface Approval {
   category: string
   type: string
   requester: string
+  requesterName: string
   submitted: string
   approvedDate?: string
   status: string
@@ -21,6 +23,7 @@ interface Approval {
   createdAt: string
   updatedAt: string
   createdBy: string
+  creatorName?: string
 }
 
 export default function ApprovalsPage() {
@@ -36,6 +39,39 @@ export default function ApprovalsPage() {
     { id: 'my', label: 'My Approvals', count: tabCounts.my, icon: 'user' },
     { id: 'all', label: 'All Approvals', count: tabCounts.all, icon: 'user-group' }
   ], [tabCounts])
+
+  // Fetch approval counts for tabs
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Fetch "My Approvals" count
+        const myParams = new URLSearchParams()
+        myParams.append('userId', session?.user?.id || '')
+        myParams.append('countOnly', 'true')
+        
+        const myResponse = await fetch(`/api/approvals?${myParams.toString()}`)
+        const myData = await myResponse.json()
+        
+        // Fetch "All Approvals" count
+        const allParams = new URLSearchParams()
+        allParams.append('countOnly', 'true')
+        
+        const allResponse = await fetch(`/api/approvals?${allParams.toString()}`)
+        const allData = await allResponse.json()
+        
+        setTabCounts({ 
+          my: myData.count || 0, 
+          all: allData.count || 0 
+        })
+      } catch (err) {
+        console.error('Error fetching counts:', err)
+      }
+    }
+
+    if (session?.user?.id) {
+      fetchCounts()
+    }
+  }, [session?.user?.id])
 
   // Fetch approvals from API
   useEffect(() => {
@@ -54,6 +90,8 @@ export default function ApprovalsPage() {
         }
         
         const data = await response.json()
+        
+        // User names are now included in the API response, no need for individual calls
         setApprovals(data)
         setError(null)
       } catch (err) {
@@ -69,16 +107,6 @@ export default function ApprovalsPage() {
     }
   }, [activeTab, session?.user?.id])
 
-  // Update tab counts
-  useEffect(() => {
-    if (approvals.length > 0) {
-      const myCount = approvals.filter(a => a.requester === session?.user?.id).length
-      const allCount = approvals.length
-      
-      setTabCounts({ my: myCount, all: allCount })
-    }
-  }, [approvals, session?.user?.id])
-
   // Filter approvals based on active tab
   const filteredApprovals = useMemo(() => {
     return activeTab === 'my' 
@@ -92,41 +120,47 @@ export default function ApprovalsPage() {
       key: 'requestId',
       label: 'Request ID',
       sortable: true,
-      width: '140px',
+      width: '160px',
       render: (value) => (
-        <span className="font-mono text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-          {value as string}
-        </span>
+        <Tooltip content={`Request ID: ${value}`} theme="purple" position="top">
+          <span className="font-mono text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded cursor-help">
+            {value as string}
+          </span>
+        </Tooltip>
       )
     },
     {
       key: 'request',
       label: 'Request',
       sortable: true,
-      width: '300px',
+      width: '400px',
       render: (value) => (
-        <div className="max-w-xs">
-          <p className="text-sm font-medium text-gray-900 line-clamp-2">
-            {value as string}
-          </p>
-        </div>
+        <Tooltip content={value as string} theme="dark" position="top" hardWrap={true}>
+          <div className="max-w-sm cursor-help">
+            <p className="text-sm font-medium text-gray-900 line-clamp-2">
+              {value as string}
+            </p>
+          </div>
+        </Tooltip>
       )
     },
     {
       key: 'category',
       label: 'Category',
       sortable: true,
-      width: '120px',
+      width: '180px',
       render: (value) => {
         const category = value as string
         const colorClasses = getCategoryColor(category)
         return (
-          <span className={cn(
-            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border',
-            colorClasses
-          )}>
-            {category}
-          </span>
+          <Tooltip content={`Category: ${category}`} theme="purple" position="top">
+            <span className={cn(
+              'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border cursor-help',
+              colorClasses
+            )}>
+              {category}
+            </span>
+          </Tooltip>
         )
       }
     },
@@ -134,49 +168,87 @@ export default function ApprovalsPage() {
       key: 'type',
       label: 'Type',
       sortable: true,
-      width: '150px',
+      width: '180px',
       render: (value) => (
-        <span className="text-sm text-gray-700 bg-gray-50 px-2 py-1 rounded">
-          {value as string}
-        </span>
+        <Tooltip content={`Request Type: ${value}`} theme="dark" position="top">
+          <span className="text-sm text-gray-700 bg-gray-50 px-2 py-1 rounded cursor-help">
+            {value as string}
+          </span>
+        </Tooltip>
       )
     },
     {
       key: 'submitted',
       label: 'Submitted',
       sortable: true,
-      width: '120px',
-      render: (value) => (
-        <div className="text-sm text-gray-600">
-          <div className="font-medium">
-            {new Date(value as string).toLocaleDateString()}
-          </div>
-          <div className="text-xs text-gray-500">
-            {new Date(value as string).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}
-          </div>
-        </div>
-      )
+      width: '140px',
+      render: (value) => {
+        const date = new Date(value as string)
+        const now = new Date()
+        const diffTime = Math.abs(now.getTime() - date.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        // Format date as "dd MMM yyyy"
+        const formattedDate = date.toLocaleDateString('en-AU', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        })
+        
+        // Determine days since text
+        let daysSinceText = ''
+        if (diffDays === 0) {
+          daysSinceText = 'Today'
+        } else if (diffDays === 1) {
+          daysSinceText = 'Yesterday'
+        } else if (diffDays < 7) {
+          daysSinceText = `${diffDays} days ago`
+        } else if (diffDays < 30) {
+          const weeks = Math.floor(diffDays / 7)
+          daysSinceText = `${weeks} week${weeks > 1 ? 's' : ''} ago`
+        } else if (diffDays < 365) {
+          const months = Math.floor(diffDays / 30)
+          daysSinceText = `${months} month${months > 1 ? 's' : ''} ago`
+        } else {
+          const years = Math.floor(diffDays / 365)
+          daysSinceText = `${years} year${years > 1 ? 's' : ''} ago`
+        }
+        
+        return (
+          <Tooltip content={`Submitted: ${formattedDate}`} theme="purple" position="top">
+            <div className="text-sm text-gray-600 cursor-help">
+              <div className="font-medium">
+                {formattedDate}
+              </div>
+              <div className="text-xs text-gray-500">
+                {daysSinceText}
+              </div>
+            </div>
+          </Tooltip>
+        )
+      }
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      width: '120px',
+      width: '140px',
       render: (value) => {
         const status = value as string
         const colorClasses = getStatusColor(status)
         const icon = getStatusIcon(status)
+        const statusDescription = getStatusDescription(status)
+        
         return (
-          <span className={cn(
-            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border',
-            colorClasses
-          )}>
-            <Icon name={icon} size={12} className="mr-1.5" />
-            {status}
-          </span>
+          <Tooltip content={statusDescription} theme="dark" position="top">
+            <span className={cn(
+              'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border cursor-help',
+              colorClasses
+            )}>
+              <Icon name={icon} size={12} className="mr-1.5" />
+              {status}
+            </span>
+          </Tooltip>
         )
       }
     },
@@ -184,22 +256,32 @@ export default function ApprovalsPage() {
       key: 'requester',
       label: 'Requester',
       sortable: true,
-      width: '120px',
-      render: (value) => (
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-            <Icon name="user" size={12} className="text-blue-600" />
-          </div>
-          <span className="text-sm text-gray-700 font-medium">
-            {value as string}
-          </span>
-        </div>
-      )
+      width: '220px',
+      render: (value, row) => {
+        const approval = row as unknown as Approval
+        const requesterInfo = approval.requesterName || value as string
+        const tooltipContent = approval.requesterName 
+          ? `Requester: ${approval.requesterName} (${approval.requester})`
+          : `Requester ID: ${approval.requester}`
+        
+        return (
+          <Tooltip content={tooltipContent} theme="purple" position="top">
+            <div className="flex items-center space-x-2 cursor-help">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <Icon name="user" size={12} className="text-blue-600" />
+              </div>
+              <span className="text-sm text-gray-700 font-medium">
+                {requesterInfo}
+              </span>
+            </div>
+          </Tooltip>
+        )
+      }
     },
     {
       key: 'actions',
       label: 'Actions',
-      width: '200px',
+      width: '280px',
       render: (_, row) => {
         const approval = row as unknown as Approval
         const canApprove = approval.status === APPROVAL_STATUS.PENDING || 
@@ -209,43 +291,53 @@ export default function ApprovalsPage() {
         return (
           <div className="flex items-center space-x-2">
             {canReview && (
-              <button 
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                onClick={() => handleReview(approval)}
-              >
-                <Icon name="eye" size={12} className="mr-1" />
-                Review
-              </button>
+              <Tooltip content="Review this approval request" theme="purple" position="top">
+                <button 
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                  onClick={() => handleReview(approval)}
+                >
+                  <Icon name="eye" size={12} className="mr-1" />
+                  Review
+                </button>
+              </Tooltip>
             )}
             {canApprove && (
               <>
-                <button 
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
-                  onClick={() => handleApprove(approval)}
-                >
-                  <Icon name="check" size={12} className="mr-1" />
-                  Approve
-                </button>
-                <button 
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
-                  onClick={() => handleReject(approval)}
-                >
-                  <Icon name="ban" size={12} className="mr-1" />
-                  Reject
-                </button>
+                <Tooltip content="Approve this request" theme="purple" position="top">
+                  <button 
+                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
+                    onClick={() => handleApprove(approval)}
+                  >
+                    <Icon name="check" size={12} className="mr-1" />
+                    Approve
+                  </button>
+                </Tooltip>
+                <Tooltip content="Reject this request" theme="purple" position="top">
+                  <button 
+                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
+                    onClick={() => handleReject(approval)}
+                  >
+                    <Icon name="ban" size={12} className="mr-1" />
+                    Reject
+                  </button>
+                </Tooltip>
               </>
             )}
             {approval.status === APPROVAL_STATUS.APPROVED && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded">
-                <Icon name="check-circle" size={12} className="mr-1" />
-                Approved
-              </span>
+              <Tooltip content="This request has been approved" theme="dark" position="top">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded cursor-help">
+                  <Icon name="check-circle" size={12} className="mr-1" />
+                  Approved
+                </span>
+              </Tooltip>
             )}
             {approval.status === APPROVAL_STATUS.REJECTED && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded">
-                <Icon name="ban" size={12} className="mr-1" />
-                Rejected
-              </span>
+              <Tooltip content="This request has been rejected" theme="dark" position="top">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded cursor-help">
+                  <Icon name="ban" size={12} className="mr-1" />
+                  Rejected
+                </span>
+              </Tooltip>
             )}
           </div>
         )
@@ -300,6 +392,23 @@ export default function ApprovalsPage() {
         return 'ban'
       default:
         return 'question-circle'
+    }
+  }
+
+  const getStatusDescription = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'This approval request is awaiting review.'
+      case 'reviewing':
+        return 'This approval request is currently under review.'
+      case 'reviewed':
+        return 'This approval request has been reviewed.'
+      case 'approved':
+        return 'This approval request has been approved.'
+      case 'rejected':
+        return 'This approval request has been rejected.'
+      default:
+        return 'Approval status unknown.'
     }
   }
 
@@ -372,7 +481,7 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-none mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center space-x-3 mb-4">
@@ -501,7 +610,7 @@ export default function ApprovalsPage() {
               selectedRows={selectedRows}
               onSelectionChange={setSelectedRows}
               onExportCSV={handleExportCSV}
-              className="min-h-[500px]"
+              className="min-h-[500px] w-full approvals-table"
             />
           )}
         </div>

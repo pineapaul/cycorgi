@@ -13,6 +13,7 @@ import { useBackNavigation } from '@/app/hooks/useBackNavigation'
 import CommentSidebar from '@/app/components/CommentSidebar'
 import WorkshopSelectionModal from '@/app/components/WorkshopSelectionModal'
 import RiskMatrix from '@/app/components/RiskMatrix'
+import ReviewerSelectionModal from '@/app/components/ReviewerSelectionModal'
 
 interface InformationAsset {
   id: string
@@ -196,6 +197,9 @@ export default function RiskInformation() {
   const [isWorkshopModalOpen, setIsWorkshopModalOpen] = useState(false)
   const [selectedTreatmentForWorkshop, setSelectedTreatmentForWorkshop] = useState<Treatment | null>(null)
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false)
+
+  // Reviewer selection modal state
+  const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false)
 
   // Current controls input state
   const [newControlInput, setNewControlInput] = useState('')
@@ -1517,6 +1521,61 @@ export default function RiskInformation() {
     setIsOptionsMenuOpen(false) // Close options menu
   }
 
+    const handleSubmitForReview = () => {
+    if (!riskDetails) return
+    
+    // Open the reviewer selection modal instead of directly updating the risk
+    setIsReviewerModalOpen(true)
+    setIsOptionsMenuOpen(false) // Close options menu
+  }
+
+  const handleReviewersSelected = async (selectedReviewers: string[]) => {
+    if (!riskDetails) return
+
+    try {
+      // Create approval request
+      const approvalResponse = await fetch('/api/approvals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request: `Risk Review Request: ${riskDetails.riskId} - ${riskDetails.riskStatement}`,
+          category: 'Risk Management',
+          type: 'Risk Review',
+          approvers: selectedReviewers
+        }),
+      })
+
+      const approvalResult = await approvalResponse.json()
+
+      if (approvalResponse.ok && approvalResult.approvalId) {
+        showToast({
+          type: 'success',
+          title: 'Review Request Submitted',
+          message: `Risk ${riskDetails.riskId} has been submitted for review. Approval ID: ${approvalResult.requestId}`,
+          duration: 5000
+        })
+      } else {
+        const errorMessage = approvalResult.error || 'Failed to create approval request'
+        showToast({
+          type: 'error',
+          title: 'Submission Failed',
+          message: errorMessage,
+          duration: 6000
+        })
+      }
+    } catch (error) {
+      console.error('Error submitting risk for review:', error)
+      showToast({
+        type: 'error',
+        title: 'Submission Failed',
+        message: 'Failed to submit risk for review. Please try again.',
+        duration: 6000
+      })
+    }
+  }
+
   // Helper function to get SOA control details by ID
   const getSOAControlDetails = (controlId: string) => {
     return soaControls.find(control => control.id === controlId)
@@ -1674,6 +1733,23 @@ export default function RiskInformation() {
                         <Icon name="calendar-plus" size={16} className="mr-3" />
                         Add to workshop
                       </button>
+                      
+                      {/* Submit for Review - Only show when risk phase is Draft */}
+                      {riskDetails.currentPhase === RISK_PHASES.DRAFT && (
+                        <>
+                          <div className="border-t border-gray-100 my-1"></div>
+                          <button
+                            onClick={() => {
+                              handleSubmitForReview()
+                              setIsOptionsMenuOpen(false)
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            <Icon name="check-circle" size={16} className="mr-3" />
+                            Submit for Review
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -3006,6 +3082,15 @@ export default function RiskInformation() {
           treatmentId: selectedTreatmentForWorkshop.treatmentId,
           riskId: selectedTreatmentForWorkshop.riskId || riskDetails?.riskId || ''
         } : undefined}
+      />
+
+      {/* Reviewer Selection Modal */}
+      <ReviewerSelectionModal
+        isOpen={isReviewerModalOpen}
+        onClose={() => setIsReviewerModalOpen(false)}
+        onConfirm={handleReviewersSelected}
+        riskId={riskDetails?.riskId || ''}
+        riskTitle={riskDetails?.riskStatement || ''}
       />
     </div>
   )

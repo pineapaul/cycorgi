@@ -99,23 +99,6 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .data-table-container td:nth-child(n+6) {
     display: none;
   }
-  
-  /* Ensure Risk ID and Actions columns don't overlap */
-  .data-table-container th:first-child,
-  .data-table-container td:first-child {
-    position: sticky;
-    left: 0;
-    background: white;
-    z-index: 10;
-  }
-  
-  .data-table-container th:nth-child(2),
-  .data-table-container td:nth-child(2) {
-    position: sticky;
-    left: 120px;
-    background: white;
-    z-index: 10;
-  }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
@@ -147,7 +130,23 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .data-table-container td {
   border-right: none;
   vertical-align: top;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Responsive text sizing */
+.data-table-container th,
+.data-table-container td {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .data-table-container th,
+  .data-table-container td {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
 }
 
 /* Ensure headers are fully visible */
@@ -482,4 +481,77 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   white-space: normal !important;
   word-wrap: break-word !important;
   overflow: visible !important;
+}
+
+/* Remove any sticky positioning */
+.data-table-container th,
+.data-table-container td {
+  position: static !important;
+  background: transparent !important;
+  z-index: auto !important;
+}
+
+/* Approvals table specific styles */
+.approvals-table .data-table-container {
+  min-width: 100%;
+  overflow-x: auto;
+}
+
+.approvals-table .data-table-container table {
+  min-width: 1200px; /* Ensure table is wide enough for all columns */
+}
+
+/* Responsive column hiding for approvals table */
+@media (max-width: 1400px) {
+  .approvals-table .data-table-container th:nth-child(n+7),
+  .approvals-table .data-table-container td:nth-child(n+7) {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .approvals-table .data-table-container th:nth-child(n+6),
+  .approvals-table .data-table-container td:nth-child(n+6) {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .approvals-table .data-table-container th:nth-child(n+5),
+  .approvals-table .data-table-container td:nth-child(n+5) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .approvals-table .data-table-container th:nth-child(n+4),
+  .approvals-table .data-table-container td:nth-child(n+4) {
+    display: none;
+  }
+}
+
+/* Ensure proper spacing for approval table columns */
+.approvals-table .data-table-container th,
+.approvals-table .data-table-container td {
+  padding: 0.75rem 1rem;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Make the request column more readable */
+.approvals-table .data-table-container td[style*="width: 400px"] {
+  max-width: 400px;
+  min-width: 300px;
+}
+
+.approvals-table .data-table-container td[style*="width: 400px"] div {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ensure actions column doesn't wrap */
+.approvals-table .data-table-container td[style*="width: 220px"] {
+  white-space: nowrap;
+  min-width: 220px;
 }
