@@ -11,6 +11,7 @@
     "seed-soa": "node scripts/seed-soa-controls.js",
     "seed-third-parties": "node scripts/seed-third-parties-dev.js",
     "seed-threats": "node scripts/seed-threats.js",
+    "migrate-threats": "node scripts/migrate-threats-add-information-assets.js",
     "test-soa-api": "node scripts/test-soa-api.js"
   },
   "dependencies": {

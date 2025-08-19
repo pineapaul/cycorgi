@@ -105,7 +105,10 @@ import {
   faGauge,
   faUserSecret,
   faBug,
-  faShieldVirus
+  faShieldVirus,
+  faEdit,
+  faDatabase,
+  faTag
 } from '@fortawesome/free-solid-svg-icons'
 
 interface IconProps {
@@ -234,6 +237,9 @@ export default function Icon({ name, size = 20, className = '' }: IconProps) {
     'user-secret': faUserSecret,
     threat: faBug,
     'shield-virus': faShieldVirus,
+    edit: faEdit,
+    database: faDatabase,
+    tag: faTag,
   }
 
   const icon = icons[name]
@@ -368,6 +374,9 @@ function getFallbackEmoji(name: string): string {
     'user-secret': '🕵️',
     threat: '🐛',
     'shield-virus': '🛡️🦠',
+    edit: '✏️',
+    database: '🗄️',
+    tag: '🏷️',
   }
   return emojiMap[name] || '📄'
 } 

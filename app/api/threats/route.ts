@@ -51,12 +51,45 @@ export async function GET(request: NextRequest) {
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1
 
     // Get threats with pagination
-    const threats = await collection
+    let threats = await collection
       .find(filter)
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .toArray()
+
+    // Map MongoDB _id to id for frontend compatibility
+    threats = threats.map(threat => ({
+      ...threat,
+      id: threat._id.toString()
+    }))
+
+    // Populate information assets details
+    if (threats.length > 0) {
+      const assetIds = [...new Set(threats.flatMap(threat => threat.informationAssets || []))]
+      
+      if (assetIds.length > 0) {
+        const assetsCollection = db.collection('information-assets')
+        const assets = await assetsCollection
+          .find({ id: { $in: assetIds } }, { 
+            projection: { 
+              id: 1, 
+              informationAsset: 1, 
+              category: 1, 
+              type: 1,
+              criticality: 1
+            } 
+          })
+          .toArray()
+        
+        const assetsMap = new Map(assets.map(asset => [asset.id, asset]))
+        
+        threats = threats.map(threat => ({
+          ...threat,
+          informationAssets: (threat.informationAssets || []).map((assetId: string) => assetsMap.get(assetId)).filter(Boolean)
+        }))
+      }
+    }
 
     // Calculate pagination info
     const hasNextPage = page < totalPages
@@ -91,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, category, severity, mitreId, mitreTactic, mitreTechnique, tags, status } = body
+    const { name, description, category, severity, mitreId, mitreTactic, mitreTechnique, tags, status, informationAssets } = body
 
     // Validation
     if (!name || !description || !category || !severity) {
@@ -125,6 +158,7 @@ export async function POST(request: NextRequest) {
       mitreTechnique: mitreTechnique || null,
       source: mitreId ? 'MITRE ATTACK' : 'Custom',
       tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map((tag: string) => tag.trim()) : []),
+      informationAssets: informationAssets || [],
       status: status || 'Active',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -20,16 +20,71 @@ interface MitreTechnique {
   description: string
   tactic: string
   tacticName: string
+  platforms: string[]
   url: string
+}
+
+interface MitreTactic {
+  id: string
+  name: string
+  description: string
 }
 
 
 
-export async function GET() {
+// Get available tactics and platforms for filtering
+function getMetadata() {
+  const tactics = [
+    { id: 'TA0001', name: 'Initial Access' },
+    { id: 'TA0002', name: 'Execution' },
+    { id: 'TA0003', name: 'Persistence' },
+    { id: 'TA0004', name: 'Privilege Escalation' },
+    { id: 'TA0005', name: 'Defense Evasion' },
+    { id: 'TA0006', name: 'Credential Access' },
+    { id: 'TA0007', name: 'Discovery' },
+    { id: 'TA0008', name: 'Lateral Movement' },
+    { id: 'TA0009', name: 'Collection' },
+    { id: 'TA0010', name: 'Exfiltration' },
+    { id: 'TA0011', name: 'Command and Control' },
+    { id: 'TA0040', name: 'Impact' }
+  ]
+
+  const platforms = [
+    'Windows',
+    'macOS', 
+    'Linux',
+    'PRE',
+    'Office Suite',
+    'Identity Provider',
+    'SaaS',
+    'IaaS',
+    'Network Devices',
+    'Containers',
+    'ESXi'
+  ]
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      tactics,
+      platforms
+    }
+  })
+}
+
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type')
+
+    // If requesting metadata (tactics and platforms), return that instead
+    if (type === 'metadata') {
+      return getMetadata()
     }
 
     // Fetch from MITRE ATTACK STIX feed
@@ -61,12 +116,16 @@ export async function GET() {
           // Extract tactic information
           const tactic = technique.kill_chain_phases?.[0]
           
+          // Extract platform information from x_mitre_platforms
+          const platforms = technique.x_mitre_platforms || []
+          
           return {
             id: mitreId,
             name: technique.name,
             description: technique.description || 'No description available',
             tactic: tactic?.kill_chain_name || '',
             tacticName: tactic?.phase_name || 'Unknown Tactic',
+            platforms: platforms,
             url: `https://attack.mitre.org/techniques/${mitreId}`
           }
         })
@@ -126,6 +185,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may circumvent mechanisms designed to control elevate privileges to gain higher-level permissions. Most modern systems contain native elevation control mechanisms that are intended to limit privileges that a user can perform on a machine.',
       tactic: 'TA0004',
       tacticName: 'Privilege Escalation',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1548'
     },
     {
@@ -134,6 +194,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may modify access tokens to operate under a different user or system security context to perform actions and bypass access controls. Windows uses access tokens to determine the ownership of a running process.',
       tactic: 'TA0004',
       tacticName: 'Privilege Escalation',
+      platforms: ['Windows'],
       url: 'https://attack.mitre.org/techniques/T1134'
     },
     {
@@ -142,6 +203,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may interrupt availability of system and network resources by inhibiting access to accounts utilized by legitimate users. Accounts may be deleted, locked, or manipulated to remove access.',
       tactic: 'TA0040',
       tacticName: 'Impact',
+      platforms: ['Windows', 'macOS', 'Linux', 'Office Suite', 'SaaS', 'IaaS'],
       url: 'https://attack.mitre.org/techniques/T1531'
     },
     {
@@ -150,6 +212,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion.',
       tactic: 'TA0001',
       tacticName: 'Initial Access',
+      platforms: ['Windows', 'macOS', 'Linux', 'Office Suite', 'SaaS', 'IaaS', 'Network Devices'],
       url: 'https://attack.mitre.org/techniques/T1078'
     },
     {
@@ -158,6 +221,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may inject code into processes in order to evade process-based defenses as well as possibly elevate privileges. Process injection is a method of executing arbitrary code in the address space of a separate live process.',
       tactic: 'TA0002',
       tacticName: 'Execution',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1055'
     },
     {
@@ -166,6 +230,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may abuse task scheduling functionality to gain initial access, persistence, and privilege escalation. Most modern operating systems have built-in functionality to schedule programs or scripts to be executed at a specified date and time.',
       tactic: 'TA0003',
       tacticName: 'Persistence',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1053'
     },
     {
@@ -174,6 +239,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may enumerate files and directories or may search in specific locations of a host or network share for certain information within a file system.',
       tactic: 'TA0007',
       tacticName: 'Discovery',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1078'
     },
     {
@@ -182,6 +248,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may modify system configurations to disable security tools and logging capabilities. This can be done to prevent detection of their activities and to maintain persistence.',
       tactic: 'TA0005',
       tacticName: 'Defense Evasion',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1562'
     },
     {
@@ -190,6 +257,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may communicate using application layer protocols to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, will be embedded within the protocol traffic between the client and server.',
       tactic: 'TA0011',
       tacticName: 'Command and Control',
+      platforms: ['Windows', 'macOS', 'Linux', 'Network Devices'],
       url: 'https://attack.mitre.org/techniques/T1071'
     },
     {
@@ -198,6 +266,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may steal data by exfiltrating it over an existing Command and Control channel. The stolen data is encoded into the normal communications channel using the same protocol as command and control communications.',
       tactic: 'TA0010',
       tacticName: 'Exfiltration',
+      platforms: ['Windows', 'macOS', 'Linux', 'Office Suite', 'SaaS', 'IaaS'],
       url: 'https://attack.mitre.org/techniques/T1041'
     },
     {
@@ -206,6 +275,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may delete or remove built-in operating system data and turn off services designed to aid in the recovery of a corrupted system to prevent recovery.',
       tactic: 'TA0040',
       tacticName: 'Impact',
+      platforms: ['Windows', 'macOS', 'Linux'],
       url: 'https://attack.mitre.org/techniques/T1490'
     },
     {
@@ -214,6 +284,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'An adversary may attempt to enumerate running virtual machines (VMs) after gaining access to a host or hypervisor. For example, adversaries may enumerate a list of VMs on an ESXi hypervisor using a Hypervisor CLI.',
       tactic: 'TA0007',
       tacticName: 'Discovery',
+      platforms: ['ESXi', 'Containers'],
       url: 'https://attack.mitre.org/techniques/T1673'
     },
     {
@@ -222,6 +293,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may employ various means to detect and avoid virtualization and analysis environments. This may include changing behaviors based on the results of checks for the presence of artifacts indicative of a virtual machine environment (VME) or sandbox.',
       tactic: 'TA0005',
       tacticName: 'Defense Evasion',
+      platforms: ['Windows', 'macOS', 'Linux', 'Containers'],
       url: 'https://attack.mitre.org/techniques/T1497'
     },
     {
@@ -230,6 +302,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may compromise a network device\'s encryption capability in order to bypass encryption that would otherwise protect data communications.',
       tactic: 'TA0005',
       tacticName: 'Defense Evasion',
+      platforms: ['Network Devices'],
       url: 'https://attack.mitre.org/techniques/T1600'
     },
     {
@@ -238,6 +311,7 @@ function getSampleMitreData(): MitreTechnique[] {
       description: 'Adversaries may use an existing, legitimate external Web service as a means for relaying data to/from a compromised system. Popular websites, cloud services, and social media acting as a mechanism for C2 may give a significant amount of cover.',
       tactic: 'TA0011',
       tacticName: 'Command and Control',
+      platforms: ['SaaS', 'IaaS', 'Office Suite'],
       url: 'https://attack.mitre.org/techniques/T1102'
     }
   ]

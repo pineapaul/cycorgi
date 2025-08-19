@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb')
+require('dotenv').config({ path: '.env.local' })
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cycorgi'
 
