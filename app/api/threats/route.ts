@@ -30,10 +30,11 @@ export async function GET(request: NextRequest) {
     const filter: any = {}
     
     if (search) {
+      const safeSearch = _.escapeRegExp(search)
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
+        { tags: { $in: [new RegExp(safeSearch, 'i')] } }
       ]
     }
     

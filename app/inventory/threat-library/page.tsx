@@ -239,15 +239,7 @@ export default function ThreatLibraryPage() {
     fetchAvailableAssets()
   }, [fetchThreats, fetchMitreMetadata, fetchAvailableAssets])
 
-  // Debug effect to log threats state changes
-  useEffect(() => {
-    console.log('Threats state updated:', threats)
-    console.log('Threats length:', threats.length)
-    if (threats.length > 0) {
-      console.log('First threat:', threats[0])
-      console.log('First threat keys:', Object.keys(threats[0]))
-    }
-  }, [threats])
+
 
 
 
@@ -258,13 +250,7 @@ export default function ThreatLibraryPage() {
 
   const handleRowClick = (row: Threat) => {
     // Navigate to threat detail page
-    console.log('Row clicked:', row) // Debug log
-    console.log('Row type:', typeof row) // Debug log
-    console.log('Row keys:', Object.keys(row)) // Debug log
-    console.log('Threats state:', threats) // Debug log
-    
     if (row && row.id) {
-      console.log('Navigating to:', `/inventory/threat-library/${row.id}`) // Debug log
       router.push(`/inventory/threat-library/${row.id}`)
     } else {
       console.error('Invalid row data or missing ID:', row)
