@@ -21,7 +21,11 @@ interface Threat {
   createdAt: string
   updatedAt: string
   status: 'Active' | 'Inactive' | 'Deprecated'
-  createdBy?: string
+  createdBy?: string | {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 interface InformationAsset {
@@ -235,10 +239,10 @@ export default function ThreatDetailPage() {
                <span>Updated: {formatDate(threat.updatedAt)}</span>
              </span>
              {threat.createdBy && (
-               <span className="flex items-center space-x-1">
-                 <Icon name="user" size={16} />
-                 <span>Created by: {escapeHtml(decodeHtmlEntities(threat.createdBy))}</span>
-               </span>
+                               <span className="flex items-center space-x-1">
+                  <Icon name="user" size={16} />
+                  <span>Created by: {escapeHtml(decodeHtmlEntities(typeof threat.createdBy === 'object' ? threat.createdBy.name : threat.createdBy))}</span>
+                </span>
              )}
            </div>
           </div>
@@ -463,7 +467,9 @@ export default function ThreatDetailPage() {
       <div className="flex items-center justify-between bg-gray-50 rounded-lg p-6">
         <div className="text-sm text-gray-600">
           <p>Last updated: {formatDate(threat.updatedAt)}</p>
-          {threat.createdBy && <p>Created by: {escapeHtml(threat.createdBy)}</p>}
+          {threat.createdBy && (
+            <p>Created by: {escapeHtml(decodeHtmlEntities(typeof threat.createdBy === 'object' ? threat.createdBy.name : threat.createdBy))}</p>
+          )}
         </div>
         
         <div className="flex items-center space-x-3">
