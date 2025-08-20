@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { decodeHtmlEntities } from '@/lib/utils'
 
 /*
  * MITRE ATTACK Framework Integration using STIX Data Feeds
@@ -89,52 +90,7 @@ function getMetadata() {
   })
 }
 
-// Helper function to decode HTML entities
-function decodeHtmlEntities(text: string): string {
-  if (!text) return text
-  
-  // Common HTML entities
-  const htmlEntities: { [key: string]: string } = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&#x27;': "'",
-    '&#x2F;': '/',
-    '&#x60;': '`',
-    '&#x3D;': '=',
-    '&#x2B;': '+',
-    '&#x23;': '#',
-    '&#x25;': '%',
-    '&#x40;': '@',
-    '&#x5B;': '[',
-    '&#x5D;': ']',
-    '&#x7B;': '{',
-    '&#x7D;': '}',
-    '&#x7C;': '|',
-    '&#x5C;': '\\',
-    '&#x5E;': '^',
-    '&#x7E;': '~'
-  }
-  
-  // Replace HTML entities with their actual characters
-  let decoded = text
-  for (const [entity, char] of Object.entries(htmlEntities)) {
-    decoded = decoded.replace(new RegExp(entity, 'g'), char)
-  }
-  
-  // Also handle numeric HTML entities like &#x2F;
-  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
-    return String.fromCharCode(parseInt(hex, 16))
-  })
-  
-  // Handle decimal HTML entities like &#47;
-  decoded = decoded.replace(/&#(\d+);/g, (match, decimal) => {
-    return String.fromCharCode(parseInt(decimal, 10))
-  })
-  
-  return decoded
-}
+
 
 // Parse and sanitize technique data
 function parseTechnique(technique: StixObject): MitreTechnique | null {
