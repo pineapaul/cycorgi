@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import clientPromise from '@/lib/mongodb'
+import _ from 'lodash'
 
 export async function GET(request: NextRequest) {
   try {
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
     const collection = db.collection('threats')
 
     // Check if threat with same name already exists
-    const existingThreat = await collection.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } })
+    const existingThreat = await collection.findOne({ name: { $regex: new RegExp(`^${_.escapeRegExp(name)}$`, 'i') } })
     if (existingThreat) {
       return NextResponse.json(
         { success: false, error: 'Threat with this name already exists' },
