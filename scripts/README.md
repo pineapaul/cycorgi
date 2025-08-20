@@ -65,6 +65,7 @@ Scripts for updating existing data structures:
 
 - `migrate-risk-ratings.js` - Updates risk rating calculations
 - `migrate-consequence-values.js` - Updates consequence value mappings
+- `migrate-mitre-data.js` - Fixes MITRE ATTACK framework data in threats collection
 
 ## Running Scripts
 
@@ -142,6 +143,40 @@ console.log('Debug: Collections:', await db.listCollections().toArray())
 - **Limit database access** to necessary operations only
 - **Review scripts** before running in production
 - **Backup data** before running migration scripts
+
+## MITRE ATTACK Data Migration
+
+### `migrate-mitre-data.js`
+
+This script fixes incorrect MITRE ATTACK framework data in the threats collection.
+
+#### What it fixes
+
+- **Tactic field**: Converts tactic IDs (e.g., "TA0001") to tactic names (e.g., "Initial Access")
+- **Technique field**: Converts tactic names to appropriate technique names (e.g., "Process Injection")
+
+#### Usage
+
+```bash
+# Fix existing MITRE data in threats collection
+node scripts/migrate-mitre-data.js
+```
+
+#### Before/After Example
+
+```javascript
+// Before (incorrect)
+{
+  mitreTactic: "TA0001",        // Tactic ID
+  mitreTechnique: "Initial Access"  // Tactic name
+}
+
+// After (correct)
+{
+  mitreTactic: "Initial Access",    // Tactic name
+  mitreTechnique: "Valid Accounts"  // Technique name
+}
+```
 
 ## Contributing
 
