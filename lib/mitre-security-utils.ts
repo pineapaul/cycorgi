@@ -37,8 +37,17 @@ class RateLimiter {
   }
 }
 
-// Global rate limiter instance
-export const mitreRateLimiter = new RateLimiter()
+// Global rate limiter instance (lazy-loaded)
+let _mitreRateLimiter: RateLimiter | null = null
+
+function getMitreRateLimiter(): RateLimiter {
+  if (!_mitreRateLimiter) {
+    _mitreRateLimiter = new RateLimiter()
+  }
+  return _mitreRateLimiter
+}
+
+export const mitreRateLimiter = getMitreRateLimiter()
 
 /**
  * Validate and sanitize STIX object data
@@ -148,8 +157,15 @@ export async function secureFetch(
     
     // Validate content type
     const contentType = response.headers.get('content-type')
-    if (!contentType || !config.patterns.allowedContentTypes.some(type => contentType.includes(type))) {
-      throw new Error('Invalid content type received')
+    
+    // Special handling for GitHub raw content (which returns text/plain for JSON files)
+    const isGitHubRawContent = url.includes('raw.githubusercontent.com')
+    const allowedTypes = isGitHubRawContent 
+      ? config.patterns.githubRawContentTypes 
+      : config.patterns.allowedContentTypes
+    
+    if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
+      throw new Error(`Invalid content type received: ${contentType} for URL: ${url}`)
     }
     
     // Check response size

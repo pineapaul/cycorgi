@@ -6,11 +6,11 @@
  */
 
 export const MITRE_SECURITY_CONFIG = {
-  // API endpoints - prefer official MITRE endpoints over raw GitHub content
+  // API endpoints - Official MITRE ATTACK STIX data feeds
   endpoints: {
-    primary: 'https://attack.mitre.org/api/techniques/enterprise/',
-    fallback: 'https://attack.mitre.org/api/techniques/enterprise/',
-    // Removed raw GitHub URLs for security reasons
+    primary: 'https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json',
+    fallback: 'https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json',
+    // These are the official, verified MITRE STIX feed URLs from their GitHub repository
   },
   
   // Request security settings
@@ -26,7 +26,7 @@ export const MITRE_SECURITY_CONFIG = {
   
   // Response validation limits
   validation: {
-    maxResponseSize: 10 * 1024 * 1024, // 10MB
+    maxResponseSize: 50 * 1024 * 1024, // 50MB (STIX feeds can be large)
     maxObjects: 10000,
     maxTechniques: 1000,
     maxNameLength: 200,
@@ -47,7 +47,9 @@ export const MITRE_SECURITY_CONFIG = {
   // Content validation patterns
   patterns: {
     mitreTechniqueId: /^T\d{4}(\.\d{3})?$/,
-    allowedContentTypes: ['application/json', 'application/vnd.api+json']
+    allowedContentTypes: ['application/json', 'application/vnd.api+json', 'text/plain', 'text/json'],
+    // GitHub raw content returns text/plain for JSON files, which is normal and secure
+    githubRawContentTypes: ['text/plain', 'text/json', 'application/json']
   },
   
   // Security headers to validate

@@ -173,19 +173,19 @@ function sanitizeTechnique(technique: any): MitreTechnique | null {
   }
 }
 
-// Fetch and validate MITRE ATTACK data securely
+// Fetch and validate MITRE ATTACK STIX data securely
 async function fetchMitreData(): Promise<MitreTechnique[]> {
   // Check cache first
   if (techniqueCache && (Date.now() - techniqueCache.timestamp) < config.cache.duration) {
     return techniqueCache.data
   }
   
-  // Use official MITRE ATTACK API endpoint instead of raw GitHub content
-  const MITRE_API_URL = config.endpoints.primary
+  // Use official MITRE ATTACK STIX feed
+  const MITRE_STIX_URL = config.endpoints.primary
   
   try {
     // Use secure fetch utility with built-in validation
-    const response = await secureFetch(MITRE_API_URL, {
+    const response = await secureFetch(MITRE_STIX_URL, {
       method: 'GET',
       headers: {
         'User-Agent': config.request.userAgent
@@ -196,7 +196,7 @@ async function fetchMitreData(): Promise<MitreTechnique[]> {
     
     // Validate the data structure
     if (!validateStixData(data)) {
-      logSecurityEvent('invalid_stix_data', { url: MITRE_API_URL })
+      logSecurityEvent('invalid_stix_data', { url: MITRE_STIX_URL })
       throw new Error('Invalid STIX data structure received')
     }
     
@@ -215,14 +215,14 @@ async function fetchMitreData(): Promise<MitreTechnique[]> {
     // Log successful data fetch
     logSecurityEvent('data_fetch_success', { 
       count: techniques.length, 
-      source: 'MITRE ATTACK API' 
+      source: 'MITRE ATTACK STIX Feed' 
     })
     
     // Update cache
     techniqueCache = {
       data: techniques,
       timestamp: Date.now(),
-      source: 'MITRE ATTACK API'
+      source: 'MITRE ATTACK STIX Feed'
     }
     
     return techniques
@@ -233,7 +233,7 @@ async function fetchMitreData(): Promise<MitreTechnique[]> {
     // Log security event for failed fetch
     logSecurityEvent('data_fetch_failure', { 
       error: error instanceof Error ? error.message : 'Unknown error',
-      url: MITRE_API_URL
+      url: MITRE_STIX_URL
     })
     
     // If cache exists and is not too old, use it even if expired
@@ -262,20 +262,20 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Attempt to fetch from MITRE ATTACK API with proper validation
+      // Attempt to fetch from MITRE ATTACK STIX feed with proper validation
       const techniques = await fetchMitreData()
       
       return NextResponse.json({
         success: true,
         data: techniques,
         count: techniques.length,
-        source: techniqueCache?.source || 'MITRE ATTACK API',
+        source: techniqueCache?.source || 'MITRE ATTACK STIX Feed',
         lastUpdated: new Date().toISOString(),
         cacheStatus: techniqueCache ? 'cached' : 'fresh'
       })
       
     } catch (mitreError) {
-      console.warn('Failed to fetch from MITRE API, falling back to sample data:', mitreError)
+      console.warn('Failed to fetch from MITRE STIX feed, falling back to sample data:', mitreError)
       
       // Fallback to trusted sample data
       const techniques = getSampleMitreData()
@@ -284,7 +284,7 @@ export async function GET(request: NextRequest) {
         success: true,
         data: techniques,
         count: techniques.length,
-        note: 'Using trusted sample data due to MITRE API error. API may be temporarily unavailable.',
+        note: 'Using trusted sample data due to MITRE STIX feed error. Feed may be temporarily unavailable.',
         source: 'Trusted Sample Data (Fallback)',
         lastUpdated: new Date().toISOString(),
         fallbackReason: mitreError instanceof Error ? mitreError.message : 'Unknown error'

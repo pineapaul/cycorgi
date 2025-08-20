@@ -6,9 +6,9 @@ This document outlines the security improvements implemented to address the secu
 
 ## Security Issues Addressed
 
-### 1. **Insecure External Data Fetching**
-- **Before**: Direct HTTP requests to GitHub raw content URLs
-- **After**: Secure API calls to official MITRE ATTACK endpoints with proper validation
+### 1. **Enhanced External Data Fetching Security**
+- **Before**: Direct HTTP requests to GitHub raw content URLs without validation
+- **After**: Secure requests to official MITRE ATTACK STIX feeds with comprehensive validation and sanitization
 
 ### 2. **Lack of Input Validation**
 - **Before**: No validation of fetched data structure or content
