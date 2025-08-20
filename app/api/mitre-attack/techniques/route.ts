@@ -118,7 +118,7 @@ function parseTechnique(technique: StixObject): MitreTechnique | null {
       name: decodeHtmlEntities(technique.name),
       description: decodeHtmlEntities(technique.description || 'No description available'),
       tactic: decodeHtmlEntities(tactic?.phase_name || ''),
-      tacticName: decodeHtmlEntities(technique.name),
+      tacticName: decodeHtmlEntities(tactic?.phase_name || 'Unknown Tactic'),
       platforms,
       url: `https://attack.mitre.org/techniques/${mitreId}`
     }
