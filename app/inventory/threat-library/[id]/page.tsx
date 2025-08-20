@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/app/components/Icon'
 import { useToast } from '@/app/components/Toast'
-import { formatDate, escapeHtml } from '@/lib/utils'
+import { formatDate, escapeHtml, decodeHtmlEntities } from '@/lib/utils'
 
 interface Threat {
   id: string
@@ -215,8 +215,8 @@ export default function ThreatDetailPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">{escapeHtml(threat.name)}</h1>
+            <div className="flex items-center space-x-2 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">{escapeHtml(decodeHtmlEntities(threat.name))}</h1>
               <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getSeverityColor(threat.severity)}`}>
                 {escapeHtml(threat.severity)}
               </span>
@@ -225,22 +225,22 @@ export default function ThreatDetailPage() {
               </span>
             </div>
             
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <span className="flex items-center space-x-1">
-                <Icon name="calendar" size={16} />
-                <span>Created: {formatDate(threat.createdAt)}</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <Icon name="clock" size={16} />
-                <span>Updated: {formatDate(threat.updatedAt)}</span>
-              </span>
-              {threat.createdBy && (
-                <span className="flex items-center space-x-1">
-                  <Icon name="user" size={16} />
-                  <span>Created by: {escapeHtml(threat.createdBy)}</span>
-                </span>
-              )}
-            </div>
+                       <div className="flex items-center space-x-4 text-sm text-gray-600">
+             <span className="flex items-center space-x-1">
+               <Icon name="calendar" size={16} />
+               <span>Created: {formatDate(threat.createdAt)}</span>
+             </span>
+             <span className="flex items-center space-x-1">
+               <Icon name="clock" size={16} />
+               <span>Updated: {formatDate(threat.updatedAt)}</span>
+             </span>
+             {threat.createdBy && (
+               <span className="flex items-center space-x-1">
+                 <Icon name="user" size={16} />
+                 <span>Created by: {escapeHtml(decodeHtmlEntities(threat.createdBy))}</span>
+               </span>
+             )}
+           </div>
           </div>
           
           <div className="text-right">
@@ -255,18 +255,18 @@ export default function ThreatDetailPage() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-          <p className="text-gray-700 leading-relaxed">{escapeHtml(threat.description)}</p>
-        </div>
+                 <div className="mb-4">
+           <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+           <p className="text-gray-700 leading-relaxed">{decodeHtmlEntities(threat.description)}</p>
+         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <h4 className="text-sm font-medium text-gray-500 mb-1">Category</h4>
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-              {escapeHtml(threat.category)}
-            </span>
-          </div>
+                     <div>
+             <h4 className="text-sm font-medium text-gray-500 mb-1">Category</h4>
+             <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+               {escapeHtml(decodeHtmlEntities(threat.category))}
+             </span>
+           </div>
           
           {threat.mitreId && (
             <div>
@@ -281,7 +281,16 @@ export default function ThreatDetailPage() {
             <div>
               <h4 className="text-sm font-medium text-gray-500 mb-1">MITRE Tactic</h4>
               <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">
-                {escapeHtml(threat.mitreTactic)}
+                {escapeHtml(decodeHtmlEntities(threat.mitreTactic))}
+              </span>
+            </div>
+          )}
+          
+          {threat.mitreTechnique && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-1">MITRE Technique</h4>
+              <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                {escapeHtml(decodeHtmlEntities(threat.mitreTechnique))}
               </span>
             </div>
           )}
@@ -293,11 +302,11 @@ export default function ThreatDetailPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags</h3>
           <div className="flex flex-wrap gap-2">
-            {threat.tags.map((tag, index) => (
-              <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                {escapeHtml(tag)}
-              </span>
-            ))}
+                         {threat.tags.map((tag, index) => (
+               <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                 {escapeHtml(decodeHtmlEntities(tag))}
+               </span>
+             ))}
           </div>
         </div>
       )}
@@ -321,25 +330,25 @@ export default function ThreatDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {threat.informationAssets.map((asset, index) => (
               <div key={asset.id} className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-medium text-gray-900 text-sm leading-tight">
-                    {escapeHtml(asset.informationAsset)}
-                  </h4>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCriticalityColor(asset.criticality)}`}>
-                    {escapeHtml(asset.criticality)}
-                  </span>
-                </div>
-                
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="flex items-center space-x-2">
-                    <Icon name="tag" size={12} />
-                    <span>{escapeHtml(asset.category)}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Icon name="cog" size={12} />
-                    <span>{escapeHtml(asset.type)}</span>
-                  </div>
-                </div>
+                                 <div className="flex items-start justify-between mb-3">
+                   <h4 className="font-medium text-gray-900 text-sm leading-tight">
+                     {escapeHtml(decodeHtmlEntities(asset.informationAsset))}
+                   </h4>
+                   <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getCriticalityColor(asset.criticality)}`}>
+                     {escapeHtml(decodeHtmlEntities(asset.criticality))}
+                   </span>
+                 </div>
+                 
+                 <div className="space-y-2 text-xs text-gray-600">
+                   <div className="flex items-center space-x-2">
+                     <Icon name="tag" size={12} />
+                     <span>{escapeHtml(decodeHtmlEntities(asset.category))}</span>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                     <Icon name="cog" size={12} />
+                     <span>{escapeHtml(decodeHtmlEntities(asset.type))}</span>
+                   </div>
+                 </div>
               </div>
             ))}
           </div>
@@ -368,7 +377,7 @@ export default function ThreatDetailPage() {
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Tactic</h4>
                 <span className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded border border-gray-200">
-                  {escapeHtml(threat.mitreTactic)}
+                  {escapeHtml(decodeHtmlEntities(threat.mitreTactic))}
                 </span>
               </div>
             )}
@@ -377,7 +386,7 @@ export default function ThreatDetailPage() {
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Technique</h4>
                 <span className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded border border-gray-200">
-                  {escapeHtml(threat.mitreTechnique)}
+                  {escapeHtml(decodeHtmlEntities(threat.mitreTechnique))}
                 </span>
               </div>
             )}
@@ -407,9 +416,9 @@ export default function ThreatDetailPage() {
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-2">Severity Level</h4>
             <div className="flex items-center space-x-3">
-              <span className={`px-4 py-2 rounded-lg text-sm font-medium border ${getSeverityColor(threat.severity)}`}>
-                {escapeHtml(threat.severity)}
-              </span>
+                             <span className={`px-4 py-2 rounded-lg text-sm font-medium border ${getSeverityColor(threat.severity)}`}>
+                 {escapeHtml(decodeHtmlEntities(threat.severity))}
+               </span>
               <div className="text-sm text-gray-600">
                 {threat.severity === 'Critical' && 'Immediate action required'}
                 {threat.severity === 'High' && 'High priority response needed'}
@@ -422,9 +431,9 @@ export default function ThreatDetailPage() {
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-2">Threat Status</h4>
             <div className="flex items-center space-x-3">
-              <span className={`px-4 py-2 rounded-lg text-sm font-medium ${getStatusColor(threat.status)}`}>
-                {escapeHtml(threat.status)}
-              </span>
+                             <span className={`px-4 py-2 rounded-lg text-sm font-medium ${getStatusColor(threat.status)}`}>
+                 {escapeHtml(decodeHtmlEntities(threat.status))}
+               </span>
               <div className="text-sm text-gray-600">
                 {threat.status === 'Active' && 'Currently active threat'}
                 {threat.status === 'Inactive' && 'Threat not currently active'}

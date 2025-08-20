@@ -306,6 +306,58 @@ export async function generateNextRequestId(db: DatabaseOperations | Db): Promis
 }
 
 /**
+ * Decode HTML entities to their actual characters
+ * Handles both named entities (like &amp;) and numeric entities (like &#x2F;)
+ * @param text - The text containing HTML entities to decode
+ * @returns Decoded text with HTML entities converted to actual characters
+ */
+export function decodeHtmlEntities(text: string): string {
+  if (!text) return text
+  
+  // Common HTML entities
+  const htmlEntities: { [key: string]: string } = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#x27;': "'",
+    '&#x2F;': '/',
+    '&#x60;': '`',
+    '&#x3D;': '=',
+    '&#x2B;': '+',
+    '&#x23;': '#',
+    '&#x25;': '%',
+    '&#x40;': '@',
+    '&#x5B;': '[',
+    '&#x5D;': ']',
+    '&#x7B;': '{',
+    '&#x7D;': '}',
+    '&#x7C;': '|',
+    '&#x5C;': '\\',
+    '&#x5E;': '^',
+    '&#x7E;': '~'
+  }
+  
+  // Replace HTML entities with their actual characters
+  let decoded = text
+  for (const [entity, char] of Object.entries(htmlEntities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char)
+  }
+  
+  // Also handle numeric HTML entities like &#x2F;
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16))
+  })
+  
+  // Handle decimal HTML entities like &#47;
+  decoded = decoded.replace(/&#(\d+);/g, (match, decimal) => {
+    return String.fromCharCode(parseInt(decimal, 10))
+  })
+  
+  return decoded
+}
+
+/**
  * Generate a unique identifier with prefix
  * @param prefix - The prefix for the ID (e.g., 'RISK', 'REQ', 'TREAT')
  * @param db - Database instance for sequential ID generation
