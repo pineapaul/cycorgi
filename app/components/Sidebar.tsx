@@ -19,6 +19,7 @@ const programItems = [
 const inventoryManagementItems = [
   { name: 'Information Assets', href: '/inventory/information-assets' },
   { name: 'Third Parties', href: '/inventory/third-parties' },
+  { name: 'Threat Library', href: '/inventory/threat-library' },
 ]
 
 const governanceItems = [

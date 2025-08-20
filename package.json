@@ -10,6 +10,8 @@
     "seed": "node scripts/seed-information-assets.js",
     "seed-soa": "node scripts/seed-soa-controls.js",
     "seed-third-parties": "node scripts/seed-third-parties-dev.js",
+    "seed-threats": "node scripts/seed-threats.js",
+    "migrate-threats": "node scripts/migrate-threats-add-information-assets.js",
     "test-soa-api": "node scripts/test-soa-api.js"
   },
   "dependencies": {
@@ -24,8 +26,10 @@
     "@nivo/heatmap": "^0.99.0",
     "@nivo/line": "^0.99.0",
     "@nivo/pie": "^0.99.0",
+    "@types/lodash": "^4.17.20",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.536.0",
     "mongodb": "^6.18.0",
     "next": "15.4.4",
