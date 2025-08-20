@@ -57,6 +57,28 @@ export async function GET(
       threat.informationAssets = (threat.informationAssets || []).map((assetId: string) => assetsMap.get(assetId)).filter(Boolean)
     }
 
+    // Populate createdBy user details if they exist
+    if (threat.createdBy) {
+      try {
+        const usersCollection = db.collection('users')
+        const user = await usersCollection.findOne(
+          { _id: new ObjectId(threat.createdBy) },
+          { projection: { name: 1, email: 1 } }
+        )
+        
+        if (user) {
+          threat.createdBy = {
+            id: threat.createdBy,
+            name: user.name,
+            email: user.email
+          }
+        }
+      } catch (error) {
+        console.warn('Could not populate createdBy user details:', error)
+        // Keep the original createdBy value if user lookup fails
+      }
+    }
+
     // Map MongoDB _id to id for frontend compatibility
     const threatWithId = {
       ...threat,
