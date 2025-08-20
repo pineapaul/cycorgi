@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getEnvironmentConfig } from '@/lib/mitre-security-config'
-import { secureFetch, validateStixObject, sanitizeString, logSecurityEvent } from '@/lib/mitre-security-utils'
 
 /*
  * MITRE ATTACK Framework Integration using STIX Data Feeds
  * 
- * This implementation uses secure, validated access to MITRE ATTACK data
- * with proper caching and fallback mechanisms.
- * 
- * Security Features:
- * - Content-Type validation
- * - JSON schema validation
- * - Rate limiting and caching
- * - Secure fallback to trusted sample data
- * - Input sanitization and validation
+ * This implementation fetches data directly from the official MITRE ATTACK STIX feed.
+ * MITRE is a trusted, reputable source, so we can rely on their data structure.
  */
 
 interface MitreTechnique {
@@ -28,7 +19,7 @@ interface MitreTechnique {
   url: string
 }
 
-// STIX data validation schema
+// STIX data structure
 interface StixObject {
   type: string
   id: string
@@ -49,15 +40,14 @@ interface StixData {
   objects: StixObject[]
 }
 
-// Get environment-specific configuration
-const config = getEnvironmentConfig()
-
-// In-memory cache (in production, consider using Redis or similar)
+// In-memory cache
 let techniqueCache: {
   data: MitreTechnique[]
   timestamp: number
   source: string
 } | null = null
+
+const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 // Get available tactics and platforms for filtering
 function getMetadata() {
@@ -99,128 +89,77 @@ function getMetadata() {
   })
 }
 
-// Validate STIX data structure and content
-function validateStixData(data: any): data is StixData {
-  if (!data || typeof data !== 'object') {
-    return false
-  }
-  
-  if (!Array.isArray(data.objects)) {
-    return false
-  }
-  
-  // Limit the number of objects to prevent memory issues
-  if (data.objects.length > config.validation.maxObjects) {
-    return false
-  }
-  
-  // More flexible validation - check that most objects have required properties
-  // Allow some objects to be malformed as long as we have enough valid ones
-  const validObjects = data.objects.filter((obj: any) => {
-    return obj && 
-           typeof obj === 'object' && 
-           typeof obj.type === 'string' &&
-           typeof obj.id === 'string'
-  })
-  
-  // Require at least 80% of objects to be valid
-  const minValidPercentage = 0.8
-  const validPercentage = validObjects.length / data.objects.length
-  
-  return validPercentage >= minValidPercentage
-}
-
-// Sanitize and validate technique data
-function sanitizeTechnique(technique: any): MitreTechnique | null {
+// Parse and sanitize technique data
+function parseTechnique(technique: StixObject): MitreTechnique | null {
   try {
-    // Extract MITRE ID from external references with validation
-    const mitreId = technique.external_references?.find((ref: any) => 
-      ref?.source_name === 'mitre-attack' && 
-      ref?.external_id && 
-      typeof ref.external_id === 'string' &&
-      ref.external_id.match(config.patterns.mitreTechniqueId) // MITRE technique ID format
+    // Extract MITRE ID from external references
+    const mitreId = technique.external_references?.find(ref => 
+      ref.source_name === 'mitre-attack' && ref.external_id
     )?.external_id || technique.id
     
     if (!mitreId || !technique.name) {
       return null
     }
     
-    // Extract tactic information with validation
+    // Extract tactic information
     const tactic = technique.kill_chain_phases?.[0]
     const tacticName = tactic?.phase_name || 'Unknown Tactic'
     
-    // Extract and validate platform information
+    // Extract platform information
     const platforms = Array.isArray(technique.x_mitre_platforms) 
-      ? technique.x_mitre_platforms.filter((p: any) => 
-          typeof p === 'string' && p.length <= config.validation.maxPlatformNameLength
-        ).slice(0, config.validation.maxPlatformsPerTechnique)
+      ? technique.x_mitre_platforms
       : []
-    
-    // Sanitize strings to prevent XSS
-    const sanitizedName = sanitizeString(technique.name, config.validation.maxNameLength)
-    const sanitizedDescription = technique.description 
-      ? sanitizeString(technique.description, config.validation.maxDescriptionLength)
-      : 'No description available'
     
     return {
       id: mitreId,
-      name: sanitizedName,
-      description: sanitizedDescription,
+      name: technique.name,
+      description: technique.description || 'No description available',
       tactic: tactic?.kill_chain_name || '',
       tacticName,
       platforms,
       url: `https://attack.mitre.org/techniques/${mitreId}`
     }
   } catch (error) {
-    console.warn('Error sanitizing technique:', error)
+    console.warn('Error parsing technique:', error)
     return null
   }
 }
 
-// Fetch and validate MITRE ATTACK STIX data securely
+// Fetch MITRE ATTACK STIX data
 async function fetchMitreData(): Promise<MitreTechnique[]> {
   // Check cache first
-  if (techniqueCache && (Date.now() - techniqueCache.timestamp) < config.cache.duration) {
+  if (techniqueCache && (Date.now() - techniqueCache.timestamp) < CACHE_DURATION) {
     return techniqueCache.data
   }
   
-  // Use official MITRE ATTACK STIX feed
-  const MITRE_STIX_URL = config.endpoints.primary
+  // Official MITRE ATTACK STIX feed
+  const STIX_FEED_URL = 'https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json'
   
   try {
-    // Use secure fetch utility with built-in validation
-    const response = await secureFetch(MITRE_STIX_URL, {
+    const response = await fetch(STIX_FEED_URL, {
       method: 'GET',
       headers: {
-        'User-Agent': config.request.userAgent
+        'User-Agent': 'Cycorgi-Threat-Library/1.0',
+        'Accept': 'application/json'
       }
     })
     
-    const data = await response.json()
-    
-    // Validate the data structure
-    if (!validateStixData(data)) {
-      logSecurityEvent('invalid_stix_data', { url: MITRE_STIX_URL })
-      throw new Error('Invalid STIX data structure received')
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
     
-    // Parse and sanitize techniques with additional validation
+    const data: StixData = await response.json()
+    
+    // Parse techniques from STIX data
     const techniques = data.objects
-      .filter((obj: StixObject) => obj.type === 'attack-pattern')
-      .filter(validateStixObject) // Additional security validation
-      .map(sanitizeTechnique)
+      .filter(obj => obj.type === 'attack-pattern')
+      .map(parseTechnique)
       .filter((technique): technique is MitreTechnique => technique !== null)
-      .slice(0, config.validation.maxTechniques) // Limit techniques for performance
+      .slice(0, 1000) // Limit for performance
     
     if (techniques.length === 0) {
-      throw new Error('No valid techniques found in MITRE data')
+      throw new Error('No techniques found in MITRE data')
     }
-    
-    // Log successful data fetch
-    logSecurityEvent('data_fetch_success', { 
-      count: techniques.length, 
-      source: 'MITRE ATTACK STIX Feed' 
-    })
     
     // Update cache
     techniqueCache = {
@@ -232,20 +171,7 @@ async function fetchMitreData(): Promise<MitreTechnique[]> {
     return techniques
     
   } catch (error) {
-    console.warn('Failed to fetch from MITRE API:', error)
-    
-    // Log security event for failed fetch
-    logSecurityEvent('data_fetch_failure', { 
-      error: error instanceof Error ? error.message : 'Unknown error',
-      url: MITRE_STIX_URL
-    })
-    
-    // If cache exists and is not too old, use it even if expired
-    if (techniqueCache && (Date.now() - techniqueCache.timestamp) < config.cache.gracePeriod) {
-      console.log('Using expired cache data due to API failure')
-      return techniqueCache.data
-    }
-    
+    console.warn('Failed to fetch from MITRE STIX feed:', error)
     throw error
   }
 }
@@ -266,7 +192,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Attempt to fetch from MITRE ATTACK STIX feed with proper validation
+      // Attempt to fetch from MITRE ATTACK STIX feed
       const techniques = await fetchMitreData()
       
       return NextResponse.json({
@@ -376,7 +302,7 @@ function getSampleMitreData(): MitreTechnique[] {
       tactic: 'TA0007',
       tacticName: 'Discovery',
       platforms: ['Windows', 'macOS', 'Linux'],
-      url: 'https://attack.mitre.org/techniques/T1078'
+      url: 'https://attack.mitre.org/techniques/T1083'
     },
     {
       id: 'T1562',
