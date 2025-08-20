@@ -114,16 +114,20 @@ function validateStixData(data: any): data is StixData {
     return false
   }
   
-  // Validate each object has required properties
-  const validObjects = data.objects.every((obj: any) => {
+  // More flexible validation - check that most objects have required properties
+  // Allow some objects to be malformed as long as we have enough valid ones
+  const validObjects = data.objects.filter((obj: any) => {
     return obj && 
            typeof obj === 'object' && 
            typeof obj.type === 'string' &&
-           typeof obj.id === 'string' &&
-           obj.id.length <= config.validation.maxIdLength
+           typeof obj.id === 'string'
   })
   
-  return validObjects
+  // Require at least 80% of objects to be valid
+  const minValidPercentage = 0.8
+  const validPercentage = validObjects.length / data.objects.length
+  
+  return validPercentage >= minValidPercentage
 }
 
 // Sanitize and validate technique data
