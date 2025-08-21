@@ -14,7 +14,7 @@ function loadEnvFile() {
       if (key && valueParts.length > 0) {
         const value = valueParts.join('=').trim()
         if (!key.startsWith('#')) {
-          envVars[key.trim()] = value.replace(/^["']|["']$/g, '') // Remove quotes
+          envVars[key.trim()] = value.replace(/^["'""'']|["'""'']$/g, '') // Remove quotes
         }
       }
     })

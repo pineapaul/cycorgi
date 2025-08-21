@@ -168,22 +168,11 @@ export default function IncidentDetail() {
             >
               Back to Incidents
             </Link>
-                  </div>
+          </div>
+        </div>
       </div>
-
-      {/* Edit Incident Modal */}
-      <EditIncidentModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        incident={incident}
-        onIncidentUpdated={() => {
-          // Refresh the incident data after update
-          window.location.reload()
-        }}
-      />
-    </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="space-y-6">

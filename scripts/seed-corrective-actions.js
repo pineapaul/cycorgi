@@ -176,26 +176,17 @@ async function seedCorrectiveActions() {
     await collection.deleteMany({})
     console.log('Cleared existing corrective actions')
 
-    // Insert sample data
-    const result = await collection.insertMany(sampleCorrectiveActions)
-    console.log(`Inserted ${result.insertedCount} corrective actions`)
+    // Add timestamps to all documents before insertion
+    const timestamp = new Date()
+    const documentsWithTimestamps = sampleCorrectiveActions.map(action => ({
+      ...action,
+      createdAt: timestamp.toISOString(),
+      updatedAt: timestamp.toISOString()
+    }))
 
-    // Add timestamps to all documents
-    const updatePromises = sampleCorrectiveActions.map((action, index) => {
-      const timestamp = new Date()
-      return collection.updateOne(
-        { _id: result.insertedIds[index] },
-        { 
-          $set: { 
-            createdAt: timestamp.toISOString(),
-            updatedAt: timestamp.toISOString()
-          } 
-        }
-      )
-    })
-
-    await Promise.all(updatePromises)
-    console.log('Added timestamps to all corrective actions')
+    // Insert sample data with timestamps
+    const result = await collection.insertMany(documentsWithTimestamps)
+    console.log(`Inserted ${result.insertedCount} corrective actions with timestamps`)
 
     console.log('Corrective actions seeding completed successfully!')
   } catch (error) {
