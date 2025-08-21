@@ -36,7 +36,7 @@
     "next-auth": "^4.24.11",
     "playwright": "^1.54.1",
     "puppeteer": "^24.16.2",
-    "react": "19.1.0",
+    "react": "19.1.1",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1"
   },
