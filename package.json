@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seed-information-assets.js",
+    "seed-improvements": "node scripts/seed-improvements.js",
     "seed-soa": "node scripts/seed-soa-controls.js",
     "seed-third-parties": "node scripts/seed-third-parties-dev.js",
     "seed-threats": "node scripts/seed-threats.js",

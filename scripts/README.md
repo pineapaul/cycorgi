@@ -58,6 +58,7 @@ Various scripts for populating the database with sample data:
 - `seed-workshops.js` - Creates sample workshops
 - `seed-third-parties.js` - Creates sample third-party vendors
 - `seed-information-assets.js` - Creates sample information assets
+- `seed-corrective-actions.js` - Creates sample corrective actions
 
 ### `migrate-*.js`
 
