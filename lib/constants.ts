@@ -145,3 +145,37 @@ export type ControlStatus = typeof CONTROL_STATUS[keyof typeof CONTROL_STATUS]
 export type ControlApplicability = typeof CONTROL_APPLICABILITY[keyof typeof CONTROL_APPLICABILITY]
 export type UserStatus = typeof USER_STATUS[keyof typeof USER_STATUS]
 export type ApprovalStatus = typeof APPROVAL_STATUS[keyof typeof APPROVAL_STATUS]
+
+// Corrective Action constants
+export const CORRECTIVE_ACTION_STATUS = {
+  OPEN: 'Open',
+  IN_PROGRESS: 'In Progress',
+  PENDING_REVIEW: 'Pending Review',
+  PENDING_APPROVAL: 'Pending Approval',
+  COMPLETED: 'Completed',
+  CLOSED: 'Closed',
+  ON_HOLD: 'On Hold'
+} as const
+
+export const CORRECTIVE_ACTION_SEVERITY = {
+  CRITICAL: 'Critical',
+  HIGH: 'High',
+  MEDIUM: 'Medium',
+  LOW: 'Low'
+} as const
+
+export const ROOT_CAUSE_CATEGORIES = {
+  PROCESS_FAILURE: 'Process Failure',
+  HUMAN_ERROR: 'Human Error',
+  SYSTEM_FAILURE: 'System Failure',
+  EXTERNAL_FACTOR: 'External Factor',
+  TRAINING_DEFICIENCY: 'Training Deficiency',
+  DOCUMENTATION_ISSUE: 'Documentation Issue',
+  COMPLIANCE_VIOLATION: 'Compliance Violation',
+  SECURITY_BREACH: 'Security Breach',
+  OTHER: 'Other'
+} as const
+
+export type CorrectiveActionStatus = typeof CORRECTIVE_ACTION_STATUS[keyof typeof CORRECTIVE_ACTION_STATUS]
+export type CorrectiveActionSeverity = typeof CORRECTIVE_ACTION_SEVERITY[keyof typeof CORRECTIVE_ACTION_SEVERITY]
+export type RootCauseCategory = typeof ROOT_CAUSE_CATEGORIES[keyof typeof ROOT_CAUSE_CATEGORIES]
