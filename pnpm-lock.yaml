@@ -84,8 +84,8 @@ importers:
         specifier: ^4.24.11
         version: 4.24.11(next@15.5.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       playwright:
-        specifier: ^1.55.1
-        version: 1.55.1
+        specifier: ^1.57.0
+        version: 1.57.0
       puppeteer:
         specifier: ^24.16.2
         version: 24.25.0(typescript@5.8.3)
@@ -2214,13 +2214,13 @@ packages:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
 
-  playwright-core@1.55.1:
-    resolution: {integrity: sha512-Z6Mh9mkwX+zxSlHqdr5AOcJnfp+xUWLCt9uKV18fhzA8eyxUd8NUWzAjxUh55RZKSYwDGX0cfaySdhZJGMoJ+w==}
+  playwright-core@1.57.0:
+    resolution: {integrity: sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.55.1:
-    resolution: {integrity: sha512-cJW4Xd/G3v5ovXtJJ52MAOclqeac9S/aGGgRzLabuF8TnIb6xHvMzKIa6JmrRzUkeXJgfL1MhukP0NK6l39h3A==}
+  playwright@1.57.0:
+    resolution: {integrity: sha512-ilYQj1s8sr2ppEJ2YVadYBN0Mb3mdo9J0wQ+UuDhzYqURwSoW4n1Xs5vs7ORwgDGmyEh33tRMeS8KhdkMoLXQw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4980,11 +4980,11 @@ snapshots:
 
   picomatch@4.0.3: {}
 
-  playwright-core@1.55.1: {}
+  playwright-core@1.57.0: {}
 
-  playwright@1.55.1:
+  playwright@1.57.0:
     dependencies:
-      playwright-core: 1.55.1
+      playwright-core: 1.57.0
     optionalDependencies:
       fsevents: 2.3.2
 
